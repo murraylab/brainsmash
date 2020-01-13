@@ -12,7 +12,7 @@ setup(
     author="Joshua Burt",
     author_email="joshua.burt@yale.edu",
     include_package_data=True,
-    description="Surrogate Map with Autocorrelated Spatial Heterogeneity.",
+    description="Brain Surrogate Map with Autocorrelated Spatial Heterogeneity.",
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/jbburt/brainsmash",
