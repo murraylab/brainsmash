@@ -1,0 +1,11 @@
+include brainsmash/LICENSE
+include brainsmash/README.md
+include brainsmash/setup.py
+recursive-include brainsmash/data/ *
+recursive-exclude brainsmash/__pycache__/ *
+recursive-exclude brainsmash/.idea/ *
+recursive-exclude brainsmash/analysis/__pycache__/ *
+recursive-exclude brainsmash/geo/__pycache__/ *
+recursive-exclude brainsmash/neuro/__pycache__/ *
+recursive-exclude brainsmash/nulls/__pycache__/ *
+recursive-exclude brainsmash/utils/__pycache__/ *
