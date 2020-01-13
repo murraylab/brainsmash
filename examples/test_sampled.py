@@ -1,4 +1,5 @@
 from brainsmash.maps.core import Sampled
+from brainsmash.analysis.eval import test_sampled_variogram_fits
 import wbplot
 # from brainsmash.neuro.cifti import export_cifti_mapping
 from os.path import join
@@ -26,6 +27,15 @@ index_file = join(data_root, "cortex_left_index.npy")
 myelin = np.load(image_file)
 distmat = np.load(dist_file, mmap_mode='r')
 index = np.load(index_file, mmap_mode='r')
+
+# Confirm visually that the simulated variograms fit well
+test_sampled_variogram_fits(
+    brain_map=myelin, distmat=distmat, index=index, include_naive=True)
+
+# Compare to the variogram fits when resampling surrogate map values from the
+# empirical brain map
+test_sampled_variogram_fits(
+    brain_map=myelin, distmat=distmat, index=index, resample=True)
 
 # Create a few surrogate maps and plot them
 generator = Sampled(brain_map=myelin, distmat=distmat,
