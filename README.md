@@ -1,10 +1,10 @@
-PySMASH
+BrainSMASH
 =======
 
-PySMASH (Surrogate Maps with Spatially Autocorrelated Heterogeneity) is a ...
+BrainSMASH (Surrogate Maps with Spatially Autocorrelated Heterogeneity) is a TODO
 
 For more detailed installation instructions, documentation, a quick start guide
-and examples, please refer to our `documentation <https://pysmash.readthedocs.io>`_.
+and examples, please refer to our `documentation <https://brainsmash.readthedocs.io>`_.
 
 Installation
 ============
@@ -19,7 +19,7 @@ TODO
 License
 -------
 
-The PySMASH source code is available under the GNU General Public License v3.0.
+The BrainSMASH source code is available under the GNU General Public License v3.0.
 
 Support
 -------
@@ -27,7 +27,7 @@ Support
 Preprint
 --------
 
-Please cite the following preprint if you use PySMASH in your research: TODO
+Please cite the following preprint if you use BrainSMASH in your research: TODO
 
 Core development team
 -----------------------
