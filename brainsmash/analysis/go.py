@@ -5,7 +5,7 @@ Map -> enrichments
 
 """
 
-from ..nulls.core import Base as Nulls
+from ..maps.core import Base
 from goatools.go_enrichment import GOEnrichmentStudy
 from goatools.anno.gaf_reader import GafReader
 from goatools.obo_parser import GODag
@@ -20,6 +20,7 @@ import io
 import gzip
 import os
 
+# TODO this whole module is a disaster
 
 __all__ = ['init_go_enrichment_study', 'spatial_go_enrichment_analysis',
            'spatial_pearsonr', 'mk_surrogates', 'get_gene_expression_ahba',
@@ -162,7 +163,7 @@ def spatial_go_enrichment_analysis(
             'and/or consider setting a background gene list'.format(
                 100 * frac_found_ids))
 
-    gn = Nulls(topography, distances, **surrogate_kwargs)
+    gn = Base(topography, distances, **surrogate_kwargs)
     surrogate_topos = gn(n=100)
 
     r_topo = 1 - cdist(gene_topographies.values, topography.reshape(
@@ -250,10 +251,10 @@ def spatial_pearsonr(x, y, method='surrogates', x_surrogates=None,
 
     elif method == 'surrogates':
         if x_surrogates is None:
-            gn = Nulls(x, **surrogate_kwargs)
+            gn = Base(x, **surrogate_kwargs)
             x_surrogates = gn.generate(n=100)
         if y_surrogates is None:
-            y_surrogates = Nulls(y, **surrogate_kwargs)
+            y_surrogates = Base(y, **surrogate_kwargs)
         null_rs = 1 - cdist(
             x_surrogates, y_surrogates, metric='correlation').ravel()
         p_corrected = np.mean(np.abs(null_rs) > np.abs(r))
@@ -296,7 +297,7 @@ def _goenrichrec2series(rec):
 
 def mk_surrogates(topography, gene_topographies, distances, n_surrogates=100,
                   n_bins=15, deltas=tuple(np.arange(0.1, .901, .1)),
-                  kernel='exponential'):
+                  kernel='exp'):
     """Generates surrogates for target topography and gene topographies.
 
     Parameters
@@ -305,6 +306,11 @@ def mk_surrogates(topography, gene_topographies, distances, n_surrogates=100,
         The target topography
     gene_topographies : pd.DataFrame (n_genes x n_locations)
         Table of gene topographies; index must contain uniprot-ids
+    distances
+    n_surrogates
+    n_bins
+    deltas
+    kernel
 
     Returns
     -------
@@ -312,15 +318,14 @@ def mk_surrogates(topography, gene_topographies, distances, n_surrogates=100,
     gene_topo_surrogates : np.ndarray (n_genes x n_surrogates,n_locations)
     """
 
-    gn = Nulls(
-        topography, distances, deltas=deltas, nbins=n_bins, kernel=kernel)
-    topo_surrogates = gn.generate(n=n_surrogates)
+    gn = Base(topography, distances, deltas=deltas, nbins=n_bins, kernel=kernel)
+    topo_surrogates = gn(n=n_surrogates)
 
     gene_topo_surrogates = list()
     for _, g in gene_topographies.iterrows():
-        gn = Nulls(
+        gn = Base(
             g.values, distances, deltas=deltas, nbins=n_bins, kernel=kernel)
-        nulls = gn.generate(n=n_surrogates)
+        nulls = gn(n=n_surrogates)
         gene_topo_surrogates.append(nulls)
 
     return topo_surrogates, np.vstack(gene_topo_surrogates)
@@ -407,7 +412,8 @@ def spatial_go_enrichment_analysis2(
 
 
 def _add_uniprot_ids(gene_expression_table, multiple_ids=False):
-    """TODO
+    """
+    TODO
 
     Parameters
     ----------
