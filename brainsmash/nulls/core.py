@@ -143,7 +143,7 @@ class Base:
     """
 
     def __init__(self, brain_map, distmat, deltas=np.linspace(0.1, 0.9, 9),
-                 kernel='exp', umax=25, nbins=25):
+                 kernel='exp', umax=25, nbins=25, resample=False):
         """
 
         Parameters
@@ -166,6 +166,11 @@ class Base:
         nbins : int, default 25
             number of uniformly spaced bins in which to compute smoothed
             variogram
+        resample : bool, default False
+            if True, simulated surrogate maps will contain values resampled from
+            the empirical map. This preserves the distribution of values in the
+            map, at the expense of worsening the simulated surrogate maps'
+            variograms fits. TODO: does it actually worsen the fit?
 
         """
         # TODO add checks for other arguments
@@ -179,6 +184,7 @@ class Base:
             raise ValueError(
                 "distance matrix must have dimension consistent with brain map")
 
+        self.resample = resample
         self.nbins = nbins
         self.deltas = deltas
         self.umax = umax
@@ -216,17 +222,14 @@ class Base:
         # Linear regression model
         self.lm = LinearRegression(fit_intercept=True)
 
-    def __call__(self, n=1, resample=False):
+    def __call__(self, n=1):
         """
-        Construct a new surrogate map.
+        Randomly generate new surrogate map(s).
 
         Parameters
         ----------
         n : int, default 1
             number of surrogate maps to randomly generate
-        resample : bool, default False
-            resample each null map from the empirical map to preserve the
-            distribution of values
 
         Returns
         -------
@@ -279,7 +282,7 @@ class Base:
                     np.sqrt(np.abs(aopt)) * np.random.randn(self.n))
             nulls[i] = null
 
-        if resample:
+        if self.resample:
             sorted_map = np.sort(self.x)
             for i, null in enumerate(nulls):
                 ii = np.argsort(null)

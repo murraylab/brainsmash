@@ -38,9 +38,10 @@ def load_gifti(f):
     return nib.load(f).darrays[0].data
 
 
-def load_nifti(f):
+def load_cifti2(f):
     """
-    Load data stored in a NIFTI (.nii) neuroimaging file.
+    Load data stored in a CIFTI-2 format neuroimaging file (e.g., .dscalar.nii
+    and .dlabel.nii files).
 
     Parameters
     ----------
@@ -50,6 +51,11 @@ def load_nifti(f):
     Returns
     -------
     np.ndarray
+
+    Notes
+    -----
+    CIFTI-2 files follow the NIFTI-2 file format. CIFTI-2 files may contain
+    surface-based and/or volumetric data.
 
     """
     return np.array(nib.load(f).get_data()).squeeze()
@@ -123,7 +129,7 @@ def load_data(f):
     if ext == '.gii':
         x = load_gifti(f)
     elif ext == '.nii':
-        x = load_nifti(f)
+        x = load_cifti2(f)
     else:
         raise TypeError("Unrecognized file type: {}".format(f))
     return x

@@ -1,1 +1,1 @@
-kernels = ['exponential', 'gaussian', 'inverse', 'uniform']
+kernels = ['exp', 'gaussian', 'invdist', 'uniform']
