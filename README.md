@@ -10,7 +10,7 @@ additional utilities to support gene ontology enrichment analyses and automated
 illustration of brain maps using Connectome Workbench.
 
 For more detailed installation instructions, documentation, a quick start guide
-and examples, please refer to our `documentation <https://brainsmash.readthedocs.io>`_.
+and examples, please refer to our [documentation](https://brainsmash.readthedocs.io).
 
 Installation
 ============
