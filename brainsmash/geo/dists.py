@@ -104,8 +104,9 @@ def compute_cortex_dists(
     # Compute dense distance matrix
     if euclid:
         # TODO make this computationally efficient
-        dense_distmat = squareform(pdist(coords, metric='euclidean'))
-        cdist(np.expand_dims(XA, 0), XB)
+        # dense_distmat = squareform(pdist(coords, metric='euclidean'))
+        # cdist(np.expand_dims(XA, 0), XB)
+        pass
     else:
         # Files produced at runtime bv Connectome Workbench commands
         coord_file = path.join(mkdtemp(), "vertex_coords.func.gii")

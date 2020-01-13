@@ -255,7 +255,8 @@ class Base:
 
         surrs = np.empty((n, self.n))
         for i in range(n):  # generate random maps
-            print(i)
+
+            print(i+1)
 
             xperm = self.permute_map()  # Randomly permute values
 
@@ -517,6 +518,10 @@ class Sampled:
         checks.check_sampled(distmat=distmat, index=index)  # TODO more checks?
         kernel_callable = checks.check_kernel(kernel)
 
+        if brain_map.size != distmat.shape[0]:
+            raise ValueError("brain map and distance matrix must be same "
+                             "size along first dimension")
+
         n = brain_map.size
         self.resample = resample
         self.nbins = int(nbins)
@@ -574,6 +579,8 @@ class Sampled:
 
         surrs = np.empty((n, self.n))
         for i in range(n):  # generate random maps
+
+            print(i+1)
 
             # Randomly permute map
             x_perm = self.permute_map()

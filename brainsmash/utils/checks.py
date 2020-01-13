@@ -83,8 +83,8 @@ def check_sampled(distmat, index):
     if distmat.shape != index.shape:
         raise ValueError("distmat and index must have identical dimensions")
     if type(distmat) is np.ndarray:
-        if not np.all(distmat[:, 1:] > distmat[:, :-1]):
+        if not np.all(distmat[:, 1:] >= distmat[:, :-1]):
             raise ValueError("distmat must be sorted column-wise")
     else:  # just test the first row
-        if not np.all(distmat[0, 1:] > distmat[0, :-1]):
+        if not np.all(distmat[0, 1:] >= distmat[0, :-1]):
             raise ValueError("distmat must be sorted column-wise")
