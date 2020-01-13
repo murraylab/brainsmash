@@ -1,4 +1,5 @@
-""" Core module containing python implementation of Viladomat et al (2014).
+"""
+Core module for generating spatial autocorrelation-preserving surrogate maps.
 
 Parcel distance matrix (txt) + parcel neuroimaging file (txt) -> surrogates
 Dense distance matrix (memmap) + dense neuroimaging file (txt) -> surrogates
@@ -68,14 +69,14 @@ class Smash:
         if knn is not None or ns is not None:  # Dense Nulls
             if deltas is None:
                 deltas = np.arange(0.02, 0.15, 0.02)
-            self.strategy = Secondary(
-                x=x, D=D, index=index, kernel=kernel, nbins=nbins, umax=umax,
+            self.strategy = Sampled(
+                brain_map=x, distmat=D, index=index, kernel=kernel, nbins=nbins, umax=umax,
                 ns=ns, deltas=deltas)
         else:
             if deltas is None:
                 deltas = np.linspace(0.1, 0.9, 9)
-            self.strategy = Primary(
-                x=x, D=D, kernel=kernel, nbins=nbins, umax=umax, deltas=deltas)
+            self.strategy = Base(
+                brain_map=x, distmat=D, kernel=kernel, nbins=nbins, umax=umax, deltas=deltas)
 
     def __call__(self, n=1):
         return self.strategy.__call__(n)
@@ -109,21 +110,17 @@ class Smash:
         return self.strategy.kernel_name
 
 
-# ------------------------
-# -- Class implementations
-# ------------------------
+class Base:
 
-class Primary:
-
-    def __init__(self, x, D, deltas=np.linspace(0.1, 0.9, 9),
+    def __init__(self, brain_map, distmat, deltas=np.linspace(0.1, 0.9, 9),
                  kernel='exponential', umax=25, nbins=25):
         """
 
         Parameters
         ----------
-        x : (N,) np.ndarray
-            random field
-        D : (N,N) np.ndarray
+        brain_map : (N,) np.ndarray
+            scalar brain map
+        distmat : (N,N) np.ndarray
             pairwise distance matrix between elements of `x`
         deltas : array_like
             proportion of neighbors to include for smoothing, in (0, 1)
@@ -148,14 +145,14 @@ class Primary:
         self.umax = umax
 
         # Field/map
-        assert x.ndim == 1
-        n = x.size
+        assert brain_map.ndim == 1
+        n = brain_map.size
         self.nfield = n
-        self.x = x
+        self.x = brain_map
         self.ikn = np.arange(n)[:, None]
 
-        assert D.shape == (n, n) and np.allclose(D, D.T)  # symmetric
-        self.D = D
+        assert distmat.shape == (n, n) and np.allclose(distmat, distmat.T)  # symmetric
+        self.D = distmat
         self.triu = np.triu_indices(self.nfield, k=1)  # upper triangular inds
 
         # Smoothing kernel selection
@@ -173,15 +170,15 @@ class Primary:
                 "Invalid kernel: 'gaussian' or 'exponential'")
 
         # Variogram
-        self.u = D[self.triu]
-        self.v = self.compute_variogram(x)
+        self.u = distmat[self.triu]
+        self.v = self.compute_variogram(brain_map)
 
         # Get indices of pairs with u < umax'th percentile
         self.uidx = np.where(self.u < np.percentile(self.u, self.umax))[0]
         self.uisort = np.argsort(self.u[self.uidx])
 
         # Find sorted indices of first `kmax` elements of each row of dist. mat.
-        self.disort = np.argsort(D, axis=-1)
+        self.disort = np.argsort(distmat, axis=-1)
         self.jkn = dict.fromkeys(deltas)
         self.dkn = dict.fromkeys(deltas)
         for delta in deltas:
@@ -403,47 +400,48 @@ class Primary:
         return alpha, beta, res
 
 
-class Secondary:
+class Sampled:
 
-    def __init__(self, x, D, index, ns=1000, deltas=np.arange(0.3, 1.1, 0.2),
-                 kernel='exponential', umax=25, nbins=25, knn=1000):
+    def __init__(self, brain_map, distmat, index, ns=1000,
+                 deltas=np.arange(0.3, 1.1, 0.2), kernel='exponential',
+                 umax=25, nbins=25, knn=1000):
         """
 
         Parameters
         ----------
-        x : (N,) np.ndarray
-            random field
-        D : (N,M) np.ndarray
-            pairwise distance matrix between elements of `x`; may be the full
-            (N,N) distance matrix if you have sufficient memory; otherwise, use
-            the subset (N,M), M<N. Note that if M<N, you must also pass an index
-            array of shape (N,M) indicating the index (in `x`) to which each
-            element in `D` corresponds, such that D[i,j] is the distance between
-            x[i] and x[index[i,j]].
+        brain_map : (N,) np.ndarray
+            scalar brain map
+        distmat : (N,M) np.ndarray
+            pairwise distance matrix between elements of `brain_map`. It may be
+            the full (N,N) distance matrix, if you have sufficient memory;
+            otherwise, use the subset (N,M), M<N. Note that if M<N, you must
+            also pass an index array of shape (N,M) indicating the index
+            (in `x`) to which each element in `D` corresponds, such that D[i,j]
+            is the distance between x[i] and x[index[i,j]].
         index : (N,M) np.ndarray or None
             see above; ignored if `D` is square, required otherwise
-        ns : int
-            take a subsample of ns rows from D when fitting variograms
-        deltas : array_like
+        ns : int, default 1000
+            take a subsample of `ns` rows from `distmat` when fitting variograms
+        deltas : np.ndarray or List, default np.arange(0.3, 1.1, 0.2)
             proportion of neighbors to include for smoothing, in (0, 1)
-        kernel : str
+        kernel : str, default 'exponential'
             kernel with which to smooth permuted fields
             - 'gaussian' : gaussian function
             - 'exponential' : exponential decay function
             - 'inverse' : inverse distance
             - 'uniform' : uniform weights (distance independent)
-        umax : int
-            percentile of the pairwise distance distribution (in `D`) at which
-            to truncate during variogram fitting
-        nbins : int
+        umax : int, default 25
+            percentile of the pairwise distance distribution (in `distmat`) at
+            which to truncate during variogram fitting
+        nbins : int, default 25
             number of uniformly spaced bins in which to compute smoothed
             variogram
-        knn : int
+        knn : int, default 1000
             number of nearest points to keep in the neighborhood of each sampled
             point
 
         """
-        assert x.ndim == 1
+        assert brain_map.ndim == 1
 
         # Misc parameters
         self.nbins = int(nbins)
@@ -454,17 +452,18 @@ class Secondary:
         self.knn = knn
 
         # Field/map
-        n = x.size
+        n = brain_map.size
         self.nfield = int(n)
-        self.x = x
+        self.x = brain_map
         self.ikn = np.arange(n)[:, None]
 
         # Ensure that D is pre-sorted
-        assert np.allclose(D[:, 0], 0) and np.all(D[0, 1:] >= D[0, :-1])
+        assert (np.allclose(distmat[:, 0], 0) and
+                np.all(distmat[0, 1:] >= distmat[0, :-1]))
 
         # Store k nearest neighbors from distance and index matrices
-        assert D.shape == index.shape
-        self.D = D[:, 1:knn+1]  # skip self-coupling (D=0)
+        assert distmat.shape == index.shape
+        self.D = distmat[:, 1:knn + 1]  # skip self-coupling (D=0)
         self.index = index[:, 1:knn+1].astype(np.int32)
         assert self.D.min() > 0
 

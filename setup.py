@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as f:
     readme = f.read()
 
-requirements = ["numpy>=1", "nibabel==2.1.0", "matplotlib>=3"]
+requirements = ["numpy>=1", "nibabel==2.1.0", "matplotlib>=3", "sklearn>=0"]
 
 setup(
     name="brainsmash",

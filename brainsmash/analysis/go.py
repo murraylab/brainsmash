@@ -5,7 +5,7 @@ Map -> enrichments
 
 """
 
-from ..nulls.core import Primary as Nulls
+from ..nulls.core import Base as Nulls
 from goatools.go_enrichment import GOEnrichmentStudy
 from goatools.anno.gaf_reader import GafReader
 from goatools.obo_parser import GODag

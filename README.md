@@ -1,7 +1,13 @@
 BrainSMASH
 ==========
 
-BrainSMASH (Surrogate Maps with Spatially Autocorrelated Heterogeneity) is a TODO
+BrainSMASH (Surrogate Maps with Spatially Autocorrelated Heterogeneity) is a 
+python-based computational platform for statistical testing of spatially
+autocorrelated brain maps. At the core of BrainSMASH is functionality to 
+simulate surrogate brain maps with spatial autocorrelation that is matched
+to the spatial autocorrelation in an empirical map. BrainSMASH also includes
+additional utilities to support gene ontology enrichment analyses and automated
+illustration of brain maps using Connectome Workbench.
 
 For more detailed installation instructions, documentation, a quick start guide
 and examples, please refer to our `documentation <https://brainsmash.readthedocs.io>`_.
