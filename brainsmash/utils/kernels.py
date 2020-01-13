@@ -10,6 +10,8 @@ Available kernels:
 
 import numpy as np
 
+# TODO: document
+
 
 def gaussian(d):  # truncates at one stddev
     try:

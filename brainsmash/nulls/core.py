@@ -7,7 +7,7 @@ Dense distance matrix (memmap) + dense neuroimaging file (txt) -> surrogates
 """
 
 from sklearn.linear_model import LinearRegression
-from ..utils import kernels
+from ..utils import kernels, checks
 import numpy as np
 
 
@@ -83,7 +83,7 @@ class Smash:
 
     @property
     def n_(self):
-        return self.strategy.nfield
+        return self.strategy.n
 
     @property
     def umax_(self):
@@ -112,8 +112,38 @@ class Smash:
 
 class Base:
 
+    """
+    Base implementation of surrogate map generator.
+
+    Attributes
+    ----------
+    nbins
+    deltas
+    umax
+    x
+    D
+    n
+    triu
+    u
+    v
+    kernel_name
+    kernel
+    uidx
+    uisort
+    disort
+    jkn
+    smvar
+    var_bins
+    lm
+
+    Methods
+    -------
+
+
+    """
+
     def __init__(self, brain_map, distmat, deltas=np.linspace(0.1, 0.9, 9),
-                 kernel='exponential', umax=25, nbins=25):
+                 kernel='exp', umax=25, nbins=25):
         """
 
         Parameters
@@ -122,56 +152,47 @@ class Base:
             scalar brain map
         distmat : (N,N) np.ndarray
             pairwise distance matrix between elements of `x`
-        deltas : array_like
+        deltas : np.ndarray or List
             proportion of neighbors to include for smoothing, in (0, 1)
-        kernel : str
+        kernel : str, default 'exp'
             kernel smoothing function:
             - 'gaussian' : gaussian function
-            - 'exponential' : exponential decay function
-            - 'inverse' : inverse distance
+            - 'exp' : exponential decay function
+            - 'invdist' : inverse distance
             - 'uniform' : uniform weights (distance independent)
-        umax : int
-            percentile of the pairwise distance distribution (in `D`) at which
-            to truncate during variogram fitting
-        nbins : int
+        umax : int, default 25
+            percentile of the pairwise distance distribution (in `distmat`) at
+             which to truncate during variogram fitting
+        nbins : int, default 25
             number of uniformly spaced bins in which to compute smoothed
             variogram
 
         """
+        # TODO add checks for other arguments
 
-        # Misc parameters
+        checks.check_map(x=brain_map)
+        checks.check_distmat(distmat=distmat)
+        kernel_callable = checks.check_kernel(kernel)
+
+        n = brain_map.size
+        if distmat.shape != (n, n):
+            raise ValueError(
+                "distance matrix must have dimension consistent with brain map")
+
         self.nbins = nbins
         self.deltas = deltas
         self.umax = umax
-
-        # Field/map
-        assert brain_map.ndim == 1
-        n = brain_map.size
-        self.nfield = n
+        self.n = n
         self.x = brain_map
         self.ikn = np.arange(n)[:, None]
-
-        assert distmat.shape == (n, n) and np.allclose(distmat, distmat.T)  # symmetric
         self.D = distmat
-        self.triu = np.triu_indices(self.nfield, k=1)  # upper triangular inds
+        self.triu = np.triu_indices(self.n, k=1)  # upper triangular inds
+        self.u = distmat[self.triu]  # variogram x-coordinate
+        self.v = self.compute_variogram(brain_map)  # variogram y-coordinate
 
         # Smoothing kernel selection
         self.kernel_name = kernel
-        if kernel == 'gaussian':
-            self.kernel = kernels.gaussian
-        elif kernel == 'exponential':
-            self.kernel = kernels.exp
-        elif kernel == 'inverse':
-            self.kernel = kernels.invdist
-        elif kernel == 'uniform':
-            self.kernel = kernels.uniform
-        else:
-            raise NotImplementedError(
-                "Invalid kernel: 'gaussian' or 'exponential'")
-
-        # Variogram
-        self.u = distmat[self.triu]
-        self.v = self.compute_variogram(brain_map)
+        self.kernel = kernel_callable
 
         # Get indices of pairs with u < umax'th percentile
         self.uidx = np.where(self.u < np.percentile(self.u, self.umax))[0]
@@ -184,7 +205,7 @@ class Base:
         for delta in deltas:
             k = int(delta*n)
             # find index of k nearest neighbors for each area
-            self.jkn[delta] = self.disort[:, 1:k+1]  # avoid self-coupling
+            self.jkn[delta] = self.disort[:, 1:k+1]  # prevent self-coupling
             # find distance to k nearest neighbors for each area
             self.dkn[delta] = self.D[(self.ikn, self.jkn[delta])]
 
@@ -197,15 +218,15 @@ class Base:
 
     def __call__(self, n=1, resample=False):
         """
-        Construct a new surrogate/null map.
+        Construct a new surrogate map.
 
         Parameters
         ----------
-        n : int
-            number of nulls to construct
+        n : int, default 1
+            number of surrogate maps to randomly generate
         resample : bool, default False
-            resample each null map from the empirical map to preserve
-            distribution of map values
+            resample each null map from the empirical map to preserve the
+            distribution of values
 
         Returns
         -------
@@ -216,23 +237,23 @@ class Base:
         -----
         Chooses a level of smoothing that produces a smoothed variogram which
         best approximates the true smoothed variogram. Selecting resample='True'
-        preserves the map value distribution at the expense of worsening the
-        null maps' variogram fits.
+        preserves the original map's value distribution at the expense of
+        worsening the surrogate maps' variogram fit.
 
         """
 
-        nulls = np.empty((n, self.nfield))
+        nulls = np.empty((n, self.n))
         for i in range(n):  # generate random nulls
             print(i)
 
-            xperm = self.permute_field()  # Randomly permute values over field
+            xperm = self.permute_map()  # Randomly permute values
 
             res = dict.fromkeys(self.deltas)
             for delta in self.deltas:  # foreach neighborhood size
 
                 # Smooth the permuted field using delta proportion of
                 # neighbors to reintroduce spatial autocorrelation
-                sm_xperm = self.smooth_field(x=xperm, delta=delta)
+                sm_xperm = self.smooth_map(x=xperm, delta=delta)
 
                 # Calculate empirical variogram of the smoothed permuted field
                 vperm = self.compute_variogram(sm_xperm)
@@ -253,9 +274,9 @@ class Base:
             bopt = betas[iopt]
 
             # Transform and smooth permuted field using best-fit parameters
-            sm_xperm_best = self.smooth_field(x=xperm, delta=dopt)
+            sm_xperm_best = self.smooth_map(x=xperm, delta=dopt)
             null = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
-                    np.sqrt(np.abs(aopt)) * np.random.randn(self.nfield))
+                    np.sqrt(np.abs(aopt)) * np.random.randn(self.n))
             nulls[i] = null
 
         if resample:
@@ -268,59 +289,55 @@ class Base:
 
     def compute_variogram(self, x):
         """
-        Compute empirical variogram and get unique pairwise distances.
+        Compute empirical variogram.
 
         Parameters
         ----------
         x : (N,) np.ndarray
-            random field
+            brain map scalars
 
         Returns
         -------
-        v : np.ndarray
-            N(N-1)/2 pairwise variogram ordinates: 0.5 * (x_i - x_j) ^ 2
+        v : (N(N-1)/2,) np.ndarray
+           variogram y-coordinates, i.e. (x_i - x_j) ^ 2
 
         """
-        diff_ij = np.subtract.outer(x, x)  # unique map differences
-        v = 0.5 * np.square(diff_ij)[self.triu]  # variogram ordinates
+        diff_ij = np.subtract.outer(x, x)
+        v = 0.5 * np.square(diff_ij)[self.triu]
         return v
 
-    def permute_field(self):
+    def permute_map(self):
         """
-        Randomly permute field values.
+        Return a random permutation of `self.x`.
 
         Returns
         -------
         (N,) np.ndarray
-            permuted field
+            permutation of empirical brain map
 
         """
         return np.random.permutation(self.x)
 
-    def smooth_field(self, x, delta):  # APPENDIX 2
+    def smooth_map(self, x, delta):
         """
-        Smooth field using `delta` proportion of nearest neighbors.
+        Smooth `x` using `delta` proportion of nearest neighbors.
 
         Parameters
         ----------
         x : (N,) np.ndarray
-            random field
+            brain map scalars
         delta : float
             proportion of neighbors to include for smoothing, in (0, 1)
 
         Returns
         -------
-        x_smooth : (N,) np.ndarray
-            smoothed random field
+        (N,) np.ndarray
+            smoothed brain map
 
         """
-
-        # field values of k nearest neighbors for each area
+        # values of k nearest neighbors for each brain area
         xkn = x[self.jkn[delta]]
-
-        # distance-weight kernel
-        weights = self.kernel(self.dkn[delta])
-
+        weights = self.kernel(self.dkn[delta])  # distance-weight kernel
         # kernel-weighted sum
         return (weights * xkn).sum(axis=1) / weights.sum(axis=1)
 
@@ -331,42 +348,45 @@ class Base:
         Parameters
         ----------
         v : (N,) np.ndarray
-            semivariance (ie, variogram ordinates)
-        h : float or None
-            Gaussian kernel smoother bandwidth. If None, three times the spacing
-            between bins (i.e., 3 * np.ptp(u) / nbins ) is used
-        return_u0 : bool
-            return distances at which smoothed variogram is computed
+            variogram y-coordinates, i.e., (x_i - x_j) ^ 2
+        h : float or None, default None
+            Gaussian kernel smoother bandwidth. If None, `h` is set to three
+            times the spacing between variogram bins
+        return_u0 : bool, default False
+            return distances at which the smoothed variogram was computed
 
         Returns
         -------
         (self.nbins,) np.ndarray
-            smoothed variogram samples
+            smoothed variogram values
         (self.nbins) np.ndarray
-            distances at which smoothed variogram was computed (return only if
+            distances at which smoothed variogram was computed (returned only if
             return_u0 is True)
 
         """
         u = self.u[self.uidx]
         v = v[self.uidx]
+        if len(u) != len(v):
+            raise RuntimeError("variogram values provided to nulls.core."
+                               "Base.smooth_variogram() have unexpected size")
         u0 = np.linspace(u.min(), u.max(), self.nbins)
+
         # if h is None, set bandwidth equal to bin space
         if h is None:
             h = 3.*(u0[1] - u0[0])
-        assert len(u) == len(v)
+
         # Subtract each element of u0 from each element of u
         # Each row corresponds to a unique element of u0
         du = np.abs(u - u0[:, None])
         assert du.shape == (len(u0), len(u))
         w = np.exp(-np.square(2.68 * du / h) / 2)  # smooth with Gaussian kernel
-        assert w.shape == du.shape
+        assert w.shape == du.shape  # TODO: remove these assert statements
         denom = w.sum(axis=1)
         assert denom.size == len(u0)
         wv = w * v[None, :]
         assert wv.shape == w.shape
-        # assert np.allclose(wv[0], w[0] * v)
         num = wv.sum(axis=1)
-        output = np.log10(num/denom + 1.)  # linearize for subsequent regression
+        output = num / denom
         if not return_u0:
             return output
         return output, u0
@@ -385,7 +405,7 @@ class Base:
         Returns
         -------
         alpha : float
-            intercept term (offset parameter)
+            intercept term (ie, offset parameter)
         beta : float
             regression coefficient (scale parameter)
         res : float
@@ -403,7 +423,7 @@ class Base:
 class Sampled:
 
     def __init__(self, brain_map, distmat, index, ns=1000,
-                 deltas=np.arange(0.3, 1.1, 0.2), kernel='exponential',
+                 deltas=np.arange(0.3, 1.1, 0.2), kernel='exp',
                  umax=25, nbins=25, knn=1000):
         """
 
@@ -424,11 +444,11 @@ class Sampled:
             take a subsample of `ns` rows from `distmat` when fitting variograms
         deltas : np.ndarray or List, default np.arange(0.3, 1.1, 0.2)
             proportion of neighbors to include for smoothing, in (0, 1)
-        kernel : str, default 'exponential'
+        kernel : str, default 'exp'
             kernel with which to smooth permuted fields
             - 'gaussian' : gaussian function
-            - 'exponential' : exponential decay function
-            - 'inverse' : inverse distance
+            - 'exp' : exponential decay function
+            - 'invdist' : inverse distance
             - 'uniform' : uniform weights (distance independent)
         umax : int, default 25
             percentile of the pairwise distance distribution (in `distmat`) at
@@ -687,7 +707,7 @@ class Sampled:
         # assert wv.shape == w.shape
         # assert np.allclose(wv[0], w[0] * v)
         num = wv.sum(axis=1)
-        output = np.log10(num/denom + 1.)  # linearize for subsequent regression
+        output = num / denom
         if not return_u0:
             return output
         return output, u0
