@@ -160,7 +160,7 @@ class Base:
             scalar brain map
         distmat : (N,N) np.ndarray
             pairwise distance matrix between elements of `x`
-        deltas : np.ndarray or list[float], default np.linspace(0.1, 0.9, 9)
+        deltas : np.ndarray or list[float], default [0.1,0.2,...,0.9]
             proportion of neighbors to include for smoothing, in (0, 1)
         kernel : str, default 'exp'
             kernel smoothing function:
@@ -177,8 +177,8 @@ class Base:
         resample : bool, default False
             if True, simulated surrogate maps will contain values resampled from
             the empirical map. This preserves the distribution of values in the
-            map, at the expense of worsening the simulated surrogate maps'
-            variograms fits. TODO: does it actually worsen the fit?
+            map, with the possibility of worsening the simulated surrogate maps'
+            variograms fits
 
         """
 
@@ -252,7 +252,7 @@ class Base:
         worsening the surrogate maps' variogram fit.
 
         """
-
+        print("Generating {} maps...".format(n))
         surrs = np.empty((n, self.n))
         for i in range(n):  # generate random maps
 
@@ -466,9 +466,9 @@ class Sampled:
 
     """
 
-    def __init__(self, brain_map, distmat, index, ns=1000,
-                 deltas=np.arange(0.3, 1.1, 0.2), kernel='exp',
-                 umax=25, nbins=25, knn=1000, h=None, resample=False):
+    def __init__(self, brain_map, distmat, index, ns=500,
+                 deltas=np.arange(0.3, 1., 0.2), kernel='exp',
+                 umax=70, nbins=25, knn=1000, h=None, resample=False):
         """
 
         Parameters
@@ -484,9 +484,9 @@ class Sampled:
             such that D[i,j] is the distance between x[i] and x[index[i,j]].
         index : (N,M) np.ndarray or None
             see above; ignored if `distmat` is square, required otherwise
-        ns : int, default 1000
+        ns : int, default 500
             take a subsample of `ns` rows from `distmat` when fitting variograms
-        deltas : np.ndarray or list[float], default np.arange(0.3, 1.1, 0.2)
+        deltas : np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
             proportion of neighbors to include for smoothing, in (0, 1)
         kernel : str, default 'exp'
             kernel with which to smooth permuted maps
@@ -494,7 +494,7 @@ class Sampled:
             - 'exp' : exponential decay function
             - 'invdist' : inverse distance
             - 'uniform' : uniform weights (distance independent)
-        umax : int, default 25
+        umax : int, default 70
             percentile of the pairwise distance distribution (in `distmat`) at
             which to truncate during variogram fitting
         nbins : int, default 25
@@ -510,7 +510,7 @@ class Sampled:
             if True, simulated surrogate maps will contain values resampled from
             the empirical map. This preserves the distribution of values in the
             map, at the expense of worsening the simulated surrogate maps'
-            variograms fits. TODO: does it actually worsen the fit?
+            variograms fits.
         """
 
         # TODO add checks for other arguments
@@ -575,7 +575,7 @@ class Sampled:
         surrogate maps' variogram fits.
         """
 
-        print("Generating %i maps..." % n)
+        print("Generating {} maps...".format(n))
 
         surrs = np.empty((n, self.n))
         for i in range(n):  # generate random maps
@@ -593,10 +593,10 @@ class Sampled:
 
             # Variogram ordinates; use nearest neighbors because local effect
             u = self.D[idx, :]
-            self.umax = np.percentile(u, self.dptile)
+            # self.umax = np.percentile(u, self.dptile)
             uidx = np.where(u < self.umax)
             umin = u.min()  # TODO what's this for?
-            self.u0 = np.linspace(umin, self.umax, self.nbins)  # TODO why defined in __init__?
+            # self.u0 = np.linspace(umin, self.umax, self.nbins)  # TODO why defined in __init__?
 
             # Smooth empirical variogram
             smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_u0=True)

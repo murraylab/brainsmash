@@ -35,15 +35,16 @@ test_sampled_variogram_fits(
 # Compare to the variogram fits when resampling surrogate map values from the
 # empirical brain map
 test_sampled_variogram_fits(
-    brain_map=myelin, distmat=distmat, index=index, resample=True)
+    brain_map=myelin, distmat=distmat, index=index, include_naive=True,
+    resample=True)
 
 # Create a few surrogate maps and plot them
 generator = Sampled(brain_map=myelin, distmat=distmat,
                     index=index, resample=True)
 surrogate_maps = generator(n=3)
 
-params = {'pos-user': (1, 2.),
-          'neg-user': (-2, -1),
+params = {'pos-percent': (2, 98),
+          'neg-percent': (2, 98),
           "disp-neg": False,
           "disp-zero": False}
 
