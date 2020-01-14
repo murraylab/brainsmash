@@ -10,29 +10,92 @@ Available kernels:
 
 import numpy as np
 
-# TODO: document
 
+def gaussian(d):
+    """
+    Gaussian kernel which truncates at one standard deviation.
 
-def gaussian(d):  # truncates at one stddev
-    try:
+    Parameters
+    ----------
+    d : (N,) or (M,N) np.ndarray
+        one- or two-dimensional array of distances
+
+    Returns
+    -------
+    (N,) or (M,N) np.ndarray
+        Gaussian kernel weights
+
+    """
+    try:  # 2-dim
         return np.exp(-0.5 * np.square(d / d.max(axis=-1)[:, np.newaxis]))
     except IndexError:  # 1-dim
         return np.exp(-0.5 * np.square(d/d.max()))
 
 
-def exp(d):  # exponential decay
-    try:
+def exp(d):
+    """
+    Exponentially decaying kernel.
+
+    Parameters
+    ----------
+    d : (N,) or (M,N) np.ndarray
+        one- or two-dimensional array of distances
+
+    Returns
+    -------
+    (N,) or (M,N) np.ndarray
+        Exponential kernel weights
+
+    Notes
+    -----
+    Characteristic length scale is set to d.max(axis=-1), ie the maximum
+    distance within each row.
+
+    """
+    try:  # 2-dim
         return np.exp(-d / d.max(axis=-1)[:, np.newaxis])
     except IndexError:  # 1-dim
         return np.exp(-d/d.max())
 
 
-def invdist(d):  # inverse distance
-    return 1./d
+def invdist(d):
+    """
+    Inverse distance kernel.
+
+    Parameters
+    ----------
+    d : (N,) or (M,N) np.ndarray
+        one- or two-dimensional array of distances
+
+    Returns
+    -------
+    (N,) or (M,N) np.ndarray
+        inverse distance, ie d^(-1)
+
+    """
+    return 1. / d
 
 
-def uniform(d):  # uniform (distance independent)
-    try:
+def uniform(d):
+    """
+    Uniform (ie, distance independent) kernel.
+
+    Parameters
+    ----------
+    d : (N,) or (M,N) np.ndarray
+        one- or two-dimensional array of distances
+
+    Returns
+    -------
+    (N,) or (M,N) np.ndarray
+        uniform kernel weights
+
+    Notes
+    -----
+    Each element normalized to 1/N such that columns sum to unity
+
+    """
+    try:  # 2-dim
         return np.ones(d.shape) / d.shape[-1]
-    except IndexError:
+    except IndexError:  # 1-dim
         return np.ones(d.size) / d.size
