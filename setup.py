@@ -18,6 +18,7 @@ setup(
     url="https://github.com/jbburt/brainsmash",
     packages=find_packages(),
     install_requires=requirements,
+    python_requires='>=3',
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

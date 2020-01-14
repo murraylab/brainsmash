@@ -5,140 +5,94 @@ X CIFTI file (incl. subcortex) -> dense Euclid distmat (txt)
 
 """
 
+from ..neuro.io import load_data, export_cifti_mapping
+from ..utils import checks
 from scipy.spatial.distance import pdist, squareform, cdist
 from tempfile import mkdtemp
-from os import path, system, pardir
-from ..neuro.io import load_data, get_hemisphere, export_cifti_mapping
-from ..neuro.io import mask_medial_wall
+from os import path, system
 import numpy as np
+from pathlib import Path
 
 
-def compute_cortex_dists(
-        surface, image, outdir, maskfile=None, euclid=False, maskmedial=True):
+def compute_cortex_dists(surface, fout, maskfile=None, euclid=False):
     """
-    Compute dense (vertex-wise) geodesic distance matrix.
+    Compute vertex-wise geodesic distance matrix for a cortical hemisphere.
 
     Parameters
     ----------
     surface : str
-        path to input .surf.gii surface file from which to compute distances
-    image : str
-        path to input .dscalar.nii or .pscalar.nii neuroimaging file
-    outdir : str
-        path to directory in which outputs are saved
+        absolute path to a surface GIFTI file (.surf.gii) from which to compute
+        distances
+    fout : str
+        name of output file, WITHOUT extension, WITH absolute path to directory
+        in which it will be saved
     maskfile : str, optional
-        path to a neuroimaging file with binary data of the same shape and type
-        as `image`
+        path to a neuroimaging file containing a mask. scalar data are cast to
+        boolean, so all elements not equal to zero are masked
     euclid : bool, optional
         if True, compute Euclidean distances; if False, compute geodesic
-    maskmedial : bool, optional (default True)
-        if True, and surface/image are in standard 32492-vertex resolution,
-        mask medial wall vertices (corresponding to parcel label 0 in HCP MMP1.0
-        parcellation)
 
     Returns
     -------
-    int
-        0 indicates successful execution. Error is raised otherwise.
+    TODO
 
     """
 
-    # Confirm that parent directory exists
-    assert path.exists(path.abspath(path.join(outdir, pardir)))
-    dense_distmat = path.splitext(outdir)[0] + '.txt'
+    # Check that parent directory exists
+    pardir = Path(fout).parent
+    if not pardir.exists:
+        raise IOError("Output directory does not exist: {}".format(str(pardir)))
 
-    # Determine whether neuroimaging map is parcellated or dense
-    fext = path.splitext(path.splitext(image)[0])[1]
-    if fext == 'pscalar':
-        dtype = 'parcel'
-    elif fext == 'dscalar':
-        dtype = 'dense'
-    else:
-        raise TypeError("Unrecognized file type: {}".format(image))
+    # Strip file extensions and define output text file
+    fout = checks.stripext(fout)
+    dense_distmat = fout + '.txt'
 
     # Load surface file
-    coords = load_data(surface)
-    nvert, ndim = coords.shape
-    if ndim != 3:
-        raise Exception(
-            "Expected three columns in surface file -- found {}".format(ndim))
+    coords = checks.check_surface(surface) if euclid else None
 
-    # TODO Handle case where surface is bilateral but image is not
-
-    # Checks
-    x = load_data(image)
-    if x.size != nvert:
-        e = "\nInconsistent number of vertices in surface and image files.\n"
-        e += "Surface file contains {} vertices.\n".format(nvert)
-        e += "Image file contains {} vertices.".format(x.size)
-        raise ValueError(e)
-    if x.ndim > 1:
-        raise ValueError("Image file must contain only a single map!")
-
-    # Mask medial wall surface vertices
-    mask = np.array([False] * nvert)
-    if maskmedial:
-        if nvert != 32492:  # Masking on but mesh not standard 32k
-            e = "\nmaskmedial flag set to True but surface mesh is non-standard"
-            e += "length.\nPlease provide a surface file with 32492 vertices or"
-            e += "\n call function with maskmedial=False"
-            raise ValueError(e)
-        mask = mask_medial_wall(surface=surface, image=image)
-
-    # User-provided mask
+    # Load user-provided mask file
     if maskfile is not None:
-        user_mask = load_data(maskfile).astype(bool)
-        if user_mask.shape != x.shape:
-            e = "\nImage and mask files must contain data with same shape. "
+        mask = checks.check_image_file(maskfile).astype(bool)
+        if mask.size != coords.shape[0]:
+            e = "Surface and mask files must contain same number of elements:\n"
+            e += "Surface: {}".format(surface)
+            e += "Mask: {}".format(maskfile)
             raise ValueError(e)
-        mask = np.logical_or(mask, user_mask)
-
-    if mask.any():
         nvert = int((~mask).sum())
-        coords = coords[~mask]
-        x = x[~mask]
+        verts = np.arange(mask.size)[~mask]
+        if euclid:
+            coords = coords[~mask]
+    else:
+        nvert = coords.shape[0]
+        verts = np.arange(nvert)
 
-    # # Determine which cortical hemisphere this surface is part of
-    # structure = get_hemisphere(surface)
-
-    # Compute dense distance matrix
+    # Pairwise Euclidean distance matrix
     if euclid:
-        # TODO make this computationally efficient
+        # TODO make this computationally efficient (??)
         # dense_distmat = squareform(pdist(coords, metric='euclidean'))
         # cdist(np.expand_dims(XA, 0), XB)
-        pass
-    else:
-        # Files produced at runtime bv Connectome Workbench commands
-        coord_file = path.join(mkdtemp(), "vertex_coords.func.gii")
-        distance_metric_file = path.join(mkdtemp(), "geodist.func.gii")
+        return
 
-        # Create a metric file containing the coordinates of each surface vertex
-        cmd = 'wb_command -surface-coordinates-to-metric "{0:s}" "{1:s}"'
-        system(cmd.format(surface, coord_file))
+    # Pairwise geodesic distance matrix
+    # Files produced at runtime by Connectome Workbench commands
+    coord_file = path.join(mkdtemp(), "vertex_coords.func.gii")
+    distance_metric_file = path.join(mkdtemp(), "geodist.func.gii")
 
-        verts = np.where(~mask)[0]
-        dense_distmat = path.join(outdir, "distances.txt")
-        with open(dense_distmat, 'w') as f:
-            for ii, iv in enumerate(verts):
-                cmd = 'wb_command -surface-geodesic-distance "{0}" {1} "{2}" '
-                system(cmd.format(surface, iv, distance_metric_file))
-                distance_from_iv = load_data(distance_metric_file)
-                line = " ".join([str(dij) for dij in distance_from_iv])
-                f.write(line + "\n")
-                if not (ii % 1000):
-                    print("Vertex {0} of {1} complete.".format(ii+1, nvert))
+    # Create a metric file containing the coordinates of each surface vertex
+    cmd = 'wb_command -surface-coordinates-to-metric "{0:s}" "{1:s}"'
+    system(cmd.format(surface, coord_file))
 
-    # try:
-    #     isnotempty = path.getsize(dense_distmat) > 0
-    #     if isnotempty:
-    #         return 0
-    #     e = "\nOutput file was empty!\n"
-    #     e += "Attempted to write distances to {}".format(dense_distmat)
-    #     raise RuntimeError(e)
-    # except OSError as e:
-    #     raise OSError(e)
+    with open(dense_distmat, 'w') as f:
+        for ii, iv in enumerate(verts):
+            cmd = 'wb_command -surface-geodesic-distance "{0}" {1} "{2}" '
+            system(cmd.format(surface, iv, distance_metric_file))
+            distance_from_iv = load_data(distance_metric_file)
+            line = " ".join([str(dij) for dij in distance_from_iv])
+            f.write(line + "\n")
+            if not (ii % 1000):
+                print("Vertex {} of {} complete.".format(ii+1, nvert))
 
-    # Write dense distance matrix and neuroimaging
+    # Write dense distance matrix
 
 
 def compute_geodist_parcel(dists_text, parcel_labels, output):
@@ -156,12 +110,14 @@ def compute_geodist_parcel(dists_text, parcel_labels, output):
 
     Returns
     -------
-    int : 1 if successful, else 0
+    TODO
 
     """
 
     # Confirm that parent directory exists
-    assert path.exists(path.abspath(path.join(output, pardir)))
+    pardir = Path(output).parent
+    if not pardir.exists:
+        raise IOError("Output directory does not exist: {}".format(str(pardir)))
     output = path.splitext(output)[0] + '.txt'
 
     print("\n## Computing parcellated geodesic distance matrix ##")

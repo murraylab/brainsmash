@@ -1,6 +1,9 @@
-import numpy as np
 from .. import config
 from ..utils import kernels
+from ..neuro.io import load_data
+import numpy as np
+import nibabel as nib
+from pathlib import Path
 
 
 def check_map(x):
@@ -90,6 +93,33 @@ def check_sampled(distmat, index):
             raise ValueError("distmat must be sorted column-wise")
 
 
+def check_image_file(image):
+    """
+    Check a neuroimaging file and return scalar data.
+
+    Parameters
+    ----------
+    image : str
+        absolute path to neuroimaging file
+
+    Returns
+    -------
+    (N,) np.ndarray
+        scalar brain map values
+
+    """
+    try:
+        x = load_data(image)
+    except FileNotFoundError:
+        raise FileNotFoundError("No such file: {}".format(image))
+    except nib.loadsave.ImageFileError:
+        raise nib.loadsave.ImageFileError(
+            "Cannot work out file type of {}".format(image))
+    if x.ndim > 1:
+        raise ValueError("Image contains more than one map: {}".format(image))
+    return x
+
+
 def check_deltas(deltas):
     """
     Check input argument `deltas`.
@@ -133,3 +163,46 @@ def check_umax(umax):
     if umax <= 0 or umax > 100:
         raise ValueError("parameter 'umax' must be in (0,100]")
     return umax
+
+
+def check_surface(surface):
+    """
+    Check and load MNI coordinates from a surface file.
+
+    Parameters
+    ----------
+    surface : str
+        absolute path to GIFTI-format surface file (.surf.gii)
+
+    Returns
+    -------
+    (N,3) np.ndarray
+        MNI coordinates. columns 0,1,2 correspond to X,Y,Z coord, respectively
+
+    """
+    coords = load_data(surface)
+    nvert, ndim = coords.shape
+    if ndim != 3:
+        raise ValueError(
+            "expected three columns in surface file but found {}".format(ndim))
+    return coords
+
+
+def stripext(f):
+    """
+    Strip (possibly multiple) extensions from a file.
+
+    Parameters
+    ----------
+    f : str
+        file name, possibly with path and possibly with extension(s)
+
+    Returns
+    -------
+    f : str
+        `f` stripped of all extensions
+
+    """
+    for s in Path(f).suffixes[::-1]:
+        f = f.strip(s)
+    return f

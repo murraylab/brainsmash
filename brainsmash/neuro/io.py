@@ -166,16 +166,6 @@ def parcel_to_vertex(image):
     root = eT.fromstring(ext[0].get_content())
     parent_map = {c: p for p in root.iter() for c in p}
 
-    # # Load CIFTI mapping
-    # maps = _export_cifti_mapping(image)
-    # sub = maps['Subcortex'].drop("structure", axis=1)
-    # subctx_map = {tuple(vxl): idx for vxl, idx in zip(
-    #     sub.values.tolist(), sub.index.values)}
-    # left = maps['CortexLeft'].to_dict()['vertex']
-    # ctx_left = {vtx: idx for idx, vtx in left.items()}
-    # right = maps['CortexRight'].to_dict()['vertex']
-    # ctx_right = {vtx: idx for idx, vtx in right.items()}
-
     # Create map from parcel label to pscalar/ptseries index
     plabel2idx = dict()
     idx = 0
@@ -184,23 +174,16 @@ def parcel_to_vertex(image):
         plabel2idx[plabel] = idx
         idx += 1
 
-    # of = nib.load(surface)
-    # root = eT.fromstring(of.to_xml())
-    # of.darrays[1].data.shape
-
     # Find surface vertex assignments for each parcel
     structures = ['Subcortex', 'CortexLeft', 'CortexRight']
     mapping = dict.fromkeys(structures)
     for k in structures:
         mapping[k] = dict()
-    # vertices = dict()
     for node in root.iter('Vertices'):
         parcel = dict(parent_map[node].attrib)['Name']
         parcel_index = plabel2idx[parcel]
         structure = dict(node.attrib)['BrainStructure']
         v = [int(i) for i in node.text.split(' ')]
-        # vertices[parcel] = v
-        # Check which hemisphere it belongs to
         if structure == "CIFTI_STRUCTURE_CORTEX_LEFT":
             mapping['CortexLeft'][parcel_index] = v
         elif structure == "CIFTI_STRUCTURE_CORTEX_RIGHT":
@@ -210,11 +193,6 @@ def parcel_to_vertex(image):
                 "Unrecognized structure in image metadata: {}".format(
                     structure))
 
-        # # Map parcellated data onto corresponding CIFTI indices
-        #
-        # parcel_cifti_inds = [surface2cifti[v] for v in vertices]
-        # mapping[parcel_index] = parcel_cifti_inds
-
     # Find constituent voxel MNI coords for each parcel
     if root.iter('VoxelIndicesIJK') is not None:
         for node in root.iter('VoxelIndicesIJK'):
@@ -223,10 +201,6 @@ def parcel_to_vertex(image):
             voxels = np.array(
                 [int(i) for i in node.text.split()]).reshape(-1, 3)
             mapping['Subcortex'][parcel_index] = voxels
-            # # Map voxel MNI indices to CIFTI indices
-            # parcel_index = plabel2idx[parcel]
-            # parcel_cifti_inds = [subctx_map[tuple(v)] for v in voxels]
-            # mapping[parcel_index] = parcel_cifti_inds
 
     return mapping
 
@@ -326,91 +300,54 @@ def export_cifti_mapping(image):
         e += "Image file: {}\n".format(image)
         raise RuntimeError(e)
 
-    # if "Subcortex" not in structs_present:  # Cortex only
-    #     return pd.concat(dfs, axis=0)
-    # elif len(structs_present) == 1 and "Subcortex" in structs_present:
-    #     return pd.concat(dfs, axis=0)
-    # else:  # whole-brain
-    #     mapping = pd.DataFrame(columns=["V", "X", "Y", "Z"])
-    #     for df in dfs:
-    #         if df.ndim == 3:
-    #             mapping.loc[]
     return data
 
 
-def mask_medial_wall(surface, image):
-    """
-    Extract medial wall vertices using surface file metadata.
-
-    Parameters
-    ----------
-    surface : str
-        path to GIFTI-format surface file for one cortical hemisphere
-    image : str
-        path to dense NIFTI-format neuroimaging file (.dscalar.nii)
-
-    Returns
-    -------
-    (N,) np.ndarray of bool
-        masked elements correspond to surface vertex indices which lie along
-        the medial wall
-
-    """
-
-    # Check file extension
-    f, ext1 = path.splitext(image)
-    _, ext2 = path.splitext(f)
-    if ext1 != ".nii" or ext2 != ".dscalar":
-        e = "Image file must be a dense scalar file "
-        e += "with extension .dscalar.nii"
-        raise TypeError(e)
-
-    # Determine number of surface vertices
-    nv = load_data(surface).shape[0]
-
-    # Enforce unilaterality
-    if nv != 32492:
-        raise ValueError("Surface must be a standard 32k mesh.")
-
-    # Determine cortical hemisphere
-    surface_structure = get_hemisphere(surface)
-
-    # Structure in the image file
-    image_structure = list(export_cifti_mapping(image).keys())
-
-    # Load mappings from surface vertices to CIFTI indices
-    mappings = export_cifti_mapping(__dlabel)
-
-    # if surface_structure not in mappings.keys():
-    #     e = "\nThe image and surface files do not match up.\n"
-    #   e += "The structure in the surface file: {}\n".format(surface_structure)
-    #     e += "The structure(s) in the image file: {}".format(
-    #         ", ".join([x for x in image_structure]))
-    #     raise TypeError(e)
-
-    # Construct medial wall mask
-    mapping = mappings[surface_structure]
-    mask = np.array([True]*nv)
-    mask[mapping.values.squeeze()] = False
-    return mask
-
-
-# def mask_roi(image):
+# def mask_medial_wall(surface, image):
 #     """
-#     Mask vertices/voxels without data in image.
+#     Extract medial wall vertices using surface file metadata.
 #
 #     Parameters
 #     ----------
+#     surface : str
+#         path to GIFTI-format surface file for one cortical hemisphere
 #     image : str
 #         path to dense NIFTI-format neuroimaging file (.dscalar.nii)
 #
 #     Returns
 #     -------
 #     (N,) np.ndarray of bool
-#         masked elements which don't contain data
+#         masked elements correspond to surface vertex indices which lie along
+#         the medial wall
 #
 #     """
 #
-#     data = load_data(image)
-#     mask = np.logical_or(np.isnan(data), data == 0)
+#     # Check file extension
+#     f, ext1 = path.splitext(image)
+#     _, ext2 = path.splitext(f)
+#     if ext1 != ".nii" or ext2 != ".dscalar":
+#         e = "Image file must be a dense scalar file "
+#         e += "with extension .dscalar.nii"
+#         raise TypeError(e)
+#
+#     # Determine number of surface vertices
+#     nv = load_data(surface).shape[0]
+#
+#     # Enforce unilaterality
+#     if nv != 32492:
+#         raise ValueError("Surface must be a standard 32k mesh.")
+#
+#     # Determine cortical hemisphere
+#     surface_structure = get_hemisphere(surface)
+#
+#     # Structure in the image file
+#     image_structure = list(export_cifti_mapping(image).keys())
+#
+#     # Load mappings from surface vertices to CIFTI indices
+#     mappings = export_cifti_mapping(__dlabel)
+#
+#     # Construct medial wall mask
+#     mapping = mappings[surface_structure]
+#     mask = np.array([True]*nv)
+#     mask[mapping.values.squeeze()] = False
 #     return mask
