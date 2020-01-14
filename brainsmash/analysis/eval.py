@@ -10,7 +10,7 @@ import numpy as np
 def test_base_variogram_fits(
         brain_map, distmat, nsurr=100, include_naive=False, **params):
     """
-    Test variogram fits for the base implementation.
+    Test variogram fits for :class:`brainsmash.maps.core.Base`.
 
     Parameters
     ----------
@@ -29,6 +29,11 @@ def test_base_variogram_fits(
     Returns
     -------
     None
+
+    Notes
+    -----
+    Generates and shows a matplotlib plot instance illustrating the fit of
+    the surrogates' variograms to the empirical map's variogram.
 
     """
 
@@ -96,7 +101,7 @@ def test_base_variogram_fits(
 def test_sampled_variogram_fits(
         brain_map, distmat, index, nsurr=10, include_naive=False, **params):
     """
-    Test variogram fits for the base+subsampling implementation.
+    Test variogram fits for :class:`brainsmash.maps.core.Sampled`.
 
     Parameters
     ----------
@@ -117,6 +122,11 @@ def test_sampled_variogram_fits(
     Returns
     -------
     None
+
+    Notes
+    -----
+    Generates and shows a matplotlib plot instance illustrating the fit of
+    the surrogates' variograms to the empirical map's variogram.
 
     """
 

@@ -88,3 +88,48 @@ def check_sampled(distmat, index):
     else:  # just test the first row
         if not np.all(distmat[0, 1:] >= distmat[0, :-1]):
             raise ValueError("distmat must be sorted column-wise")
+
+
+def check_deltas(deltas):
+    """
+    Check input argument `deltas`.
+
+    Parameters
+    ----------
+    deltas : np.ndarray or List[float]
+        proportions of neighbors to include for smoothing, in (0, 1]
+
+    Returns
+    -------
+    None
+
+    """
+    if type(deltas) is not np.ndarray and type(deltas) is not list:
+        raise TypeError("parameter 'deltas' must be a list or numpy array")
+    for d in deltas:
+        if d <= 0 or d > 1:
+            raise ValueError("each element of 'deltas' must lie in (0,1]")
+
+
+def check_umax(umax):
+    """
+    Check input argument `deltas`.
+
+    Parameters
+    ----------
+    umax : int
+        percentile of the pairwise distance distribution at which to truncate
+        during variogram fitting
+
+    Returns
+    -------
+    int
+
+    """
+    try:
+        umax = int(umax)
+    except ValueError:
+        raise ValueError("parameter 'umax' must be an integer in (0,100]")
+    if umax <= 0 or umax > 100:
+        raise ValueError("parameter 'umax' must be in (0,100]")
+    return umax

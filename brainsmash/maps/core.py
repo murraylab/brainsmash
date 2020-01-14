@@ -81,6 +81,21 @@ class Smash:
     def __call__(self, n=1):
         return self.strategy.__call__(n)
 
+    def compute_variogram(self, *args, **kwargs):
+        return self.strategy.compute_variogram(*args, **kwargs)
+
+    def permute_map(self):
+        return self.strategy.permute_map()
+
+    def smooth_map(self, *args, **kwargs):
+        return self.strategy.smooth_map(*args, **kwargs)
+
+    def smooth_variogram(self, *args, **kwargs):
+        return self.strategy.smooth_variogram(*args, **kwargs)
+
+    def lin_regress(self, *args, **kwargs):
+        return self.strategy.lin_regress(*args, **kwargs)
+
     @property
     def n_(self):
         return self.strategy.n
@@ -102,18 +117,22 @@ class Smash:
         return np.copy(self.strategy.x)
 
     @property
-    def D_(self):
+    def distmat_(self):
         return np.copy(self.strategy.D)
 
     @property
     def kernel_(self):
         return self.strategy.kernel_name
 
+    @property
+    def sample(self):
+        return self.strategy.sample()
+
 
 class Base:
 
     """
-    Base implementation of surrogate map generator.
+    Base strategy for surrogate map generator.
 
     TODO
 
@@ -147,6 +166,7 @@ class Base:
     self.smooth_map
     self.smooth_variogram
     self.lin_regress
+    self.sample
 
     """
 
@@ -161,7 +181,7 @@ class Base:
         distmat : (N,N) np.ndarray
             pairwise distance matrix between elements of `x`
         deltas : np.ndarray or list[float], default [0.1,0.2,...,0.9]
-            proportion of neighbors to include for smoothing, in (0, 1)
+            proportion of neighbors to include for smoothing, in (0, 1]
         kernel : str, default 'exp'
             kernel smoothing function:
             - 'gaussian' : gaussian function
@@ -186,6 +206,8 @@ class Base:
         checks.check_map(x=brain_map)
         checks.check_distmat(distmat=distmat)
         kernel_callable = checks.check_kernel(kernel)
+        umax = checks.check_umax(umax)
+        checks.check_deltas(deltas)
 
         n = brain_map.size
         if distmat.shape != (n, n):
@@ -426,11 +448,22 @@ class Base:
         res = np.sum(np.square(y-y_pred))
         return alpha, beta, res
 
+    def sample(self):
+        """
+        Defined only for consistency with :class:`brainsmash.maps.core.Sampled`.
+
+        Returns
+        -------
+        np.arange(self.n)
+
+        """
+        return np.arange(self.n)
+
 
 class Sampled:
 
     """
-    Base+subsampling implementation of surrogate map generator.
+    Sampling strategy for surrogate map generator.
 
     TODO
 
@@ -487,7 +520,7 @@ class Sampled:
         ns : int, default 500
             take a subsample of `ns` rows from `distmat` when fitting variograms
         deltas : np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
-            proportion of neighbors to include for smoothing, in (0, 1)
+            proportions of neighbors to include for smoothing, in (0, 1]
         kernel : str, default 'exp'
             kernel with which to smooth permuted maps
             - 'gaussian' : gaussian function
@@ -515,8 +548,10 @@ class Sampled:
 
         # TODO add checks for other arguments
         checks.check_map(x=brain_map)
-        checks.check_sampled(distmat=distmat, index=index)  # TODO more checks?
+        checks.check_sampled(distmat=distmat, index=index)
         kernel_callable = checks.check_kernel(kernel)
+        umax = checks.check_umax(umax)
+        checks.check_deltas(deltas)
 
         if brain_map.size != distmat.shape[0]:
             raise ValueError("brain map and distance matrix must be same "
