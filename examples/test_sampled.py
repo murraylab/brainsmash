@@ -25,7 +25,7 @@ dist_file = join(data_root, "cortex_left_distmat.npy")
 index_file = join(data_root, "cortex_left_index.npy")
 
 myelin = np.load(image_file)
-# myelin[100] = np.nan
+myelin[100] = np.nan
 distmat = np.load(dist_file, mmap_mode='r')
 index = np.load(index_file, mmap_mode='r')
 
@@ -41,7 +41,7 @@ index = np.load(index_file, mmap_mode='r')
 
 # Create a few surrogate maps and plot them
 generator = Sampled(brain_map=myelin, distmat=distmat,
-                    index=index, resample=True)
+                    index=index, resample=False)
 surrogate_maps = generator(n=3)
 
 params = {'pos-percent': (2, 98),

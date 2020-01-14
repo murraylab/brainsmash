@@ -633,10 +633,7 @@ class Sampled:
 
             # Variogram ordinates; use nearest neighbors because local effect
             u = self.D[idx, :]
-            # self.umax = np.percentile(u, self.dptile)
             uidx = np.where(u < self.umax)
-            umin = u.min()  # TODO what's this for?
-            # self.u0 = np.linspace(umin, self.umax, self.nbins)  # TODO why defined in __init__?
 
             # Smooth empirical variogram
             smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_u0=True)
@@ -676,6 +673,7 @@ class Sampled:
                     np.sqrt(np.abs(aopt)) * np.random.randn(self.n))
             surrs[i] = surr
 
+        # TODO: resample in a way which preserves the location of NaNs??
         if self.resample:  # resample values from empirical map
             sorted_map = np.sort(self.x)
             for i, surr in enumerate(surrs):
