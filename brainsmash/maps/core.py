@@ -10,6 +10,8 @@ from ..utils import checks
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
+# np.seterr(all='raise')
+
 
 class Smash:
 
@@ -219,7 +221,7 @@ class Base:
         self.deltas = deltas
         self.umax = umax
         self.n = int(n)
-        self.x = brain_map
+        self.x = np.ma.masked_array(data=brain_map, mask=np.isnan(brain_map))
         self.ikn = np.arange(n)[:, None]
         self.D = distmat
         self.triu = np.triu_indices(self.n, k=1)  # upper triangular inds
@@ -350,7 +352,10 @@ class Base:
             permutation of empirical brain map
 
         """
-        return np.random.permutation(self.x)
+        perm_idx = np.random.permutation(np.arange(self.x.size))
+        mask_perm = self.x.mask[perm_idx]
+        x_perm = self.x.data[perm_idx]
+        return np.ma.masked_array(data=x_perm, mask=mask_perm)
 
     def smooth_map(self, x, delta):
         """
@@ -563,7 +568,7 @@ class Sampled:
         self.deltas = deltas
         self.ns = int(ns)
         self.n = int(n)
-        self.x = brain_map
+        self.x = np.ma.masked_array(data=brain_map, mask=np.isnan(brain_map))
         self.user_h = h
         self.dptile = umax
         self.knn = knn
@@ -713,7 +718,10 @@ class Sampled:
             permutation of empirical brain map
 
         """
-        return np.random.permutation(self.x)
+        perm_idx = np.random.permutation(np.arange(self.x.size))
+        mask_perm = self.x.mask[perm_idx]
+        x_perm = self.x.data[perm_idx]
+        return np.ma.masked_array(data=x_perm, mask=mask_perm)
 
     def smooth_map(self, x, k):
         """
@@ -739,7 +747,6 @@ class Sampled:
         jkn = self.index[:, :k]  # indices of k nearest neighbors
         xkn = x[jkn]  # values of k nearest neighbors
         dkn = self.D[:, :k]  # distances to k nearest neighbors
-        # assert dkn.shape == xkn.shape == jkn.shape
         weights = self.kernel(dkn)  # distance-weighted kernel
         # kernel-weighted sum
         return (weights * xkn).sum(axis=1) / weights.sum(axis=1)

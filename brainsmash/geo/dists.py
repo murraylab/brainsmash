@@ -270,7 +270,7 @@ def compute_eucliddist_subcortex(image, output):
     # parent_map = {c: p for p in root.iter() for c in p}
 
     # Load CIFTI mapping
-    maps = export_cifti_mapping(image)
+    maps = export_cifti_mapping(image)  # TODO make this only return volume
     if "Subcortex" not in maps.keys():
         e = "\nSubcortical information not found in file header!\n"
         e += "Image file: {}\n".format(image)
