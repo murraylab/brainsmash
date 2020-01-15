@@ -6,7 +6,7 @@ Subcortical map -> CIFTI indices + coordinates
 
 """
 
-from brainsmash.config import parcel_labels_lr
+from ..config import parcel_labels_lr
 import pandas as pd
 import tempfile
 from os.path import join

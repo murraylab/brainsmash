@@ -4,6 +4,7 @@ from ..neuro.io import load_data
 import numpy as np
 import nibabel as nib
 from pathlib import Path
+from os import stat
 
 
 def check_map(x):
@@ -165,7 +166,7 @@ def check_umax(umax):
     return umax
 
 
-def check_surface(surface):
+def check_surface(surface) -> np.ndarray:
     """
     Check and load MNI coordinates from a surface file.
 
@@ -176,7 +177,7 @@ def check_surface(surface):
 
     Returns
     -------
-    (N,3) np.ndarray
+    (N,3) ndarray
         MNI coordinates. columns 0,1,2 correspond to X,Y,Z coord, respectively
 
     """
@@ -206,3 +207,8 @@ def stripext(f):
     for s in Path(f).suffixes[::-1]:
         f = f.strip(s)
     return f
+
+
+def file_exists(f):
+    if not Path(f).exists() or Path(f).stat().st_size == 0:
+        raise IOError("{} was not successfully written to".format(f))

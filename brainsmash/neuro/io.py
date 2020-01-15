@@ -121,7 +121,7 @@ def load_data(f):
 
     Returns
     -------
-    np.ndarray
+    np.ndarray (N,)
         map data stored in neuroimaging file
 
     """

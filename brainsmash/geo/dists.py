@@ -8,13 +8,13 @@ X CIFTI file (incl. subcortex) -> dense Euclid distmat (txt)
 from ..neuro.io import load_data, export_cifti_mapping
 from ..utils import checks
 from scipy.spatial.distance import pdist, squareform, cdist
-from tempfile import mkdtemp
-from os import path, system
+from tempfile import gettempdir
+from os import path, system, stat
 import numpy as np
 from pathlib import Path
 
 
-def compute_cortex_dists(surface, fout, maskfile=None, euclid=False):
+def compute_cortex_dists(surface, fout, euclid=False):
     """
     Compute vertex-wise geodesic distance matrix for a cortical hemisphere.
 
@@ -26,17 +26,17 @@ def compute_cortex_dists(surface, fout, maskfile=None, euclid=False):
     fout : str
         name of output file, WITHOUT extension, WITH absolute path to directory
         in which it will be saved
-    maskfile : str, optional
-        path to a neuroimaging file containing a mask. scalar data are cast to
-        boolean, so all elements not equal to zero are masked
-    euclid : bool, optional
-        if True, compute Euclidean distances; if False, compute geodesic
+    euclid : bool, default False
+        if True, compute Euclidean distances; if False, compute geodesic dist
 
     Returns
     -------
     TODO
 
     """
+
+    if path.exists(fout):
+        raise RuntimeWarning("{} will be overwritten".format(fout))
 
     # Check that parent directory exists
     pardir = Path(fout).parent
@@ -45,54 +45,81 @@ def compute_cortex_dists(surface, fout, maskfile=None, euclid=False):
 
     # Strip file extensions and define output text file
     fout = checks.stripext(fout)
-    dense_distmat = fout + '.txt'
+    dist_file = fout + '.txt'
 
     # Load surface file
-    coords = checks.check_surface(surface) if euclid else None
+    coords = checks.check_surface(surface)
 
-    # Load user-provided mask file
-    if maskfile is not None:
-        mask = checks.check_image_file(maskfile).astype(bool)
-        if mask.size != coords.shape[0]:
-            e = "Surface and mask files must contain same number of elements:\n"
-            e += "Surface: {}".format(surface)
-            e += "Mask: {}".format(maskfile)
-            raise ValueError(e)
-        nvert = int((~mask).sum())
-        verts = np.arange(mask.size)[~mask]
-        if euclid:
-            coords = coords[~mask]
-    else:
-        nvert = coords.shape[0]
-        verts = np.arange(nvert)
+    if euclid:  # Pairwise Euclidean distance matrix
+        _euclidean_distances(dist_file=dist_file, coords=coords)
+    else:  # Pairwise geodesic distance matrix
+        _geodesic_distances(
+            surface=surface, dist_file=dist_file, coords=coords)
 
-    # Pairwise Euclidean distance matrix
-    if euclid:
-        # TODO make this computationally efficient (??)
-        # dense_distmat = squareform(pdist(coords, metric='euclidean'))
-        # cdist(np.expand_dims(XA, 0), XB)
-        return
 
-    # Pairwise geodesic distance matrix
-    # Files produced at runtime by Connectome Workbench commands
-    coord_file = path.join(mkdtemp(), "vertex_coords.func.gii")
-    distance_metric_file = path.join(mkdtemp(), "geodist.func.gii")
+def _euclidean_distances(dist_file, coords):
+    """
+    TODO
+
+    Parameters
+    ----------
+    dist_file
+    coords
+
+    Returns
+    -------
+
+    """
+    # distmat = squareform(pdist(coords, metric='euclidean'))
+    # distmat = cdist(coords, coords)
+
+    with open(dist_file, 'w') as fp:
+        # Compute distances one row at a time to reduce memory burden
+        for il, l in enumerate(fp):  # Loop over lines of file
+            distances = cdist(
+                np.expand_dims(coords[il], 0), coords).squeeze()
+            line = ",".join([str(d) for d in distances]) + "\n"
+            fp.write(line)
+
+    checks.file_exists(f=dist_file)
+
+
+def _geodesic_distances(surface, dist_file, coords):
+    """
+    TODO
+
+    Parameters
+    ----------
+    surface
+    dist_file
+    coords
+
+    Returns
+    -------
+
+    """
+    nvert = coords.shape[0]
+
+    # Files produced at runtime by Workbench commands
+    temp = gettempdir()
+    coord_file = path.join(temp, "coords.func.gii")
+    distance_metric_file = path.join(temp, "dist.func.gii")
 
     # Create a metric file containing the coordinates of each surface vertex
     cmd = 'wb_command -surface-coordinates-to-metric "{0:s}" "{1:s}"'
     system(cmd.format(surface, coord_file))
 
-    with open(dense_distmat, 'w') as f:
-        for ii, iv in enumerate(verts):
+    with open(dist_file, 'w') as f:
+        for ii in np.arange(coords.shape[0]):
             cmd = 'wb_command -surface-geodesic-distance "{0}" {1} "{2}" '
-            system(cmd.format(surface, iv, distance_metric_file))
+            system(cmd.format(surface, ii, distance_metric_file))
             distance_from_iv = load_data(distance_metric_file)
             line = " ".join([str(dij) for dij in distance_from_iv])
             f.write(line + "\n")
             if not (ii % 1000):
                 print("Vertex {} of {} complete.".format(ii+1, nvert))
 
-    # Write dense distance matrix
+    checks.file_exists(f=dist_file)
 
 
 def compute_geodist_parcel(dists_text, parcel_labels, output):
