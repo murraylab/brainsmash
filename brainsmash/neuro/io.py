@@ -1,28 +1,22 @@
-""" Functions for CIFTI-format neuroimaging file I/O.
-
-X Load GIFTI
-X Load NIFTI
-Write dense data to file
-Write parcel data to file
-
 """
+Functions for Connectome Workbench-style neuroimaging file I/O.
+"""
+
+from ..config import parcel_labels_lr
+import tempfile
 from os import path
-from xml.etree import cElementTree as eT
+from os import system
+# from xml.etree import cElementTree as eT
+import pandas as pd
 import nibabel as nib
 import numpy as np
 
-# TODO refactor this file, what are these variables doing here
+# TODO once export_cifti_mapping tested, clean up this file
 
-# TODO __all__ = []
-
-__root = path.dirname(path.dirname(path.abspath(path.join(__file__))))
-__dlabel = path.abspath(
-    path.join(__root, "data",
-              "Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_Final_"
-              "Areas_Group_Colors.32k_fs_LR.dlabel.nii"))
+__all__ = ['load_data', 'export_cifti_mapping']
 
 
-def load_gifti(f):
+def _load_gifti(f):
     """
     Load data stored in a GIFTI (.gii) neuroimaging file.
 
@@ -39,7 +33,7 @@ def load_gifti(f):
     return nib.load(f).darrays[0].data
 
 
-def load_cifti2(f):
+def _load_cifti2(f):
     """
     Load data stored in a CIFTI-2 format neuroimaging file (e.g., .dscalar.nii
     and .dlabel.nii files).
@@ -61,6 +55,90 @@ def load_cifti2(f):
     """
     return np.array(nib.load(f).get_data()).squeeze()
 
+
+def load_data(f):
+    """
+    Load data contained in a NIFTI-/GIFTI-format neuroimaging file.
+
+    Parameters
+    ----------
+    f : str
+        path to CIFTI-format neuroimaging file
+
+    Returns
+    -------
+    np.ndarray (N,)
+        map data stored in neuroimaging file
+
+    """
+    try:
+        return _load_gifti(f)
+    except AttributeError:
+        try:
+            return _load_cifti2(f)
+        except AttributeError:
+            raise TypeError("This file cannot be loaded: {}".format(f))
+
+
+def export_cifti_mapping(image=None):
+    """
+    Compute the map from CIFTI indices to surface vertices and volume voxels.
+
+    Parameters
+    ----------
+    image : str or None, default None
+        path to NIFTI-2 format neuroimaging file, eg .dscalar.nii. the metadata
+        from this file is used to determine the CIFTI indices and voxel
+        coordinates of elements in the image. if None, use ``parcel_labels_lr``
+        defined in `brainsmash/config.py`.
+
+    Returns
+    -------
+    maps : dict
+        a dictionary containing the maps between CIFTI indices, surface
+        vertices, and volume voxels. Keys include 'cortex_left',
+        'cortex_right`, and 'subcortex'.
+
+    Notes
+    -----
+    See the Workbench documentation here for more details:
+    https://www.humanconnectome.org/software/workbench-command/-cifti-export-dense-mapping
+
+    """
+
+    # Temporary files written to by Workbench, then loaded and returned
+    tempdir = tempfile.gettempdir()
+    volume = path.join(tempdir, "volume.txt")
+    left = path.join(tempdir, "left.txt")
+    right = path.join(tempdir, "right.txt")
+
+    if image is None:
+        image = parcel_labels_lr
+
+    basecmd = "wb_command -cifti-export-dense-mapping '{}' COLUMN ".format(
+        image)
+
+    # Subcortex
+    system(basecmd + " -volume-all '{}' -structure ".format(volume))
+
+    # Cortex left
+    system(basecmd + "-surface CORTEX_LEFT '{}'".format(left))
+
+    # Cortex right
+    system(basecmd + "-surface CORTEX_RIGHT '{}'".format(right))
+
+    maps = dict()
+    maps['subcortex'] = pd.read_table(
+        volume, header=None, index_col=0, sep=' ',
+        names=['structure', 'mni_i', 'mni_j', 'mni_k']).rename_axis('index')
+
+    maps['cortex_left'] = pd.read_table(left, header=None, index_col=0, sep=' ',
+                                        names=['vertex']).rename_axis('index')
+    maps['cortex_right'] = pd.read_table(
+        right, header=None, index_col=0, sep=' ', names=['vertex']).rename_axis(
+        'index')
+
+    return maps
 
 # def save_dscalar(dscalars, fname):
 #
@@ -111,125 +189,100 @@ def load_cifti2(f):
 #     return f
 
 
-def load_data(f):
-    """
-    Load data contained in a NIFTI-/GIFTI-format neuroimaging file.
-
-    Parameters
-    ----------
-    f : str
-        path to CIFTI-format neuroimaging file
-
-    Returns
-    -------
-    np.ndarray (N,)
-        map data stored in neuroimaging file
-
-    """
-    ext = path.splitext(f)[1]
-    if ext == '.gii':
-        x = load_gifti(f)
-    elif ext == '.nii':
-        x = load_cifti2(f)
-    else:
-        raise TypeError("Unrecognized file type: {}".format(f))
-    return x
-
-
-def parcel_to_vertex(image):
-    """
-    Create map from parcel labels to CIFTI indices using file metadata.
-
-    Parameters
-    ----------
-    image : str
-        path to parcellated NIFTI-format neuroimaging file (.pscalar.nii)
-
-    Returns
-    -------
-    dict : map from parcel index to surface vertex, in cortex left/right, and
-        from parcel index to voxel MNI_X,Y,Z, in subcortex
-
-    """
-    f, ext1 = path.splitext(image)
-    _, ext2 = path.splitext(f)
-    if ext1 != ".nii" or ext2 != ".pscalar":
-        e = "Image file must be a parcellated scalar file "
-        e += "with extension .pscalar.nii"
-        raise TypeError(e)
-
-    # Load CIFTI indices for this map
-    of = nib.load(image)
-    # pscalars = load_map(image_file)
-
-    # Get XML from file metadata
-    ext = of.header.extensions
-    root = eT.fromstring(ext[0].get_content())
-    parent_map = {c: p for p in root.iter() for c in p}
-
-    # Create map from parcel label to pscalar/ptseries index
-    plabel2idx = dict()
-    idx = 0
-    for node in root.iter("Parcel"):
-        plabel = dict(node.attrib)['Name']
-        plabel2idx[plabel] = idx
-        idx += 1
-
-    # Find surface vertex assignments for each parcel
-    structures = ['Subcortex', 'CortexLeft', 'CortexRight']
-    mapping = dict.fromkeys(structures)
-    for k in structures:
-        mapping[k] = dict()
-    for node in root.iter('Vertices'):
-        parcel = dict(parent_map[node].attrib)['Name']
-        parcel_index = plabel2idx[parcel]
-        structure = dict(node.attrib)['BrainStructure']
-        v = [int(i) for i in node.text.split(' ')]
-        if structure == "CIFTI_STRUCTURE_CORTEX_LEFT":
-            mapping['CortexLeft'][parcel_index] = v
-        elif structure == "CIFTI_STRUCTURE_CORTEX_RIGHT":
-            mapping['CortexRight'][parcel_index] = v
-        else:
-            raise ValueError(
-                "Unrecognized structure in image_file metadata: {}".format(
-                    structure))
-
-    # Find constituent voxel MNI coords for each parcel
-    if root.iter('VoxelIndicesIJK') is not None:
-        for node in root.iter('VoxelIndicesIJK'):
-            parcel = dict(parent_map[node].attrib)['Name']
-            parcel_index = plabel2idx[parcel]
-            voxels = np.array(
-                [int(i) for i in node.text.split()]).reshape(-1, 3)
-            mapping['Subcortex'][parcel_index] = voxels
-
-    return mapping
+# def parcel_to_vertex(image):
+#     """
+#     Create map from parcel labels to CIFTI indices using file metadata.
+#
+#     Parameters
+#     ----------
+#     image : str
+#         path to parcellated NIFTI-format neuroimaging file (.pscalar.nii)
+#
+#     Returns
+#     -------
+#     dict : map from parcel index to surface vertex, in cortex left/right, and
+#         from parcel index to voxel MNI_X,Y,Z, in subcortex
+#
+#     """
+#     f, ext1 = path.splitext(image)
+#     _, ext2 = path.splitext(f)
+#     if ext1 != ".nii" or ext2 != ".pscalar":
+#         e = "Image file must be a parcellated scalar file "
+#         e += "with extension .pscalar.nii"
+#         raise TypeError(e)
+#
+#     # Load CIFTI indices for this map
+#     of = nib.load(image)
+#     # pscalars = load_map(image_file)
+#
+#     # Get XML from file metadata
+#     ext = of.header.extensions
+#     root = eT.fromstring(ext[0].get_content())
+#     parent_map = {c: p for p in root.iter() for c in p}
+#
+#     # Create map from parcel label to pscalar/ptseries index
+#     plabel2idx = dict()
+#     idx = 0
+#     for node in root.iter("Parcel"):
+#         plabel = dict(node.attrib)['Name']
+#         plabel2idx[plabel] = idx
+#         idx += 1
+#
+#     # Find surface vertex assignments for each parcel
+#     structures = ['Subcortex', 'CortexLeft', 'CortexRight']
+#     mapping = dict.fromkeys(structures)
+#     for k in structures:
+#         mapping[k] = dict()
+#     for node in root.iter('Vertices'):
+#         parcel = dict(parent_map[node].attrib)['Name']
+#         parcel_index = plabel2idx[parcel]
+#         structure = dict(node.attrib)['BrainStructure']
+#         v = [int(i) for i in node.text.split(' ')]
+#         if structure == "CIFTI_STRUCTURE_CORTEX_LEFT":
+#             mapping['CortexLeft'][parcel_index] = v
+#         elif structure == "CIFTI_STRUCTURE_CORTEX_RIGHT":
+#             mapping['CortexRight'][parcel_index] = v
+#         else:
+#             raise ValueError(
+#                 "Unrecognized structure in image_file metadata: {}".format(
+#                     structure))
+#
+#     # Find constituent voxel MNI coords for each parcel
+#     if root.iter('VoxelIndicesIJK') is not None:
+#         for node in root.iter('VoxelIndicesIJK'):
+#             parcel = dict(parent_map[node].attrib)['Name']
+#             parcel_index = plabel2idx[parcel]
+#             voxels = np.array(
+#                 [int(i) for i in node.text.split()]).reshape(-1, 3)
+#             mapping['Subcortex'][parcel_index] = voxels
+#
+#     return mapping
 
 
-def get_hemisphere(surface):
-    """
-
-    Parameters
-    ----------
-    surface
-
-    Returns
-    -------
-    str : 'CortexLeft' or 'CortexRight'
-
-    """
-    of = nib.load(surface)
-    root = eT.fromstring(of.darrays[0].meta.to_xml())
-    structure = root[0][1].text
-    try:
-        if structure == "CortexRight" or structure == "CortexLeft":
-            return structure
-        else:
-            e = "\nUnidentified structure in surface file metadata.\n"
-            e += "Surface file: {}".format(surface)
-            raise ValueError(e)
-    except IndexError or AttributeError:
-        raise TypeError("Surface file metadata has unexpected structure.")
+# def get_hemisphere(surface):
+#     """
+#
+#     Parameters
+#     ----------
+#     surface
+#
+#     Returns
+#     -------
+#     str : 'CortexLeft' or 'CortexRight'
+#
+#     """
+#     of = nib.load(surface)
+#     root = eT.fromstring(of.darrays[0].meta.to_xml())
+#     structure = root[0][1].text
+#     try:
+#         if structure == "CortexRight" or structure == "CortexLeft":
+#             return structure
+#         else:
+#             e = "\nUnidentified structure in surface file metadata.\n"
+#             e += "Surface file: {}".format(surface)
+#             raise ValueError(e)
+#     except IndexError or AttributeError:
+#         raise TypeError("Surface file metadata has unexpected structure.")
 
 
 # def export_cifti_mapping(image):
@@ -291,7 +344,7 @@ def get_hemisphere(surface):
 #             raise RuntimeError(e)
 #         else:
 #             structs_present.append(s)
-#             cols = ["vertex"] if "Cortex" in s else ["structure", "x", "y", "z"]
+#           cols = ["vertex"] if "Cortex" in s else ["structure", "x", "y", "z"]
 #             df = pd.read_table(
 #                 of, delimiter=" ", index_col=0, header=None, names=cols)
 #             data[s] = df

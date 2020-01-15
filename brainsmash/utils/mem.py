@@ -2,7 +2,7 @@
 Convert large data files written to disk to memory-mapped arrays for memory-
 efficient data retrieval.
 """
-
+from ..utils import files
 from ..utils import checks
 import numpy.lib.format
 from os import path
@@ -41,7 +41,7 @@ def create(dist_file, output_dir, maskfile=None, delimiter=' '):
 
     """
 
-    nlines = checks.count_lines(dist_file)
+    nlines = files.count_lines(dist_file)
 
     if not path.exists(output_dir):
         raise IOError("Output directory does not exist: {}".format(output_dir))

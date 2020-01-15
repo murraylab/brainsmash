@@ -1,5 +1,5 @@
 from brainsmash.maps.core import Base
-from brainsmash.neuro.io import load_cifti2
+from brainsmash.neuro.io import load_data
 from brainsmash.analysis.eval import test_base_variogram_fits
 import wbplot
 from os.path import join
@@ -13,7 +13,7 @@ output_dir = "/Users/jbb/Desktop/"
 image = join(data_root, "myelin_L.pscalar.nii")
 matrix = join(data_root, "left_parcel_distmat.npy")
 
-myelin = load_cifti2(image)
+myelin = load_data(image)
 distmat = np.load(matrix)
 
 # Confirm visually that the simulated variograms fit well

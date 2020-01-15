@@ -3,9 +3,10 @@ from ..utils import kernels
 from ..neuro.io import load_data
 import numpy as np
 import nibabel as nib
-from pathlib import Path
 
-# TODO __all__ = []
+
+__all__ = ['check_map', 'check_distmat', 'check_kernel', 'check_sampled',
+           'check_image_file', 'check_deltas', 'check_umax', 'check_surface']
 
 
 def check_map(x):
@@ -167,7 +168,7 @@ def check_umax(umax):
     return umax
 
 
-def check_surface(surface) -> np.ndarray:
+def check_surface(surface):
     """
     Check and load MNI coordinates from a surface file.
 
@@ -188,51 +189,3 @@ def check_surface(surface) -> np.ndarray:
         raise ValueError(
             "expected three columns in surface file but found {}".format(ndim))
     return coords
-
-
-def stripext(f):
-    """
-    Strip (possibly multiple) extensions from a file.
-
-    Parameters
-    ----------
-    f : str
-        file name, possibly with path and possibly with extension(s)
-
-    Returns
-    -------
-    f : str
-        `f` stripped of all extensions
-
-    """
-    for s in Path(f).suffixes[::-1]:
-        f = f.strip(s)
-    return f
-
-
-def file_exists(f):
-    if not Path(f).exists() or Path(f).stat().st_size == 0:
-        raise IOError("{} was not successfully written to".format(f))
-
-
-def count_lines(f):
-    """
-    Count number of lines in a file.
-
-    Parameters
-    ----------
-    f : str
-        absolute path to file
-
-    Returns
-    -------
-    int
-        number of lines
-
-    """
-    with open(f, 'r') as fp:
-        nrows = 1
-        for l in fp:
-            if l.rstrip():
-                nrows += 1
-        return nrows

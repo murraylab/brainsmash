@@ -2,11 +2,12 @@
 Evaluation metrics for randomly generated surrogate maps.
 """
 
-from brainsmash.maps.core import Base, Sampled
+from ..maps.core import Base
+from ..maps.core import Sampled
 import matplotlib.pyplot as plt
 import numpy as np
 
-# TODO __all__ = []
+__all__ = ['test_sampled_variogram_fits', 'test_base_variogram_fits']
 
 
 def test_base_variogram_fits(

@@ -4,17 +4,19 @@ neuroimaging files.
 """
 
 from ..neuro.io import load_data
-from ..neuro.cifti import export_cifti_mapping
+from ..neuro.io import export_cifti_mapping
 from ..utils import checks
+from ..utils import files
 from scipy.spatial.distance import cdist
 from tempfile import gettempdir
-from os import path, system
+from os import path
+from os import system
 import numpy as np
 from pathlib import Path
 
 # TODO add Notes/print statement to cortex/subcortex warning of extended runtime
 
-# TODO __all__ = []
+__all__ = ['cortex', 'subcortex', 'parcellate']
 
 
 def cortex(surface, outfile, euclid=False):
@@ -48,7 +50,7 @@ def cortex(surface, outfile, euclid=False):
         raise IOError("Output directory does not exist: {}".format(str(pardir)))
 
     # Strip file extensions and define output text file
-    outfile = checks.stripext(outfile)
+    outfile = files.stripext(outfile)
     dist_file = outfile + '.txt'
 
     # Load surface file
@@ -98,7 +100,7 @@ def subcortex(image_file, fout):
         raise IOError("Output directory does not exist: {}".format(str(pardir)))
 
     # Strip file extensions and define output text file
-    fout = checks.stripext(fout)
+    fout = files.stripext(fout)
     dist_file = fout + '.txt'
 
     # Load CIFTI mapping
@@ -111,89 +113,6 @@ def subcortex(image_file, fout):
     coords = maps['Subcortex'].drop("structure", axis=1).values
     outfile = _euclidean(dist_file=dist_file, coords=coords)
     return outfile
-
-
-def _euclidean(dist_file, coords):
-    """
-    Compute three-dimensional pairwise Euclidean distance between rows of
-    `coords`. Write results to `dist_file`.
-
-    Parameters
-    ----------
-    dist_file : str
-        absolute path to output file, with .txt extension
-    coords : (N,3) np.ndarray
-        MNI coordinates for N voxels/vertices
-
-    Returns
-    -------
-    str
-        path to output distance matrix file
-
-    Notes
-    -----
-    Distances are computed one row at a time to reduce memory burden.
-
-    """
-    # distmat = squareform(pdist(coords, metric='euclidean'))
-    # distmat = cdist(coords, coords)
-    with open(dist_file, 'w') as fp:
-        for point in coords:
-            distances = cdist(
-                np.expand_dims(point, 0), coords).squeeze()
-            line = " ".join([str(d) for d in distances]) + "\n"
-            fp.write(line)
-    checks.file_exists(f=dist_file)
-    return dist_file
-
-
-def _geodesic(surface, dist_file, coords):
-    """
-    Compute pairwise geodesic distance between rows of `coords`. Write results
-    to `dist_file`.
-
-    Parameters
-    ----------
-    surface : str
-        absolute path to a surface GIFTI file (.surf.gii) from which to compute
-        distances
-    dist_file : str
-        absolute path to output file, with .txt extension
-    coords : (N,3) np.ndarray
-        MNI coordinates for N voxels/vertices
-
-    Returns
-    -------
-    str
-        path to output distance matrix file
-
-    Notes
-    -----
-    This function uses command-line utilities included in Connectome Workbench.
-
-    """
-    nvert = coords.shape[0]
-
-    # Files produced at runtime by Workbench commands
-    temp = gettempdir()
-    coord_file = path.join(temp, "coords.func.gii")
-    distance_metric_file = path.join(temp, "dist.func.gii")
-
-    # Create a metric file containing the coordinates of each surface vertex
-    cmd = 'wb_command -surface-coordinates-to-metric "{0:s}" "{1:s}"'
-    system(cmd.format(surface, coord_file))
-
-    with open(dist_file, 'w') as f:
-        for ii in np.arange(coords.shape[0]):
-            cmd = 'wb_command -surface-geodesic-distance "{0}" {1} "{2}" '
-            system(cmd.format(surface, ii, distance_metric_file))
-            distance_from_iv = load_data(distance_metric_file)
-            line = " ".join([str(dij) for dij in distance_from_iv])
-            f.write(line + "\n")
-            if not (ii % 1000):
-                print("Vertex {} of {} complete.".format(ii+1, nvert))
-    checks.file_exists(f=dist_file)
-    return dist_file
 
 
 def parcellate(infile, dlabel_file, outfile, delimiter=" "):
@@ -238,7 +157,7 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
         raise IOError("Output directory does not exist: {}".format(str(pardir)))
 
     # Strip file extensions and define output text file
-    fout = checks.stripext(outfile)
+    fout = files.stripext(outfile)
     dist_file = fout + '.txt'
 
     # Load surface vertex parcel labels
@@ -305,5 +224,88 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
 
         # Write to file
         np.savetxt(fname=dist_file, X=distance_matrix)
-        checks.file_exists(dist_file)
+        files.file_exists(dist_file)
         return dist_file
+
+
+def _euclidean(dist_file, coords):
+    """
+    Compute three-dimensional pairwise Euclidean distance between rows of
+    `coords`. Write results to `dist_file`.
+
+    Parameters
+    ----------
+    dist_file : str
+        absolute path to output file, with .txt extension
+    coords : (N,3) np.ndarray
+        MNI coordinates for N voxels/vertices
+
+    Returns
+    -------
+    str
+        path to output distance matrix file
+
+    Notes
+    -----
+    Distances are computed one row at a time to reduce memory burden.
+
+    """
+    # distmat = squareform(pdist(coords, metric='euclidean'))
+    # distmat = cdist(coords, coords)
+    with open(dist_file, 'w') as fp:
+        for point in coords:
+            distances = cdist(
+                np.expand_dims(point, 0), coords).squeeze()
+            line = " ".join([str(d) for d in distances]) + "\n"
+            fp.write(line)
+    files.file_exists(f=dist_file)
+    return dist_file
+
+
+def _geodesic(surface, dist_file, coords):
+    """
+    Compute pairwise geodesic distance between rows of `coords`. Write results
+    to `dist_file`.
+
+    Parameters
+    ----------
+    surface : str
+        absolute path to a surface GIFTI file (.surf.gii) from which to compute
+        distances
+    dist_file : str
+        absolute path to output file, with .txt extension
+    coords : (N,3) np.ndarray
+        MNI coordinates for N voxels/vertices
+
+    Returns
+    -------
+    str
+        path to output distance matrix file
+
+    Notes
+    -----
+    This function uses command-line utilities included in Connectome Workbench.
+
+    """
+    nvert = coords.shape[0]
+
+    # Files produced at runtime by Workbench commands
+    temp = gettempdir()
+    coord_file = path.join(temp, "coords.func.gii")
+    distance_metric_file = path.join(temp, "dist.func.gii")
+
+    # Create a metric file containing the coordinates of each surface vertex
+    cmd = 'wb_command -surface-coordinates-to-metric "{0:s}" "{1:s}"'
+    system(cmd.format(surface, coord_file))
+
+    with open(dist_file, 'w') as f:
+        for ii in np.arange(coords.shape[0]):
+            cmd = 'wb_command -surface-geodesic-distance "{0}" {1} "{2}" '
+            system(cmd.format(surface, ii, distance_metric_file))
+            distance_from_iv = load_data(distance_metric_file)
+            line = " ".join([str(dij) for dij in distance_from_iv])
+            f.write(line + "\n")
+            if not (ii % 1000):
+                print("Vertex {} of {} complete.".format(ii+1, nvert))
+    files.file_exists(f=dist_file)
+    return dist_file
