@@ -1,4 +1,4 @@
-from brainsmash.geo.dists import compute_cortex_dists
+from brainsmash.geo.dists import cortex
 from time import time
 
 surf_left = ("/Users/jbb/Documents/Repos/brainsmash/brainsmash/data/surfaces/"
@@ -7,8 +7,8 @@ surf_right = ("/Users/jbb/Documents/Repos/brainsmash/brainsmash/data/surfaces/"
               "S1200.R.midthickness_MSMAll.32k_fs_LR.surf.gii")
 
 t1 = time()
-compute_cortex_dists(
+cortex(
     surface=surf_left,
-    fout="/Users/jbb/Desktop/left_cortex_euclid_test",
+    outfile="/Users/jbb/Desktop/left_cortex_euclid_test",
     euclid=True)
 print(time() - t1)

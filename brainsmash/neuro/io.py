@@ -6,13 +6,12 @@ Write dense data to file
 Write parcel data to file
 
 """
-import subprocess
 from os import path
-from tempfile import mkdtemp
 from xml.etree import cElementTree as eT
 import nibabel as nib
 import numpy as np
-import pandas as pd
+
+# TODO refactor this file, what are these variables doing here
 
 __root = path.dirname(path.dirname(path.abspath(path.join(__file__))))
 __dlabel = path.abspath(
@@ -102,7 +101,7 @@ def load_cifti2(f):
 #     # Reshape the new data appropriately
 #     data_to_write = new_data.reshape(np.shape(temp_data))
 #
-#     # Create and save a new NIFTI2 image object
+#     # Create and save a new NIFTI2 image_file object
 #     new_img = nib.Nifti2Image(
 #         data_to_write, affine=of.affine, header=of.header)
 #     f = os.path.join(files.outputs_dir, fname)
@@ -159,7 +158,7 @@ def parcel_to_vertex(image):
 
     # Load CIFTI indices for this map
     of = nib.load(image)
-    # pscalars = load_map(image)
+    # pscalars = load_map(image_file)
 
     # Get XML from file metadata
     ext = of.header.extensions
@@ -190,7 +189,7 @@ def parcel_to_vertex(image):
             mapping['CortexRight'][parcel_index] = v
         else:
             raise ValueError(
-                "Unrecognized structure in image metadata: {}".format(
+                "Unrecognized structure in image_file metadata: {}".format(
                     structure))
 
     # Find constituent voxel MNI coords for each parcel
@@ -231,79 +230,79 @@ def get_hemisphere(surface):
         raise TypeError("Surface file metadata has unexpected structure.")
 
 
-def export_cifti_mapping(image):
-    """
-    Compute the mapping from CIFTI indices to surface-based vertices and
-    volume-based voxels (for cortex and subcortex, respectively).
+# def export_cifti_mapping(image):
+#     """
+#     Compute the mapping from CIFTI indices to surface-based vertices and
+#     volume-based voxels (for cortex and subcortex, respectively).
+#
+#     Parameters
+#     ----------
+#     image : str
+#         path to dense NIFTI-format neuroimaging file (.dscalar.nii)
+#
+#     Returns
+#     -------
+#     dict: up to three pd.DataFrame objects indexed by keys 'Subcortex',
+#         'CortexLeft', and 'CortexRight', the first of which contains three
+#         columns (MNI_X, MNI_Y, and MNI_Z), and the latter two which contain
+#         one column (surface vertex index). All three DataFrame are indexed by
+#         CIFTI index
+#
+#     Notes
+#     -----
+#     See the Connectome Workbench documentation here for details:
+#     www.humanconnectome.org/software/workbench-command/-cifti-separate
+#
+#     """
+#
+#     # Check file extension
+#     f, ext1 = path.splitext(image)
+#     _, ext2 = path.splitext(f)
+#     if ext1 != ".nii" or ext2[1] != "d":
+#         e = "Image file must be a dense NIFTI file "
+#         raise TypeError(e)
+#
+#     tmpdir = mkdtemp()
+#
+#     cmd_root = "wb_command -cifti-export-dense-mapping '{}' COLUMN ".format(
+#         image)
+#
+#     structures = dict()
+#     structures['Subcortex'] = " -volume-all '{}' -structure "
+#     structures['CortexLeft'] = "-surface CORTEX_LEFT '{}' "
+#     structures['CortexRight'] = "-surface CORTEX_RIGHT '{}' "
+#
+#     data = dict()
+#     structs_present = list()
+#     for s, cmd in structures.items():
+#         of = path.join(tmpdir, "{}.txt".format(s))
+#         scmd = cmd_root + cmd.format(of)
+#         scmd += "> /dev/null 2>&1"
+#         result = subprocess.run([scmd], stdout=subprocess.PIPE, shell=True)
+#         if result.returncode:
+#             continue
+#         elif not path.getsize(of):
+#             e = "\nFile created by Connectome Workbench is empty.\n"
+#             e += "Input file: {}\n".format(image)
+#             e += "Output file: {}\n".format(image)
+#             e += "Attempted command: {}".format(cmd)
+#             raise RuntimeError(e)
+#         else:
+#             structs_present.append(s)
+#             cols = ["vertex"] if "Cortex" in s else ["structure", "x", "y", "z"]
+#             df = pd.read_table(
+#                 of, delimiter=" ", index_col=0, header=None, names=cols)
+#             data[s] = df
+#
+#     if not len(structs_present):
+#         e = "\nNo files were created by Connectome Workbench.\n"
+#         e += "Image file: {}\n".format(image)
+#         raise RuntimeError(e)
+#
+#     return data
 
-    Parameters
-    ----------
-    image : str
-        path to dense NIFTI-format neuroimaging file (.dscalar.nii)
 
-    Returns
-    -------
-    dict: up to three pd.DataFrame objects indexed by keys 'Subcortex',
-        'CortexLeft', and 'CortexRight', the first of which contains three
-        columns (MNI_X, MNI_Y, and MNI_Z), and the latter two which contain
-        one column (surface vertex index). All three DataFrame are indexed by
-        CIFTI index
-
-    Notes
-    -----
-    See the Connectome Workbench documentation here for details:
-    www.humanconnectome.org/software/workbench-command/-cifti-separate
-
-    """
-
-    # Check file extension
-    f, ext1 = path.splitext(image)
-    _, ext2 = path.splitext(f)
-    if ext1 != ".nii" or ext2[1] != "d":
-        e = "Image file must be a dense NIFTI file "
-        raise TypeError(e)
-
-    tmpdir = mkdtemp()
-
-    cmd_root = "wb_command -cifti-export-dense-mapping '{}' COLUMN ".format(
-        image)
-
-    structures = dict()
-    structures['Subcortex'] = " -volume-all '{}' -structure "
-    structures['CortexLeft'] = "-surface CORTEX_LEFT '{}' "
-    structures['CortexRight'] = "-surface CORTEX_RIGHT '{}' "
-
-    data = dict()
-    structs_present = list()
-    for s, cmd in structures.items():
-        of = path.join(tmpdir, "{}.txt".format(s))
-        scmd = cmd_root + cmd.format(of)
-        scmd += "> /dev/null 2>&1"
-        result = subprocess.run([scmd], stdout=subprocess.PIPE, shell=True)
-        if result.returncode:
-            continue
-        elif not path.getsize(of):
-            e = "\nFile created by Connectome Workbench is empty.\n"
-            e += "Input file: {}\n".format(image)
-            e += "Output file: {}\n".format(image)
-            e += "Attempted command: {}".format(cmd)
-            raise RuntimeError(e)
-        else:
-            structs_present.append(s)
-            cols = ["vertex"] if "Cortex" in s else ["structure", "x", "y", "z"]
-            df = pd.read_table(
-                of, delimiter=" ", index_col=0, header=None, names=cols)
-            data[s] = df
-
-    if not len(structs_present):
-        e = "\nNo files were created by Connectome Workbench.\n"
-        e += "Image file: {}\n".format(image)
-        raise RuntimeError(e)
-
-    return data
-
-
-# def mask_medial_wall(surface, image):
+# def mask_medial_wall(surface, image_file):
 #     """
 #     Extract medial wall vertices using surface file metadata.
 #
@@ -311,7 +310,7 @@ def export_cifti_mapping(image):
 #     ----------
 #     surface : str
 #         path to GIFTI-format surface file for one cortical hemisphere
-#     image : str
+#     image_file : str
 #         path to dense NIFTI-format neuroimaging file (.dscalar.nii)
 #
 #     Returns
@@ -323,7 +322,7 @@ def export_cifti_mapping(image):
 #     """
 #
 #     # Check file extension
-#     f, ext1 = path.splitext(image)
+#     f, ext1 = path.splitext(image_file)
 #     _, ext2 = path.splitext(f)
 #     if ext1 != ".nii" or ext2 != ".dscalar":
 #         e = "Image file must be a dense scalar file "
@@ -340,8 +339,8 @@ def export_cifti_mapping(image):
 #     # Determine cortical hemisphere
 #     surface_structure = get_hemisphere(surface)
 #
-#     # Structure in the image file
-#     image_structure = list(export_cifti_mapping(image).keys())
+#     # Structure in the image_file file
+#     image_structure = list(export_cifti_mapping(image_file).keys())
 #
 #     # Load mappings from surface vertices to CIFTI indices
 #     mappings = export_cifti_mapping(__dlabel)

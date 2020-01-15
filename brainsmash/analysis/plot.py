@@ -1,9 +1,9 @@
 """ Utility functions for visualizing brain maps.
 
-Dense cortical map -> workbench image
-Parcellated cortical map -> workbench image
-Subcortical map -> workbench image
-? Whole-brain map -> workbench image
+Dense cortical map -> workbench image_file
+Parcellated cortical map -> workbench image_file
+Subcortical map -> workbench image_file
+? Whole-brain map -> workbench image_file
 
 """
 
@@ -112,7 +112,7 @@ def save_map(fname, x, cmap, flat=False, sphere=False, mw=False):
     remove(cifti_in)
     rename(cifti_out, cifti_in)
 
-    # Save workbench image
+    # Save workbench image_file
     w, h = (1920, 660)
     num = 1 if not mw else 4
     if flat:
@@ -132,7 +132,7 @@ def save_map(fname, x, cmap, flat=False, sphere=False, mw=False):
 def save_workbench_image(dscalars, fname, scene=3, cortex_only=False,
                          cmap='RY-BC-BL'):
     """
-    Save an image of dense scalars using Connnectome Workbench.
+    Save an image_file of dense scalars using Connnectome Workbench.
 
     Parameters
     ----------
@@ -256,10 +256,10 @@ def save_workbench_image(dscalars, fname, scene=3, cortex_only=False,
     rename(cifti_out, cifti_in)
 
     # Use Workbench's command line utilities and the provided scene template
-    # file to auto-generate an output image
+    # file to auto-generate an output image_file
     fout = path.join(files.outputs, fname)
-    width = 1438*2.  # image width
-    height = 538*2.  # image height
+    width = 1438*2.  # image_file width
+    height = 538*2.  # image_file height
     cmd = "wb_command -show-scene %s %i %s %i %i " % (
         scene_file, scene, fout, width, height)
 

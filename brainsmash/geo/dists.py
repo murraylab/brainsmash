@@ -1,20 +1,21 @@
-""" Functions to compute geodesic distance matrices from neuroimaging files.
-
-Surface file + map -> dense or parcellated geodesic or euclid dist matrix (txt)
-X CIFTI file (incl. subcortex) -> dense Euclid distmat (txt)
-
+"""
+Functions to compute geodesic and Euclidean distance matrices from
+neuroimaging files.
 """
 
-from ..neuro.io import load_data, export_cifti_mapping
+from ..neuro.io import load_data
+from ..neuro.cifti import export_cifti_mapping
 from ..utils import checks
-from scipy.spatial.distance import pdist, squareform, cdist
+from scipy.spatial.distance import cdist
 from tempfile import gettempdir
 from os import path, system
 import numpy as np
 from pathlib import Path
 
+# TODO add Notes/print statement to cortex/subcortex warning of extended runtime
 
-def compute_cortex_dists(surface, fout, euclid=False):
+
+def cortex(surface, outfile, euclid=False):
     """
     Compute vertex-wise geodesic distance matrix for a cortical hemisphere.
 
@@ -23,7 +24,7 @@ def compute_cortex_dists(surface, fout, euclid=False):
     surface : str
         absolute path to a surface GIFTI file (.surf.gii) from which to compute
         distances
-    fout : str
+    outfile : str
         name of output file, WITHOUT extension, WITH absolute path to directory
         in which it will be saved
     euclid : bool, default False
@@ -34,6 +35,54 @@ def compute_cortex_dists(surface, fout, euclid=False):
     str
         path to output distance matrix file
 
+    """
+
+    if path.exists(outfile):
+        raise RuntimeWarning("{} will be overwritten".format(outfile))
+
+    # Check that parent directory exists
+    pardir = Path(outfile).parent
+    if not pardir.exists:
+        raise IOError("Output directory does not exist: {}".format(str(pardir)))
+
+    # Strip file extensions and define output text file
+    outfile = checks.stripext(outfile)
+    dist_file = outfile + '.txt'
+
+    # Load surface file
+    coords = checks.check_surface(surface)
+
+    if euclid:  # Pairwise Euclidean distance matrix
+        outfile = _euclidean(dist_file=dist_file, coords=coords)
+    else:  # Pairwise geodesic distance matrix
+        outfile = _geodesic(
+            surface=surface, dist_file=dist_file, coords=coords)
+    return outfile
+
+
+def subcortex(image_file, fout):
+    """
+    Compute 3D Euclidean distance matrix between areas in `image` file.
+
+    Parameters
+    ----------
+    image_file : str
+        absolute path to a NIFTI-2 format neuroimaging file (eg .dscalar.nii).
+        MNI coordinates for each subcortical voxel are read from this file's
+        metadata
+    fout : str
+        absolute path to output text file WITHOUT extension (to be created)
+
+    Returns
+    -------
+    output : str
+        path to output text file
+
+    Notes
+    -----
+    Voxel indices are used as a proxy for physical distance, since the two are
+    related by a simple linear scaling
+    TODO isn't the scaling different along different dimensions??
     """
 
     if path.exists(fout):
@@ -48,21 +97,22 @@ def compute_cortex_dists(surface, fout, euclid=False):
     fout = checks.stripext(fout)
     dist_file = fout + '.txt'
 
-    # Load surface file
-    coords = checks.check_surface(surface)
+    # Load CIFTI mapping
+    maps = export_cifti_mapping(image_file)
+    if "subcortex" not in maps.keys():
+        e = "Subcortical information was not found in {}".format(image_file)
+        raise ValueError(e)
 
-    if euclid:  # Pairwise Euclidean distance matrix
-        fout = _euclidean_distances(dist_file=dist_file, coords=coords)
-    else:  # Pairwise geodesic distance matrix
-        fout = _geodesic_distances(
-            surface=surface, dist_file=dist_file, coords=coords)
-    return fout
+    # Compute Euclidean distance matrix
+    coords = maps['Subcortex'].drop("structure", axis=1).values
+    outfile = _euclidean(dist_file=dist_file, coords=coords)
+    return outfile
 
 
-def _euclidean_distances(dist_file, coords):
+def _euclidean(dist_file, coords):
     """
-    Compute pairwise euclidean distance between rows of `coords`. Write results
-    to `dist_file`.
+    Compute three-dimensional pairwise Euclidean distance between rows of
+    `coords`. Write results to `dist_file`.
 
     Parameters
     ----------
@@ -93,7 +143,7 @@ def _euclidean_distances(dist_file, coords):
     return dist_file
 
 
-def _geodesic_distances(surface, dist_file, coords):
+def _geodesic(surface, dist_file, coords):
     """
     Compute pairwise geodesic distance between rows of `coords`. Write results
     to `dist_file`.
@@ -116,7 +166,6 @@ def _geodesic_distances(surface, dist_file, coords):
     Notes
     -----
     This function uses command-line utilities included in Connectome Workbench.
-    It requires ~1-2 hours to run.
 
     """
     nvert = coords.shape[0]
@@ -143,19 +192,20 @@ def _geodesic_distances(surface, dist_file, coords):
     return dist_file
 
 
-def compute_geodist_parcel(infile, dlabel_file, outfile, delimiter=' '):
+def parcellate(infile, dlabel_file, outfile, delimiter=" "):
     """
     Parcellate a dense distance matrix.
 
     Parameters
     ----------
     infile : str
-        text file generated by ``compute_geodist_dense''
+        `delimiter`-separated distance matrix file, eg the file written by
+        ``cortex``
     dlabel_file : str
         path to parcellation file  (.dlabel.nii)
     outfile : str
-        path to output text file (to be created)
-    delimiter : str
+        absolute path to output text file WITHOUT extension (to be created)
+    delimiter : str, default " "
         delimiter between elements in `infile`
 
     Returns
@@ -179,11 +229,6 @@ def compute_geodist_parcel(infile, dlabel_file, outfile, delimiter=' '):
         raise RuntimeWarning("{} will be overwritten".format(outfile))
 
     # Check that parent directory exists
-    pardir = Path(outfile).parent
-    if not pardir.exists:
-        raise IOError("Output directory does not exist: {}".format(str(pardir)))
-
-    # Confirm that parent directory exists
     pardir = Path(outfile).parent
     if not pardir.exists:
         raise IOError("Output directory does not exist: {}".format(str(pardir)))
@@ -258,65 +303,3 @@ def compute_geodist_parcel(infile, dlabel_file, outfile, delimiter=' '):
         np.savetxt(fname=dist_file, X=distance_matrix)
         checks.file_exists(dist_file)
         return dist_file
-
-
-def compute_eucliddist_subcortex(image, output):
-    """
-    Create 3D Euclidean distance matrix for a subcortical ROI.
-
-    Parameters
-    ----------
-    image : str
-        path to NIFTI-format neuroimaging file
-    output : str
-        path to output text file (to be created)
-
-    Returns
-    -------
-    output : str
-        path to output text file
-    """
-
-    # TODO add support for pscalar images once it's worked out in cortex
-
-    # Load CIFTI indices for this map
-    # of = nib.load(image)
-    scalars = load_data(image)
-
-    # # Get XML from file metadata
-    # ext = of.header.extensions
-    # root = eT.fromstring(ext[0].get_content())
-    # parent_map = {c: p for p in root.iter() for c in p}
-
-    # Load CIFTI mapping
-    maps = export_cifti_mapping(image)  # TODO make this only return volume
-    if "Subcortex" not in maps.keys():
-        e = "\nSubcortical information not found in file header!\n"
-        e += "Image file: {}\n".format(image)
-        raise TypeError(e)
-
-    # sub is a dataframe indexed by CIFTI index with cols for X,Y,Z coords
-    sub = maps['Subcortex'].drop("structure", axis=1)
-    # TODO perform step later, first printing unique structures in ROI?
-
-    # Select MNI coords where `scalars` is not NaN
-    subctx_inds = sub.index.values
-    mask = np.isnan(scalars[subctx_inds])
-    coords = sub.iloc[subctx_inds[~mask]].values
-    assert coords.shape[0] == (~mask).sum()
-
-    # # Create map from parcel label to pscalar/ptseries index
-    # plabel2idx = dict()
-    # idx = 0
-    # for node in root.iter("Parcel"):
-    #     plabel = dict(node.attrib)['Name']
-    #     plabel2idx[plabel] = idx
-    #     idx += 1
-
-    # Compute Euclidean distance matrix
-    distmat = squareform(pdist(coords, metric='euclidean'))
-
-    # Write to file
-    np.savetxt(output, distmat)
-
-    return output

@@ -67,9 +67,17 @@ def make_fs_key(structure, hemisphere):
     return s
 
 
-def export_cifti_mapping():
+def export_cifti_mapping(image=None):
     """
     Compute the map from CIFTI indices to surface vertices and volume voxels.
+
+    Parameters
+    ----------
+    image : str or None, default None
+        path to NIFTI-2 format neuroimaging file, eg .dscalar.nii. the metadata
+        from this file is used to determine the CIFTI indices and voxel
+        coordinates of elements in the image. if None, use ``parcel_labels_lr``
+        defined in `brainsmash/config.py`.
 
     Returns
     -------
@@ -80,24 +88,32 @@ def export_cifti_mapping():
 
     Notes
     -----
-    This function uses the ``parcel_labels_lr`` defined in `config.py`.
     See the Workbench documentation here for more details:
     https://www.humanconnectome.org/software/workbench-command/-cifti-export-dense-mapping
 
     """
 
+    # Temporary files written to by Workbench, then loaded and returned
     tempdir = tempfile.gettempdir()
     volume = join(tempdir, "volume.txt")
     left = join(tempdir, "left.txt")
     right = join(tempdir, "right.txt")
 
-    cmd = "wb_command -cifti-export-dense-mapping '{}' COLUMN ".format(
-        parcel_labels_lr)
-    cmd += " -volume-all '{}' -structure ".format(volume)
-    cmd += "-surface CORTEX_LEFT '{}' -surface CORTEX_RIGHT '{}'".format(
-        left, right)
+    if image is None:
+        image = parcel_labels_lr
 
-    system(cmd)
+    basecmd = "wb_command -cifti-export-dense-mapping '{}' COLUMN ".format(
+        image)
+
+    # Subcortex
+    system(basecmd + " -volume-all '{}' -structure ".format(volume))
+
+    # Cortex left
+    system(basecmd + "-surface CORTEX_LEFT '{}'".format(left))
+
+    # Cortex right
+    system(basecmd + "-surface CORTEX_RIGHT '{}'".format(right))
+
     maps = dict()
     maps['subcortex'] = pd.read_table(
         volume, header=None, index_col=0, sep=' ',
