@@ -5,6 +5,8 @@ import numpy as np
 import nibabel as nib
 from pathlib import Path
 
+# TODO __all__ = []
+
 
 def check_map(x):
     """
@@ -211,3 +213,26 @@ def stripext(f):
 def file_exists(f):
     if not Path(f).exists() or Path(f).stat().st_size == 0:
         raise IOError("{} was not successfully written to".format(f))
+
+
+def count_lines(f):
+    """
+    Count number of lines in a file.
+
+    Parameters
+    ----------
+    f : str
+        absolute path to file
+
+    Returns
+    -------
+    int
+        number of lines
+
+    """
+    with open(f, 'r') as fp:
+        nrows = 1
+        for l in fp:
+            if l.rstrip():
+                nrows += 1
+        return nrows

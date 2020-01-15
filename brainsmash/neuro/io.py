@@ -13,6 +13,8 @@ import numpy as np
 
 # TODO refactor this file, what are these variables doing here
 
+# TODO __all__ = []
+
 __root = path.dirname(path.dirname(path.abspath(path.join(__file__))))
 __dlabel = path.abspath(
     path.join(__root, "data",

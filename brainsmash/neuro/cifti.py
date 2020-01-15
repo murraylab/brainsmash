@@ -12,6 +12,7 @@ import tempfile
 from os.path import join
 from os import system
 
+# TODO __all__ = []
 
 # Gross anatomical structure names
 structures = ['diencephalon_ventral', 'brain_stem', 'thalamus', 'cerebellum',

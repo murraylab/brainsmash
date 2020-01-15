@@ -93,7 +93,7 @@ def save_map(fname, x, cmap, flat=False, sphere=False, mw=False):
 
     # # Overwrite existing template data with `dscalars`
 
-    # First, write new data to existing template file
+    # First, create new data to existing template file
     data_to_write = new_data.reshape(np.shape(temp_data))
     new_img = nib.Nifti2Image(data_to_write, affine=of.affine, header=of.header)
     prefix = files.outfile.split(".dscalar.nii")[0]
@@ -236,7 +236,7 @@ def save_workbench_image(dscalars, fname, scene=3, cortex_only=False,
 
     # # Overwrite existing template data with `dscalars`
 
-    # First, write new data to existing template file
+    # First, create new data to existing template file
     data_to_write = new_data.reshape(np.shape(temp_data))
     new_img = nib.Nifti2Image(data_to_write, affine=of.affine, header=of.header)
     prefix = dscalar_template_file.split(".dscalar.nii")[0]

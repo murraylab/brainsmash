@@ -6,6 +6,8 @@ from brainsmash.maps.core import Base, Sampled
 import matplotlib.pyplot as plt
 import numpy as np
 
+# TODO __all__ = []
+
 
 def test_base_variogram_fits(
         brain_map, distmat, nsurr=100, include_naive=False, **params):

@@ -14,6 +14,8 @@ from pathlib import Path
 
 # TODO add Notes/print statement to cortex/subcortex warning of extended runtime
 
+# TODO __all__ = []
+
 
 def cortex(surface, outfile, euclid=False):
     """
@@ -81,8 +83,10 @@ def subcortex(image_file, fout):
     Notes
     -----
     Voxel indices are used as a proxy for physical distance, since the two are
-    related by a simple linear scaling
-    TODO isn't the scaling different along different dimensions??
+    related by a simple linear scaling. NOTE!! This assumes that voxels are
+    cubic, ie that the scaling is equivalent along each dimension, which as I
+    understand it is normally the case with Workbench-style files.
+
     """
 
     if path.exists(fout):

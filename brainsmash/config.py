@@ -1,5 +1,8 @@
 from os.path import join, dirname, abspath
 
+
+# TODO __all__ = []
+
 kernels = ['exp', 'gaussian', 'invdist', 'uniform']
 
 root = dirname(dirname(abspath(__file__)))  # root directory path

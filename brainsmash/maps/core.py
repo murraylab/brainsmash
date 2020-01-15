@@ -11,6 +11,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 
 # np.seterr(all='raise')
+# TODO __all__ = []
 
 
 class Smash:

@@ -11,6 +11,8 @@ X non-parametric p-value
 
 import numpy as np
 
+# TODO __all__ = []
+
 
 def pearsonr_multi(x, y):
     """
