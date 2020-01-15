@@ -4,7 +4,6 @@ from ..neuro.io import load_data
 import numpy as np
 import nibabel as nib
 from pathlib import Path
-from os import stat
 
 
 def check_map(x):
