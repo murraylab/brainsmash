@@ -19,11 +19,11 @@ class Smash:
         Parameters
         ----------
         brain_map : filename
-            Absolute path to a brain map saved as a memory-map (see Notes)
+            Path to a brain map saved as a memory-map (see Notes)
         distmat : filename
-            Absolute path to a distance matrix saved as a memory-map (see Notes)
+            Path to a distance matrix saved as a memory-map (see Notes)
         delimiter : str, default ' '
-            character used to delimit elements in `brain_map` and `distmat`
+            Character used to delimit elements in `brain_map` and `distmat`
         *args
             Variable length argument list (see Notes)
         **kwargs
@@ -52,7 +52,7 @@ class Smash:
         for f in (brain_map, distmat):  # Check file types
             if not checks.is_string_like(f):
                 raise TypeError('expected string-like, got {}'.format(type(f)))
-            exts = ['npy', 'txt']
+            exts = ['.npy', '.txt']
             if not checks.check_extensions(f, exts):
                 raise ValueError("expected txt or npy file, got {}".format(
                     brain_map))
@@ -63,14 +63,14 @@ class Smash:
                         len(args)))
 
         # Load brain map
-        if Path(brain_map).suffix != 'txt':
+        if Path(brain_map).suffix != '.txt':
             raise ValueError(
                 'brain_map: expected txt file, got {}'.format(
                     Path(brain_map).suffix))
         x = np.loadtxt(brain_map, delimiter=delimiter).squeeze()
         n = x.size
 
-        if Path(distmat).suffix == 'txt':  # Load distance matrix
+        if Path(distmat).suffix == '.txt':  # Load distance matrix
             distances = np.loadtxt(distmat, delimiter=delimiter).squeeze()
         else:
             distances = numpy.lib.format.open_memmap(
@@ -87,7 +87,7 @@ class Smash:
             findex = None
             use_base = True
         if not use_base:
-            if not checks.check_extensions(findex, ['npy']):
+            if not checks.check_extensions(findex, ['.npy']):
                 raise ValueError("index: expected npy file, got {}".format(
                     findex))
             index = numpy.lib.format.open_memmap(

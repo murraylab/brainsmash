@@ -153,7 +153,7 @@ def check_image_file(image):
     Parameters
     ----------
     image : filename
-        Path to neuroimaging file
+        Path to neuroimaging file or txt file
 
     Returns
     -------
@@ -163,7 +163,7 @@ def check_image_file(image):
     Raises
     ------
     FileNotFoundError : `image` does not exist
-    nibabel.loadsave.ImageFileError : filetype not recognized by nibabel
+    IOError : filetype not recognized
     ValueError : `image` contains more than one neuroimaging map
 
     """
@@ -172,8 +172,11 @@ def check_image_file(image):
     except FileNotFoundError:
         raise FileNotFoundError("No such file: {}".format(image))
     except nib.loadsave.ImageFileError:
-        raise nib.loadsave.ImageFileError(
-            "Cannot work out file type of {}".format(image))
+        try:
+            x = np.loadtxt(image)
+        except:  # TODO narrow this down
+            raise IOError(
+                "Cannot work out file type of {}".format(image))
     if x.ndim > 1:
         raise ValueError("Image contains more than one map: {}".format(image))
     return x
@@ -280,12 +283,12 @@ def check_outfile(filename):
 
     """
     if Path(filename).exists():
-        raise RuntimeWarning("{} will be overwritten".format(filename))
+        print("WARNING: overwriting {}".format(filename))
 
     # Check that parent directory exists
-    pardir = Path(filename).parent.exists()
-    if not pardir.exists:
-        raise IOError("Output directory does not exist: {}".format(str(pardir)))
+    if not Path(filename).parent.exists():
+        raise IOError("Output directory does not exist: {}".format(
+            str(Path(filename).parent)))
 
 
 def is_string_like(obj):
