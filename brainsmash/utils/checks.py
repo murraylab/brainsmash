@@ -35,6 +35,33 @@ def check_map(x):
         raise ValueError("brain map must be one-dimensional")
 
 
+def check_extensions(filename, exts):
+    """
+    Test filename for a set of file extensions.
+
+    Parameters
+    ----------
+    filename : str
+        path to file
+    exts : List[str]
+        list of allowed file extensions for `filename`
+
+    Returns
+    -------
+    bool
+        True if `filename`'s extensions is in `exts`
+
+    Raises
+    ------
+    TypeError : `filename` is not string-like
+
+    """
+    if not is_string_like(filename):
+        raise TypeError("expected str, got {}".format(type(filename)))
+    ext = Path(filename).suffix
+    return True if ext in exts else False
+
+
 def check_distmat(distmat):
     """
     Check that a distance matrix conforms to expectations.
@@ -233,13 +260,13 @@ def check_surface(surface):
     return coords
 
 
-def check_outfile(f):
+def check_outfile(filename):
     """
     Warn if file exists and throw error if parent directory does not exist.
 
     Parameters
     ----------
-    f : filename
+    filename : filename
         File to be written
 
     Returns
@@ -252,10 +279,21 @@ def check_outfile(f):
     IOError : Parent directory of `f` does not exist
 
     """
-    if Path(f).exists():
-        raise RuntimeWarning("{} will be overwritten".format(f))
+    if Path(filename).exists():
+        raise RuntimeWarning("{} will be overwritten".format(filename))
 
     # Check that parent directory exists
-    pardir = Path(f).parent.exists()
+    pardir = Path(filename).parent.exists()
     if not pardir.exists:
         raise IOError("Output directory does not exist: {}".format(str(pardir)))
+
+
+def is_string_like(obj):
+    """
+    Check whether obj behaves like a string.
+    """
+    try:
+        obj + ''
+    except (TypeError, ValueError):
+        return False
+    return True

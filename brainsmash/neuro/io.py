@@ -178,7 +178,7 @@ def export_cifti_mapping(image=None):
 #
 #     new_data = np.copy(dscalars)
 #
-#     # Load template NIFTI file (from which to create a new file)
+#     # Load template NIFTI file (from which to txt2mmap a new file)
 #     of = nib.load(os.path.join(files.cifti_dir, files.dscalar_template_file))
 #
 #     # Load data from the template file

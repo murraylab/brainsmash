@@ -4,22 +4,26 @@ Core module for generating spatial autocorrelation-preserving surrogate maps.
 
 from ..utils import checks
 from sklearn.linear_model import LinearRegression
+from pathlib import Path
 import numpy as np
+import numpy.lib.format
 
 __all__ = ['Smash']
 
 
 class Smash:
 
-    def __init__(self, brain_map_file, distmat_file, *args, **kwargs):
+    def __init__(self, brain_map, distmat, delimiter=' ', *args, **kwargs):
         """
 
         Parameters
         ----------
-        brain_map_file : filename
+        brain_map : filename
             Absolute path to a brain map saved as a memory-map (see Notes)
-        distmat_file : filename
+        distmat : filename
             Absolute path to a distance matrix saved as a memory-map (see Notes)
+        delimiter : str, default ' '
+            character used to delimit elements in `brain_map` and `distmat`
         *args
             Variable length argument list (see Notes)
         **kwargs
@@ -36,43 +40,62 @@ class Smash:
 
         Raises
         ------
-        TODO
+        TypeError : filenames are not string-like
+        ValueError : filenames do not have expected extensions (txt or npy)
+        RuntimeError : more than one optional argument provided
 
         Examples
         --------
         TODO
 
-
         """
+        for f in (brain_map, distmat):  # Check file types
+            if not checks.is_string_like(f):
+                raise TypeError('expected string-like, got {}'.format(type(f)))
+            exts = ['npy', 'txt']
+            if not checks.check_extensions(f, exts):
+                raise ValueError("expected txt or npy file, got {}".format(
+                    brain_map))
+        if args:  # Check optional arguments
+            if len(args) > 1:
+                raise RuntimeError(
+                    'expected at most one optional argument, got {}'.format(
+                        len(args)))
 
-        # TODO accept text files/memory-mapped arrays as inputs
-
-        # Load map
-        x = np.loadtxt(xf, delimiter=delimiter).squeeze()
-        assert x.ndim == 1
+        # Load brain map
+        if Path(brain_map).suffix != 'txt':
+            raise ValueError(
+                'brain_map: expected txt file, got {}'.format(
+                    Path(brain_map).suffix))
+        x = np.loadtxt(brain_map, delimiter=delimiter).squeeze()
         n = x.size
 
-        # Load distance matrix from file
-        if knn is None:  # load file into memory at once
-            D = np.loadtxt(df, delimiter=delimiter, dtype=np.float32)
-            index = None
-        else:  # load file line-by-line and keep only nearest k neighbors
-            assert (0 > knn > n) and (0 > ns > n)
-            # index, D = utils.knn_dist(f=df, k=knn)
-            # TODO
-
-        # Pass to one of the classes
-        if knn is not None or ns is not None:  # Use Sampled class
-            if deltas is None:
-                deltas = np.arange(0.02, 0.15, 0.02)
-            self.strategy = Sampled(
-                brain_map=x, distmat=D, index=index, kernel=kernel, nbins=nbins, umax=umax,
-                ns=ns, deltas=deltas)
+        if Path(distmat).suffix == 'txt':  # Load distance matrix
+            distances = np.loadtxt(distmat, delimiter=delimiter).squeeze()
         else:
-            if deltas is None:
-                deltas = np.linspace(0.1, 0.9, 9)
-            self.strategy = Base(
-                brain_map=x, distmat=D, kernel=kernel, nbins=nbins, umax=umax, deltas=deltas)
+            distances = numpy.lib.format.open_memmap(
+                distmat, mode='w+', dtype=np.int32, shape=(n, n))
+
+        if args:  # Select strategy
+            findex = args[0]
+            use_base = False
+        elif 'index' in list(kwargs.keys()):
+            use_base = False
+            findex = kwargs['index']
+            del kwargs['index']
+        else:
+            findex = None
+            use_base = True
+        if not use_base:
+            if not checks.check_extensions(findex, ['npy']):
+                raise ValueError("index: expected npy file, got {}".format(
+                    findex))
+            index = numpy.lib.format.open_memmap(
+                findex, mode='w+', dtype=np.int32, shape=(n, n))
+            self.strategy = Sampled(
+                brain_map=x, distmat=distances, index=index, **kwargs)
+        else:
+            self.strategy = Base(brain_map=x, distmat=distances, **kwargs)
 
     def __call__(self, n=1):
         return self.strategy.__call__(n)
