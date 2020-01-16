@@ -1,55 +1,33 @@
 """
 Core module for generating spatial autocorrelation-preserving surrogate maps.
-
-Parcel distance matrix (txt) + parcel neuroimaging file (txt) -> surrogates
-Dense distance matrix (memmap) + dense neuroimaging file (txt) -> surrogates
-
 """
 
 from ..utils import checks
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-# np.seterr(all='raise')
-
-__all__ = ['Smash', 'Base', 'Sampled']
+__all__ = ['Smash']
 
 
 class Smash:
 
-    def __init__(self, xf, df, delimiter=" ", knn=None, ns=None, deltas=None,
-                 kernel='exponential', umax=25, nbins=25):
+    def __init__(self, brain_map_file, distmat_file, *args, **kwargs):
         """
 
         Parameters
         ----------
-        xf : str
-            absolute path to a delimiter-separated text file containing a map
-        df : (N,M) np.ndarray
-            absolute path to a delimiter-separated text file whose i,j-th
-            element corresponds to the distance between areas i and j in map x
-        delimiter : str
-            delimiting character used in the map and distance files
-        knn : int
-            number, k, of nearest neighbor columns to keep in the distance
-            matrix (eg, due to memory constraints when working at dense level)
-        ns : int
-            take a subsample of ns rows from D when fitting variograms
-        deltas : None or array_like
-            proportion of neighbors to include for smoothing, in (0,1); if None,
-            defaults are selected
-        kernel : str
-            kernel with which to smooth permuted maps
-            - 'gaussian' : gaussian function
-            - 'exponential' : exponential decay function
-            - 'inverse' : inverse distance
-            - 'uniform' : uniform weights (distance independent)
-        umax : int
-            percentile of the pairwise distance distribution (in `D`) at which
-            to truncate during variogram fitting
-        nbins : int
-            number of uniformly spaced bins in which to compute smoothed
-            variogram
+        brain_map_file : filename
+            Absolute path to a brain map saved as a memory-map (see Notes)
+        distmat_file : filename
+            Absolute path to a distance matrix saved as a memory-map (see Notes)
+        *args
+            Variable length argument list (see Notes)
+        **kwargs
+            Arbitrary keyword arguments (see Notes)
+
+        Notes
+        -----
+
 
         """
 

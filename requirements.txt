@@ -10,4 +10,3 @@ scikit-learn==0.22.1
 wbplot==1.0.3
 pandas==0.25.3
 requests==2.22.0
-goatools==0.9.9
