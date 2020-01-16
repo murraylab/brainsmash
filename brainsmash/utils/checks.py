@@ -17,7 +17,7 @@ def check_map(x):
     Parameters
     ----------
     x : np.ndarray
-        brain map
+        Brain map scalars
 
     Returns
     -------
@@ -42,7 +42,7 @@ def check_distmat(distmat):
     Parameters
     ----------
     distmat : (N,N) np.ndarray
-        pairwise distance matrix
+        Pairwise distance matrix
 
     Returns
     -------
@@ -95,9 +95,9 @@ def check_sampled(distmat, index):
     Parameters
     ----------
     distmat : np.ndarray or np.memmap
-        pairwise distance matrix
+        Pairwise distance matrix
     index : np.ndarray or np.memmap
-        see :class:`brainsmash.core.Sampled`
+        See :class:`brainsmash.maps.core.Sampled`
 
     Returns
     -------
@@ -105,7 +105,7 @@ def check_sampled(distmat, index):
 
     Raises
     ------
-    ValueError : arguments do not have identical dimensions
+    ValueError : Arguments do not have identical dimensions
     ValueError : `distmat` has not been sorted column-wise
 
     """
@@ -121,17 +121,17 @@ def check_sampled(distmat, index):
 
 def check_image_file(image):
     """
-    Check a neuroimaging file and return scalar data.
+    Check a neuroimaging file and return internal scalar neuroimaging data.
 
     Parameters
     ----------
     image : filename
-        absolute path to neuroimaging file
+        Path to neuroimaging file
 
     Returns
     -------
     (N,) np.ndarray
-        scalar brain map values
+        Scalar brain map values
 
     Raises
     ------
@@ -159,7 +159,7 @@ def check_deltas(deltas):
     Parameters
     ----------
     deltas : np.ndarray or List[float]
-        proportions of neighbors to include for smoothing, in (0, 1]
+        Proportions of neighbors to include for smoothing, in (0, 1]
 
     Returns
     -------
@@ -168,7 +168,7 @@ def check_deltas(deltas):
     Raises
     ------
     TypeError : `deltas` is not a List or np.ndarray object
-    ValueError : one or more elements of `deltas` lies outside (0,1]
+    ValueError : One or more elements of `deltas` lies outside (0,1]
 
     """
     if type(deltas) is not np.ndarray and type(deltas) is not list:
@@ -185,8 +185,8 @@ def check_umax(umax):
     Parameters
     ----------
     umax : int
-        percentile of the pairwise distance distribution at which to truncate
-        during variogram fitting
+        Percentile of the pairwise distance distribution at which to truncate
+        during variogram fitting.
 
     Returns
     -------
@@ -213,11 +213,11 @@ def check_surface(surface):
     Parameters
     ----------
     surface : filename
-        absolute path to GIFTI-format surface file (.surf.gii)
+        Path to GIFTI-format surface file (.surf.gii)
 
     Returns
     -------
-    (N,3) ndarray
+    (N,3) np.ndarray
         MNI coordinates. columns 0,1,2 correspond to X,Y,Z coord, respectively
 
     Raises
@@ -240,7 +240,7 @@ def check_outfile(f):
     Parameters
     ----------
     f : filename
-        file to be written
+        File to be written
 
     Returns
     -------
@@ -249,7 +249,7 @@ def check_outfile(f):
     Raises
     ------
     RuntimeWarning : `f` exists and will be overwritten
-    IOError : parent directory of `f` does not exist
+    IOError : Parent directory of `f` does not exist
 
     """
     if Path(f).exists():

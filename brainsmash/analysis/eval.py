@@ -18,16 +18,16 @@ def test_base_variogram_fits(
     Parameters
     ----------
     brain_map : (N,) np.ndarray
-        scalar brain map
+        Scalar brain map
     distmat : (N,N) np.ndarray
-        pairwise distance matrix between elements of `x`
+        Pairwise distance matrix between elements of `x`
     nsurr : int, default 100
-        number of simulated surrogate maps from which to compute variograms
+        Number of simulated surrogate maps from which to compute variograms
     include_naive : bool, default False
-        compute and plot randomly shuffled ("naive") surrogate maps for
+        Compute and plot randomly shuffled ("naive") surrogate maps for
         comparison
     params
-        keyword arguments for :class:`brainsmash.maps.Base`
+        Keyword arguments for :class:`brainsmash.maps.Base`
 
     Returns
     -------
@@ -109,18 +109,18 @@ def test_sampled_variogram_fits(
     Parameters
     ----------
     brain_map : (N,) np.ndarray
-        scalar brain map
+        Scalar brain map
     distmat : (N,N) np.ndarray or np.memmap
-        pairwise distance matrix between elements of `x`
+        Pairwise distance matrix between elements of `x`
     index : (N,N) np.ndarray or np.memmap
-        see :class:`brainsmash.core.Sampled`
+        See :class:`brainsmash.core.Sampled`
     nsurr : int, default 50
-        number of simulated surrogate maps from which to compute variograms
+        Number of simulated surrogate maps from which to compute variograms
     include_naive : bool, default False
-        compute and plot randomly shuffled ("naive") surrogate maps for
-        comparison
+        Compute and plot randomly shuffled ("naive") surrogate maps for
+        comparison.
     params
-        keyword arguments for :class:`brainsmash.maps.Sampled`
+        Keyword arguments for :class:`brainsmash.maps.Sampled`
 
     Returns
     -------

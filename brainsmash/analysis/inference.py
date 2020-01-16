@@ -62,7 +62,7 @@ def pairwise_r(X):
     Returns
     -------
     (N*(N-1)/2,) np.ndarray
-        flatten array of unique Pearson correlations
+        Flattened array of unique Pearson correlations
 
     """
     rp = pearsonr_multi(X, X)
@@ -77,14 +77,14 @@ def nonparp(stat, dist):
     Parameters
     ----------
     stat : float
-        test statistic
+        Test statistic
     dist : (N,) np.ndarray
-        null distribution for test statistic
+        Null distribution for test statistic
 
     Returns
     -------
     float
-        fraction of `dist` values more extreme than `stat`
+        Fraction of `dist` element which are more extreme than `stat`
 
     """
     n = float(len(dist))

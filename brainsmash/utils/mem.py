@@ -19,31 +19,31 @@ def create(dist_file, output_dir, maskfile=None, delimiter=' '):
 
     Parameters
     ----------
-    dist_file : str
-        path to `delimiter`-separated distance matrix file
-    output_dir : str
-        absolute path to directory in which output files will be written
-    maskfile : str or None, default None
-        absolute path to a neuroimaging file containing a mask. scalar data are
+    dist_file : filename
+        Path to `delimiter`-separated distance matrix file
+    output_dir : filename
+        Path to directory in which output files will be written
+    maskfile : filename or None, default None
+        Path to a neuroimaging file containing a mask. scalar data are
         cast to boolean; all elements not equal to zero will therefore be masked
     delimiter : str
-        delimiting character in `infile`
+        Delimiting character in `infile`
 
     Returns
     -------
     dict
-        keys are arguments expected by :class:`brainsmash.maps.core.Sampled`,
+        Keys are arguments expected by :class:`brainsmash.maps.core.Sampled`,
         and values are the absolute paths to the associated files on disk.
 
     Notes
     -----
-    if `maskfile` is not None, a binary mask.txt file will also be written to
+    If `maskfile` is not None, a binary mask.txt file will also be written to
     the output directory.
 
     Raises
     ------
     IOError : `output_dir` doesn't exist
-    ValueError : mask image and distance matrix have inconsistent sizes
+    ValueError : Mask image and distance matrix have inconsistent sizes
 
     """
 
@@ -100,5 +100,4 @@ def create(dist_file, output_dir, maskfile=None, delimiter=' '):
         del fpd
         del fpi
 
-    # Return filenames
-    return {'distmat': npydfile, 'index': npyifile}
+    return {'distmat': npydfile, 'index': npyifile}  # Return filenames

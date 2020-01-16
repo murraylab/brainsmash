@@ -24,19 +24,17 @@ def cortex(surface, outfile, euclid=False):
 
     Parameters
     ----------
-    surface : str
-        absolute path to a surface GIFTI file (.surf.gii) from which to compute
-        distances
-    outfile : str
-        name of output file, WITHOUT extension, WITH absolute path to directory
-        in which it will be saved
+    surface : filename
+        Path to a surface GIFTI file (.surf.gii) from which to compute distances
+    outfile : filename
+        Path to output file
     euclid : bool, default False
-        if True, compute Euclidean distances; if False, compute geodesic dist
+        If True, compute Euclidean distances; if False, compute geodesic dist
 
     Returns
     -------
-    str
-        path to output distance matrix file
+    filename : str
+        Path to output distance matrix file
 
     """
 
@@ -63,17 +61,17 @@ def subcortex(image_file, fout):
 
     Parameters
     ----------
-    image_file : str
-        absolute path to a NIFTI-2 format neuroimaging file (eg .dscalar.nii).
-        MNI coordinates for each subcortical voxel are read from this file's
-        metadata
-    fout : str
-        absolute path to output text file WITHOUT extension (to be created)
+    image_file : filename
+        Path to a CIFTI-2 format neuroimaging file (eg .dscalar.nii). MNI
+        coordinates for each subcortical voxel are read from this file's
+        metadata.
+    fout : filename
+        Path to output text file WITHOUT extension (to be created)
 
     Returns
     -------
-    output : str
-        path to output text file
+    filename : str
+        Path to output text file
 
     Notes
     -----
@@ -112,20 +110,19 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
 
     Parameters
     ----------
-    infile : str
-        `delimiter`-separated distance matrix file, eg the file written by
-        ``cortex``
-    dlabel_file : str
-        path to parcellation file  (.dlabel.nii)
-    outfile : str
-        absolute path to output text file WITHOUT extension (to be created)
+    infile : filename
+        Path to `delimiter`-separated distance matrix file
+    dlabel_file : filename
+        Path to parcellation file  (.dlabel.nii)
+    outfile : filename
+        Path to output text file WITHOUT extension (to be created)
     delimiter : str, default " "
-        delimiter between elements in `infile`
+        Delimiter between elements in `infile`
 
     Returns
     -------
-    str
-        path to output parcellated distance matrix file
+    filename : str
+        Path to output parcellated distance matrix file
 
     Notes
     -----
@@ -225,15 +222,15 @@ def _euclidean(dist_file, coords):
 
     Parameters
     ----------
-    dist_file : str
-        absolute path to output file, with .txt extension
+    dist_file : filename
+        Path to output file, with .txt extension
     coords : (N,3) np.ndarray
         MNI coordinates for N voxels/vertices
 
     Returns
     -------
-    str
-        path to output distance matrix file
+    filename : str
+        Path to output distance matrix file
 
     Notes
     -----
@@ -259,18 +256,17 @@ def _geodesic(surface, dist_file, coords):
 
     Parameters
     ----------
-    surface : str
-        absolute path to a surface GIFTI file (.surf.gii) from which to compute
-        distances
-    dist_file : str
-        absolute path to output file, with .txt extension
+    surface : filename
+        Path to a surface GIFTI file (.surf.gii) from which to compute distances
+    dist_file : filename
+        Path to output file, with .txt extension
     coords : (N,3) np.ndarray
         MNI coordinates for N voxels/vertices
 
     Returns
     -------
-    str
-        path to output distance matrix file
+    filename : str
+        Path to output distance matrix file
 
     Notes
     -----

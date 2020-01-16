@@ -22,12 +22,13 @@ def _load_gifti(f):
 
     Parameters
     ----------
-    f : str
-        path to gifti (.gii) file
+    f : filename
+        Path to GIFTI-format (.gii) neuroimaging file
 
     Returns
     -------
     np.ndarray
+        Neuroimaging data in `f`
 
     """
     return nib.load(f).darrays[0].data
@@ -40,12 +41,13 @@ def _load_cifti2(f):
 
     Parameters
     ----------
-    f : str
-        path to nifti (.nii) file
+    f : filename
+        Path to CIFTI-2 format (.nii) file
 
     Returns
     -------
     np.ndarray
+        Neuroimaging data in `f`
 
     Notes
     -----
@@ -62,13 +64,13 @@ def load_data(f):
 
     Parameters
     ----------
-    f : str
-        path to CIFTI-format neuroimaging file
+    f : filename
+        Path to CIFTI-format neuroimaging file
 
     Returns
     -------
-    np.ndarray (N,)
-        map data stored in neuroimaging file
+    (N,) np.ndarray
+        Neuroimaging data stored in `f`
 
     Raises
     ------
@@ -90,16 +92,16 @@ def export_cifti_mapping(image=None):
 
     Parameters
     ----------
-    image : str or None, default None
-        path to NIFTI-2 format neuroimaging file, eg .dscalar.nii. the metadata
+    image : filename or None, default None
+        Path to NIFTI-2 format (.nii) neuroimaging file. The metadata
         from this file is used to determine the CIFTI indices and voxel
-        coordinates of elements in the image. if None, use ``parcel_labels_lr``
+        coordinates of elements in the image. If None, use ``parcel_labels_lr``
         defined in `brainsmash/config.py`.
 
     Returns
     -------
     maps : dict
-        a dictionary containing the maps between CIFTI indices, surface
+        A dictionary containing the maps between CIFTI indices, surface
         vertices, and volume voxels. Keys include 'cortex_left',
         'cortex_right`, and 'subcortex'.
 

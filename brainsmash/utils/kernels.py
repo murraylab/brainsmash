@@ -67,15 +67,21 @@ def invdist(d):
     Parameters
     ----------
     d : (N,) or (M,N) np.ndarray
-        one- or two-dimensional array of distances
+        One- or two-dimensional array of distances
 
     Returns
     -------
     (N,) or (M,N) np.ndarray
-        inverse distance, ie d^(-1)
+        Inverse distance, ie d^(-1)
+
+    Raises
+    ZeroDivisionError : `d` includes zero value
 
     """
-    return 1. / d
+    try:
+        return 1. / d
+    except ZeroDivisionError as e:
+        raise ZeroDivisionError(e)
 
 
 def uniform(d):
@@ -85,16 +91,16 @@ def uniform(d):
     Parameters
     ----------
     d : (N,) or (M,N) np.ndarray
-        one- or two-dimensional array of distances
+        One- or two-dimensional array of distances
 
     Returns
     -------
     (N,) or (M,N) np.ndarray
-        uniform kernel weights
+        Uniform kernel weights
 
     Notes
     -----
-    Each element normalized to 1/N such that columns sum to unity
+    Each element is normalized to 1/N such that columns sum to unity.
 
     """
     try:  # 2-dim
