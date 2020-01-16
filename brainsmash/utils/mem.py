@@ -2,6 +2,7 @@
 Convert large data files written to disk to memory-mapped arrays for memory-
 efficient data retrieval.
 """
+
 from ..utils import files
 from ..utils import checks
 import numpy.lib.format
@@ -38,6 +39,11 @@ def create(dist_file, output_dir, maskfile=None, delimiter=' '):
     -----
     if `maskfile` is not None, a binary mask.txt file will also be written to
     the output directory.
+
+    Raises
+    ------
+    IOError : `output_dir` doesn't exist
+    ValueError : mask image and distance matrix have inconsistent sizes
 
     """
 

@@ -70,6 +70,10 @@ def load_data(f):
     np.ndarray (N,)
         map data stored in neuroimaging file
 
+    Raises
+    ------
+    TypeError : `f` has unknown filetype
+
     """
     try:
         return _load_gifti(f)

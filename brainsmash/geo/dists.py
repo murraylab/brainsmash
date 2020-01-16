@@ -12,7 +12,6 @@ from tempfile import gettempdir
 from os import path
 from os import system
 import numpy as np
-from pathlib import Path
 
 # TODO add Notes/print statement to cortex/subcortex warning of extended runtime
 
@@ -41,13 +40,7 @@ def cortex(surface, outfile, euclid=False):
 
     """
 
-    if path.exists(outfile):
-        raise RuntimeWarning("{} will be overwritten".format(outfile))
-
-    # Check that parent directory exists
-    pardir = Path(outfile).parent
-    if not pardir.exists:
-        raise IOError("Output directory does not exist: {}".format(str(pardir)))
+    checks.check_outfile(outfile)
 
     # Strip file extensions and define output text file
     outfile = files.stripext(outfile)
@@ -89,15 +82,13 @@ def subcortex(image_file, fout):
     cubic, ie that the scaling is equivalent along each dimension, which as I
     understand it is normally the case with Workbench-style files.
 
+    Raises
+    ------
+    ValueError : `image_file` header does not contain volume information
+
     """
 
-    if path.exists(fout):
-        raise RuntimeWarning("{} will be overwritten".format(fout))
-
-    # Check that parent directory exists
-    pardir = Path(fout).parent
-    if not pardir.exists:
-        raise IOError("Output directory does not exist: {}".format(str(pardir)))
+    checks.check_outfile(fout)
 
     # Strip file extensions and define output text file
     fout = files.stripext(fout)
@@ -146,15 +137,14 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
     number of elements. If you need to isolate one anatomical structure from
     `dlabel_file`, see the following Workbench function:
     https://www.humanconnectome.org/software/workbench-command/-cifti-separate
+
+    Raises
+    ------
+    ValueError : `infile` and `dlabel_file` have inconsistent sizes
+
     """
 
-    if path.exists(outfile):
-        raise RuntimeWarning("{} will be overwritten".format(outfile))
-
-    # Check that parent directory exists
-    pardir = Path(outfile).parent
-    if not pardir.exists:
-        raise IOError("Output directory does not exist: {}".format(str(pardir)))
+    checks.check_outfile(outfile)
 
     # Strip file extensions and define output text file
     fout = files.stripext(outfile)

@@ -27,6 +27,20 @@ class Smash:
 
         Notes
         -----
+        TODO
+
+        See Also
+        --------
+        :class:`brainsmash.maps.core.Base`
+        :class:`brainsmash.maps.core.Sampled`
+
+        Raises
+        ------
+        TODO
+
+        Examples
+        --------
+        TODO
 
 
         """
@@ -382,12 +396,15 @@ class Base:
             distances at which smoothed variogram was computed (returned only if
             return_u0 is True)
 
+        Raises
+        ------
+        ValueError : `v` has unexpected size (not equal to `self.u`).
+
         """
         u = self.u[self.uidx]
         v = v[self.uidx]
         if len(u) != len(v):
-            raise RuntimeError("variogram values provided to maps.core."
-                               "Base.smooth_variogram() have unexpected size")
+            raise RuntimeError("variogram values  have unexpected size")
         u0 = np.linspace(u.min(), u.max(), self.nbins)
 
         if h is None:  # if h is None, set bandwidth equal to 3x bin spacing
@@ -529,6 +546,11 @@ class Sampled:
             the empirical map. This preserves the distribution of values in the
             map, at the expense of worsening the simulated surrogate maps'
             variograms fits.
+
+        Raises
+        ------
+        ValueError : `brain_map` and `distmat` have inconsistent sizes
+
         """
 
         # TODO add checks for other arguments
@@ -750,11 +772,13 @@ class Sampled:
             distances at which smoothed variogram was computed (returned only if
             return_u0 is True)
 
+        Raises
+        ------
+        ValueError : `u` and `v` are not same size
+
         """
         if len(u) != len(v):
-            raise RuntimeError(
-                "variogram values provided to maps.core."
-                "Sampled.smooth_variogram() have unexpected size")
+            raise ValueError("u and v must have same number of elements")
 
         # Subtract each element of u0 from each element of u
         # Each row corresponds to a unique element of u0

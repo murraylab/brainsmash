@@ -27,6 +27,10 @@ def pearsonr_multi(x, y):
     -------
     (N,M) np.ndarray
 
+    Raises
+    ------
+    ValueError : `x` and `y` are not same size along second axis
+
     """
     if x.ndim == 1:
         x = x.reshape(1, -1)
@@ -35,7 +39,7 @@ def pearsonr_multi(x, y):
 
     n = x.shape[1]
     if n != y.shape[1]:
-        raise ValueError('x and y must be same size in 2nd dimension.')
+        raise ValueError('x and y must be same size along axis=1')
 
     mu_x = x.mean(axis=1)
     mu_y = y.mean(axis=1)
@@ -53,7 +57,7 @@ def pairwise_r(X):
 
     Parameters
     ----------
-    X : (N, M) np.ndarray
+    X : (N,M) np.ndarray
 
     Returns
     -------

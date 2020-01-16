@@ -1,6 +1,7 @@
 from .. import config
 from ..utils import kernels
 from ..neuro.io import load_data
+from pathlib import Path
 import numpy as np
 import nibabel as nib
 
@@ -22,6 +23,11 @@ def check_map(x):
     -------
     None
 
+    Raises
+    ------
+    TypeError : `x` is not a np.ndarray object
+    ValueError : `x` is not one-dimensional
+
     """
     if type(x) is not np.ndarray:
         raise TypeError("brain map must be a numpy array")
@@ -42,8 +48,11 @@ def check_distmat(distmat):
     -------
     None
 
-    """
+    Raises
+    ------
+    ValueError : `distmat` is not symmetric
 
+    """
     if not np.allclose(distmat, distmat.T):
         raise ValueError("distance matrix must be symmetric")
 
@@ -54,12 +63,21 @@ def check_kernel(kernel):
 
     Parameters
     ----------
-    kernel : str
-        kernel selection
+    kernel : 'exp' or 'gaussian' or 'invdist' or 'uniform'
+        Kernel selection
 
     Returns
     -------
     Callable
+
+    Notes
+    -----
+    If `kernel` is included in `config.py`, a function with the same name must
+    be defined in `utils.kernels.py`.
+
+    Raises
+    ------
+    NotImplementedError : `kernel` is not included in `config.py`
 
     """
     if kernel not in config.kernels:
@@ -85,6 +103,11 @@ def check_sampled(distmat, index):
     -------
     None
 
+    Raises
+    ------
+    ValueError : arguments do not have identical dimensions
+    ValueError : `distmat` has not been sorted column-wise
+
     """
     if distmat.shape != index.shape:
         raise ValueError("distmat and index must have identical dimensions")
@@ -102,13 +125,19 @@ def check_image_file(image):
 
     Parameters
     ----------
-    image : str
+    image : filename
         absolute path to neuroimaging file
 
     Returns
     -------
     (N,) np.ndarray
         scalar brain map values
+
+    Raises
+    ------
+    FileNotFoundError : `image` does not exist
+    nibabel.loadsave.ImageFileError : filetype not recognized by nibabel
+    ValueError : `image` contains more than one neuroimaging map
 
     """
     try:
@@ -136,6 +165,11 @@ def check_deltas(deltas):
     -------
     None
 
+    Raises
+    ------
+    TypeError : `deltas` is not a List or np.ndarray object
+    ValueError : one or more elements of `deltas` lies outside (0,1]
+
     """
     if type(deltas) is not np.ndarray and type(deltas) is not list:
         raise TypeError("parameter 'deltas' must be a list or numpy array")
@@ -158,6 +192,10 @@ def check_umax(umax):
     -------
     int
 
+    Raises
+    ------
+    ValueError : `umax` lies outside range (0,100]
+
     """
     try:
         umax = int(umax)
@@ -174,13 +212,17 @@ def check_surface(surface):
 
     Parameters
     ----------
-    surface : str
+    surface : filename
         absolute path to GIFTI-format surface file (.surf.gii)
 
     Returns
     -------
     (N,3) ndarray
         MNI coordinates. columns 0,1,2 correspond to X,Y,Z coord, respectively
+
+    Raises
+    ------
+    ValueError : `surface` does not contain 3 columns (assumed to be X, Y, Z)
 
     """
     coords = load_data(surface)
@@ -189,3 +231,31 @@ def check_surface(surface):
         raise ValueError(
             "expected three columns in surface file but found {}".format(ndim))
     return coords
+
+
+def check_outfile(f):
+    """
+    Warn if file exists and throw error if parent directory does not exist.
+
+    Parameters
+    ----------
+    f : filename
+        file to be written
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    RuntimeWarning : `f` exists and will be overwritten
+    IOError : parent directory of `f` does not exist
+
+    """
+    if Path(f).exists():
+        raise RuntimeWarning("{} will be overwritten".format(f))
+
+    # Check that parent directory exists
+    pardir = Path(f).parent.exists()
+    if not pardir.exists:
+        raise IOError("Output directory does not exist: {}".format(str(pardir)))
