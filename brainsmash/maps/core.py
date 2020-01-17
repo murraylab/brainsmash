@@ -6,7 +6,6 @@ from ..utils import checks
 from sklearn.linear_model import LinearRegression
 from pathlib import Path
 import numpy as np
-import numpy.lib.format
 
 __all__ = ['Smash']
 
@@ -61,21 +60,16 @@ class Smash:
                 raise RuntimeError(
                     'expected at most one optional argument, got {}'.format(
                         len(args)))
-
-        # Load brain map
-        if Path(brain_map).suffix != '.txt':
+        if Path(brain_map).suffix != '.txt':  # Load brain map
             raise ValueError(
                 'brain_map: expected txt file, got {}'.format(
                     Path(brain_map).suffix))
         x = np.loadtxt(brain_map, delimiter=delimiter).squeeze()
         n = x.size
-
         if Path(distmat).suffix == '.txt':  # Load distance matrix
             distances = np.loadtxt(distmat, delimiter=delimiter).squeeze()
         else:
-            distances = numpy.lib.format.open_memmap(
-                distmat, mode='w+', dtype=np.int32, shape=(n, n))
-
+            distances = np.load(distmat, mmap_mode='r')
         if args:  # Select strategy
             findex = args[0]
             use_base = False
@@ -86,12 +80,11 @@ class Smash:
         else:
             findex = None
             use_base = True
-        if not use_base:
+        if not use_base:  # Use Sampled
             if not checks.check_extensions(findex, ['.npy']):
                 raise ValueError("index: expected npy file, got {}".format(
                     findex))
-            index = numpy.lib.format.open_memmap(
-                findex, mode='w+', dtype=np.int32, shape=(n, n))
+            index = np.load(findex, mmap_mode='r')
             self.strategy = Sampled(
                 brain_map=x, distmat=distances, index=index, **kwargs)
         else:
