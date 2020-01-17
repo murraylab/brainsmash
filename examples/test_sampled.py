@@ -29,10 +29,10 @@ myelin[100] = np.nan
 distmat = np.load(dist_file, mmap_mode='r')
 index = np.load(index_file, mmap_mode='r')
 
-# # Confirm visually that the simulated variograms fit well
-# test_sampled_variogram_fits(
-#     brain_map=myelin, distmat=distmat, index=index, include_naive=True)
-#
+# Confirm visually that the simulated variograms fit well
+test_sampled_variogram_fits(
+    brain_map=myelin, distmat=distmat, index=index, include_naive=True)
+
 # # Compare to the variogram fits when resampling surrogate map values from the
 # # empirical brain map
 # test_sampled_variogram_fits(

@@ -41,9 +41,9 @@ fnames = {'distmat': '/Users/jbb/Documents/Repos/brainsmash/examples/distmat.npy
           'index': '/Users/jbb/Documents/Repos/brainsmash/examples/index.npy'}
 
 # # Create a few surrogate maps and plot them
-# generator = Smash(
-#     brain_map=image_txt_file, distmat=fnames['distmat'],
-#     index=fnames['index'], resample=False)
+generator = Smash(
+    brain_map=image_txt_file, distmat=fnames['distmat'],
+    index=fnames['index'], resample=False)
 #
 # surrogate_maps = generator(n=3)
 #

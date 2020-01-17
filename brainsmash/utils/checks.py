@@ -29,7 +29,7 @@ def check_map(x):
     ValueError : `x` is not one-dimensional
 
     """
-    if type(x) is not np.ndarray:
+    if not isinstance(x, np.ndarray):
         raise TypeError("brain map must be a numpy array")
     if x.ndim != 1:
         raise ValueError("brain map must be one-dimensional")
@@ -138,7 +138,7 @@ def check_sampled(distmat, index):
     """
     if distmat.shape != index.shape:
         raise ValueError("distmat and index must have identical dimensions")
-    if type(distmat) is np.ndarray:
+    if isinstance(distmat, np.ndarray):
         if not np.all(distmat[:, 1:] >= distmat[:, :-1]):
             raise ValueError("distmat must be sorted column-wise")
     else:  # just test the first row
@@ -201,7 +201,7 @@ def check_deltas(deltas):
     ValueError : One or more elements of `deltas` lies outside (0,1]
 
     """
-    if type(deltas) is not np.ndarray and type(deltas) is not list:
+    if not isinstance(deltas, list) and not isinstance(deltas, np.ndarray):
         raise TypeError("parameter 'deltas' must be a list or numpy array")
     for d in deltas:
         if d <= 0 or d > 1:

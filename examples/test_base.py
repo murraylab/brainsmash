@@ -25,6 +25,8 @@ test_base_variogram_fits(brain_map=myelin, distmat=distmat, resample=True)
 
 # Create a few surrogate maps and plot them
 generator = Base(brain_map=myelin, distmat=distmat, resample=True)
+
+
 surrogate_maps = generator(n=3)
 for i in range(3):
     wbplot.pscalar(join(
