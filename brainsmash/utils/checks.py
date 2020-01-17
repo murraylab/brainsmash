@@ -174,7 +174,7 @@ def check_image_file(image):
     except nib.loadsave.ImageFileError:
         try:
             x = np.loadtxt(image)
-        except:  # TODO narrow this down
+        except (TypeError, ValueError):
             raise IOError(
                 "Cannot work out file type of {}".format(image))
     if x.ndim > 1:

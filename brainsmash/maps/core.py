@@ -577,8 +577,11 @@ class Sampled:
         checks.check_deltas(deltas)
 
         if brain_map.size != distmat.shape[0]:
-            raise ValueError("brain map and distance matrix must be same "
-                             "size along first dimension")
+            e = "brain map and distance matrix must be same size along first "
+            e += "dimension\n"
+            e += "brain_map.size: {}\n".format(brain_map.size)
+            e += "distmat.shape: {}".format(distmat.shape)
+            raise ValueError(e)
 
         n = brain_map.size
         self.resample = resample

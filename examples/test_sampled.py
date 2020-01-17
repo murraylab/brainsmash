@@ -41,7 +41,7 @@ index = np.load(index_file, mmap_mode='r')
 
 # Create a few surrogate maps and plot them
 generator = Sampled(brain_map=myelin, distmat=distmat,
-                    index=index, resample=False)
+                    index=index, resample=True)
 surrogate_maps = generator(n=3)
 
 params = {'pos-percent': (2, 98),
