@@ -3,6 +3,7 @@ Core module for generating spatial autocorrelation-preserving surrogate maps.
 """
 
 from ..utils import checks
+from ..neuro import io
 from sklearn.linear_model import LinearRegression
 from pathlib import Path
 import numpy as np
@@ -21,8 +22,12 @@ def _dataio(x, delimiter=None):
         elif Path(x).suffix == ".txt":  # text file
             return np.loadtxt(x, delimiter=delimiter).squeeze()
         else:
-            raise ValueError(
-                "expected .npy or .txt file, got {}".format(Path(x).suffix))
+            try:
+                return io.load_data(x)
+            except TypeError:
+                raise ValueError(
+                    "expected npy or txt or nii or gii file, got {}".format(
+                        Path(x).suffix))
     else:
         if not isinstance(x, np.ndarray):
             raise TypeError(
@@ -307,7 +312,7 @@ class Base:
         self.kernel = kernel  # Smoothing kernel selection
         self._ikn = np.arange(n)[:, None]
         self._triu = np.triu_indices(self._nmap, k=1)  # upper triangular inds
-        self._u = distmat[self._triu]  # variogram x-coordinate
+        self._u = self._dmat[self._triu]  # variogram x-coordinate
         self._v = self.compute_variogram(self._brain_map)  # variogram y-coord
 
         # Get indices of pairs with u < umax'th percentile
@@ -315,7 +320,7 @@ class Base:
         self._uisort = np.argsort(self._u[self._uidx])
 
         # Find sorted indices of first `kmax` elements of each row of dist. mat.
-        self._disort = np.argsort(distmat, axis=-1)
+        self._disort = np.argsort(self._dmat, axis=-1)
         self._jkn = dict.fromkeys(deltas)
         self._dkn = dict.fromkeys(deltas)
         for delta in deltas:
@@ -712,7 +717,7 @@ class Sampled:
         self.brain_map = brain_map
         self.dmat = distmat
         self.index = index
-        n = brain_map.size
+        n = self._brain_map.size
         self.resample = resample
         self.nbins = int(nbins)
         self.deltas = deltas

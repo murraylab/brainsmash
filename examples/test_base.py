@@ -13,19 +13,20 @@ output_dir = "/Users/jbb/Desktop/"
 image = join(data_root, "myelin_L.pscalar.nii")
 matrix = join(data_root, "left_parcel_distmat.npy")
 
-myelin = load_data(image)
-distmat = np.load(matrix)
+# myelin = load_data(image)
+# distmat = np.load(matrix)
 
-# Confirm visually that the simulated variograms fit well
-test_base_variogram_fits(brain_map=myelin, distmat=distmat, include_naive=True)
+# # Confirm visually that the simulated variograms fit well
+# test_base_variogram_fits(brain_map=myelin, distmat=distmat, include_naive=True)
+#
+# # Compare to the variogram fits when resampling surrogate map values from the
+# # empirical brain map
+# test_base_variogram_fits(brain_map=myelin, distmat=distmat, resample=True)
 
-# Compare to the variogram fits when resampling surrogate map values from the
-# empirical brain map
-test_base_variogram_fits(brain_map=myelin, distmat=distmat, resample=True)
 
 # Create a few surrogate maps and plot them
-generator = Base(brain_map=myelin, distmat=distmat, resample=True)
-
+# generator = Base(brain_map=myelin, distmat=distmat, resample=True)
+generator = Base(brain_map=image, distmat=matrix, resample=True)
 
 surrogate_maps = generator(n=3)
 for i in range(3):

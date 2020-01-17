@@ -20,18 +20,21 @@ def upsample(x):
 
 
 # Read data from file
-image_file = join(data_root, "cortex_left_myelin.npy")
-dist_file = join(data_root, "cortex_left_distmat.npy")
+# image_file = join(data_root, "cortex_left_myelin.npy")
+image_file = join(data_root, "myelin_L.txt")
+# dist_file = join(data_root, "cortex_left_distmat.npy")
 index_file = join(data_root, "cortex_left_index.npy")
+dist_file = join(data_root, "distmat.npy")
+# index_file = join(data_root, "index.npy")
 
-myelin = np.load(image_file)
-myelin[100] = np.nan
+# myelin = np.load(image_file)
+# myelin[100] = np.nan
 distmat = np.load(dist_file, mmap_mode='r')
 index = np.load(index_file, mmap_mode='r')
 
 # Confirm visually that the simulated variograms fit well
-test_sampled_variogram_fits(
-    brain_map=myelin, distmat=distmat, index=index, include_naive=True)
+# test_sampled_variogram_fits(
+#     brain_map=myelin, distmat=distmat, index=index, include_naive=True)
 
 # # Compare to the variogram fits when resampling surrogate map values from the
 # # empirical brain map
@@ -40,8 +43,10 @@ test_sampled_variogram_fits(
 #     resample=True)
 
 # Create a few surrogate maps and plot them
-generator = Sampled(brain_map=myelin, distmat=distmat,
-                    index=index, resample=True)
+# generator = Sampled(brain_map=myelin, distmat=distmat,
+#                     index=index, resample=True)
+generator = Sampled(brain_map=image_file, distmat=dist_file,
+                    index=index_file, resample=True)
 surrogate_maps = generator(n=3)
 
 params = {'pos-percent': (2, 98),
