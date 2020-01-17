@@ -10,6 +10,8 @@ import numpy as np
 __all__ = ['Smash']
 
 
+# TODO add get property methods instead of accessing attributes directly
+
 class Smash:
 
     def __init__(self, brain_map, distmat, delimiter=' ', *args, **kwargs):
@@ -108,6 +110,9 @@ class Smash:
     def lin_regress(self, *args, **kwargs):
         return self.strategy.lin_regress(*args, **kwargs)
 
+    def sample(self):
+        return self.strategy.sample()
+
     @property
     def n_(self):
         return self.strategy.n
@@ -135,10 +140,6 @@ class Smash:
     @property
     def kernel_(self):
         return self.strategy.kernel_name
-
-    @property
-    def sample(self):
-        return self.strategy.sample()
 
 
 class Base:
@@ -475,7 +476,7 @@ class Base:
         np.arange(self.n)
 
         """
-        return np.arange(self.n)
+        return np.arange(self.n, dtype=np.int32)
 
 
 class Sampled:
@@ -591,7 +592,7 @@ class Sampled:
         self.n = int(n)
         self.x = np.ma.masked_array(data=brain_map, mask=np.isnan(brain_map))
         self.user_h = h
-        self.dptile = umax
+        self.umax = umax
         self.knn = knn
         self.ikn = np.arange(n)[:, None]
 
@@ -603,8 +604,8 @@ class Sampled:
         self.kernel_name = kernel
         self.kernel = kernel_callable
 
-        self.umax = np.percentile(self.D, umax)
-        self.u0 = np.linspace(self.D.min(), self.umax, self.nbins)
+        self._umax_value = np.percentile(self.D, umax)
+        self.u0 = np.linspace(self.D.min(), self._umax_value, self.nbins)
 
         if h is not None:
             self._h = h
@@ -655,7 +656,7 @@ class Sampled:
 
             # Variogram ordinates; use nearest neighbors because local effect
             u = self.D[idx, :]
-            uidx = np.where(u < self.umax)
+            uidx = np.where(u < self._umax_value)
 
             # Smooth empirical variogram
             smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_u0=True)
@@ -711,7 +712,7 @@ class Sampled:
         ----------
         x : (N,) np.ndarray
             Brain map scalars
-        idx : (ns,) np.ndarray
+        idx : (ns,) np.ndarray[int]
             Indices of randomly sampled points (ie, areas)
 
         Returns
@@ -850,4 +851,5 @@ class Sampled:
             Indices of randomly sampled areas
 
         """
-        return np.random.choice(a=self.n, size=self.ns, replace=False)
+        return np.random.choice(
+            a=self.n, size=self.ns, replace=False).astype(np.int32)
