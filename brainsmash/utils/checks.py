@@ -30,9 +30,13 @@ def check_map(x):
 
     """
     if not isinstance(x, np.ndarray):
-        raise TypeError("brain map must be a numpy array")
+        e = "Brain map must be array-like\n"
+        e += "got type {}".format(type(x))
+        raise TypeError(e)
     if x.ndim != 1:
-        raise ValueError("brain map must be one-dimensional")
+        e = "Brain map must be one-dimensional\n"
+        e += "got shape {}".format(x.shape)
+        raise ValueError(e)
 
 
 def check_extensions(filename, exts):
@@ -57,7 +61,9 @@ def check_extensions(filename, exts):
 
     """
     if not is_string_like(filename):
-        raise TypeError("expected str, got {}".format(type(filename)))
+        e = "Expected str, got {}".format(type(filename))
+        e += "\nfilename: {}".format(filename)
+        raise TypeError(e)
     ext = Path(filename).suffix
     return True if ext in exts else False
 
@@ -81,7 +87,7 @@ def check_distmat(distmat):
 
     """
     if not np.allclose(distmat, distmat.T):
-        raise ValueError("distance matrix must be symmetric")
+        raise ValueError("Distance matrix must be symmetric")
 
 
 def check_kernel(kernel):
@@ -108,9 +114,8 @@ def check_kernel(kernel):
 
     """
     if kernel not in config.kernels:
-        e = "{} is not a valid kernel\n".format(kernel)
-        e += "Supported kernels: {}".format(
-            ", ".join([k for k in config.kernels]))
+        e = "'{}' is not a valid kernel\n".format(kernel)
+        e += "Valid kernels: {}".format(", ".join([k for k in config.kernels]))
         raise NotImplementedError(e)
     return getattr(kernels, kernel)
 
@@ -134,16 +139,22 @@ def check_sampled(distmat, index):
     ------
     ValueError : Arguments do not have identical dimensions
     ValueError : `distmat` has not been sorted column-wise
+    TypeError : rows of `distmat` or `index` are not sorted (ascending)
 
     """
+    if not isinstance(distmat, np.ndarray) or not isinstance(index, np.ndarray):
+        raise TypeError("'distmat' and 'index' must be array_like")
     if distmat.shape != index.shape:
-        raise ValueError("distmat and index must have identical dimensions")
+        e = "`distmat` and `index` must have identical dimensions\n"
+        e += "distmat.shape: {}".format(distmat.shape)
+        e += "index.shape: {}".format(index.shape)
+        raise ValueError(e)
     if isinstance(distmat, np.ndarray):
         if not np.all(distmat[:, 1:] >= distmat[:, :-1]):
-            raise ValueError("distmat must be sorted column-wise")
+            raise ValueError("Each row of `distmat` must be sorted (ascending)")
     else:  # just test the first row
         if not np.all(distmat[0, 1:] >= distmat[0, :-1]):
-            raise ValueError("distmat must be sorted column-wise")
+            raise ValueError("Each row of `distmat` must be sorted (ascending)")
 
 
 def check_image_file(image):
@@ -175,8 +186,8 @@ def check_image_file(image):
         try:
             x = np.loadtxt(image)
         except (TypeError, ValueError):
-            raise IOError(
-                "Cannot work out file type of {}".format(image))
+            e = "Cannot work out file type of {}".format(image)
+            raise IOError(e)
     if x.ndim > 1:
         raise ValueError("Image contains more than one map: {}".format(image))
     return x
@@ -202,10 +213,10 @@ def check_deltas(deltas):
 
     """
     if not isinstance(deltas, list) and not isinstance(deltas, np.ndarray):
-        raise TypeError("parameter 'deltas' must be a list or numpy array")
+        raise TypeError("Parameter `deltas` must be a list or ndarray")
     for d in deltas:
         if d <= 0 or d > 1:
-            raise ValueError("each element of 'deltas' must lie in (0,1]")
+            raise ValueError("Each element of `deltas` must lie in (0,1]")
 
 
 def check_umax(umax):
@@ -258,8 +269,8 @@ def check_surface(surface):
     coords = load_data(surface)
     nvert, ndim = coords.shape
     if ndim != 3:
-        raise ValueError(
-            "expected three columns in surface file but found {}".format(ndim))
+        e = "expected three columns in surface file but found {}".format(ndim)
+        raise ValueError(e)
     return coords
 
 
@@ -278,10 +289,12 @@ def check_outfile(filename):
 
     Raises
     ------
-    RuntimeWarning : `f` exists and will be overwritten
     IOError : Parent directory of `f` does not exist
+    ValueError : directory provided instead of file
 
     """
+    if Path(filename).is_dir():
+        raise ValueError("expected filename, got dir: {}".format(filename))
     if Path(filename).exists():
         print("WARNING: overwriting {}".format(filename))
 
@@ -292,9 +305,7 @@ def check_outfile(filename):
 
 
 def is_string_like(obj):
-    """
-    Check whether obj behaves like a string.
-    """
+    """ Check whether obj behaves like a string. """
     try:
         obj + ''
     except (TypeError, ValueError):

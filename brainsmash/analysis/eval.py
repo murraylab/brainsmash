@@ -49,13 +49,13 @@ def test_base_variogram_fits(
 
     # Compute empirical variogram
     v = generator.compute_variogram(brain_map)
-    emp_var, u0 = generator.smooth_variogram(v, return_u0=True)
+    emp_var, u0 = generator.smooth_variogram(v, return_bins=True)
 
     # Compute surrogate map variograms
     surr_var = np.empty((nsurr, generator.nbins))
     for i in range(nsurr):
         v_null = generator.compute_variogram(surrogate_maps[i])
-        surr_var[i] = generator.smooth_variogram(v_null, return_u0=False)
+        surr_var[i] = generator.smooth_variogram(v_null, return_bins=False)
 
     # Compute "naive" (randomly shuffled) surrogate maps for further comparison
     if include_naive:
@@ -64,7 +64,7 @@ def test_base_variogram_fits(
         naive_var = np.empty((nsurr, generator.nbins))
         for i in range(nsurr):
             v_null = generator.compute_variogram(naive_surrs[i])
-            naive_var[i] = generator.smooth_variogram(v_null, return_u0=False)
+            naive_var[i] = generator.smooth_variogram(v_null, return_bins=False)
 
     # # Create plot for visual comparison
 
@@ -151,14 +151,14 @@ def test_sampled_variogram_fits(
     uidx = np.where(u < umax)
 
     emp_var, u0 = generator.smooth_variogram(
-        u=u[uidx], v=v[uidx], return_u0=True)
+        u=u[uidx], v=v[uidx], return_bins=True)
 
     # Compute surrogate map variograms
     surr_var = np.empty((nsurr, generator.nbins))
     for i in range(nsurr):
         v_null = generator.compute_variogram(surrogate_maps[i], idx)
         surr_var[i] = generator.smooth_variogram(
-            u=u[uidx], v=v_null[uidx], return_u0=False)
+            u=u[uidx], v=v_null[uidx], return_bins=False)
 
     # Compute "naive" (randomly shuffled) surrogate maps for further comparison
     if include_naive:
@@ -167,7 +167,7 @@ def test_sampled_variogram_fits(
         for i in range(nsurr):
             v_null = generator.compute_variogram(naive_surrs[i], idx)
             naive_var[i] = generator.smooth_variogram(
-                u=u[uidx], v=v_null[uidx], return_u0=False)
+                u=u[uidx], v=v_null[uidx], return_bins=False)
 
     # # Create plot for visual comparison
 

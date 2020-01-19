@@ -11,7 +11,32 @@ import numpy as np
 __all__ = ['Base', 'Sampled']
 
 
-def _dataio(x, delimiter=None):
+def _dataio(x):
+    """
+    Data I/O for core classes.
+
+    To facilitate flexible user inputs, this function loads data from:
+        - neuroimaging files
+        - txt files
+        - npy files (memory-mapped arrays)
+        - array_like data
+
+    Parameters
+    ----------
+    x : filename or np.ndarray or np.memmap
+
+    Returns
+    -------
+    np.ndarray or np.memmap
+
+    Raises
+    ------
+    FileExistsError : file does not exist
+    RuntimeError : file is empty
+    ValueError : file type cannot be determined or is not implemented
+    TypeError : input is not a filename or array_like object
+
+    """
     if checks.is_string_like(x):
         if not Path(x).exists():
             raise FileExistsError("file does not exist: {}".format(x))
@@ -20,7 +45,7 @@ def _dataio(x, delimiter=None):
         if Path(x).suffix == ".npy":  # memmap
             return np.load(x, mmap_mode='r')
         elif Path(x).suffix == ".txt":  # text file
-            return np.loadtxt(x, delimiter=delimiter).squeeze()
+            return np.loadtxt(x).squeeze()
         else:
             try:
                 return io.load_data(x)
@@ -31,7 +56,7 @@ def _dataio(x, delimiter=None):
     else:
         if not isinstance(x, np.ndarray):
             raise TypeError(
-                "expected filename or ndarray obj, got {}".format(type(x)))
+                "expected filename or array_like obj, got {}".format(type(x)))
         return x
 
 # def _fileloader(brain_map, distance_matrix, *args, delimiter=' '):
@@ -110,7 +135,6 @@ def _dataio(x, delimiter=None):
 #
 #         Notes
 #         -----
-#         TODO
 #
 #         See Also
 #         --------
@@ -125,13 +149,12 @@ def _dataio(x, delimiter=None):
 #
 #         Examples
 #         --------
-#         TODO
 #
 #         """
 #
 #         for f in (brain_map, distmat):  # Check file types
 #             if not checks.is_string_like(f):
-#                 raise TypeError('expected string-like, got {}'.format(type(f)))
+#                raise TypeError('expected string-like, got {}'.format(type(f)))
 #             exts = ['.npy', '.txt']
 #             if not checks.check_extensions(f, exts):
 #                 raise ValueError("expected txt or npy file, got {}".format(
@@ -149,9 +172,8 @@ def _dataio(x, delimiter=None):
 #                     Path(brain_map).suffix))
 #         x = np.loadtxt(brain_map, delimiter=delimiter).squeeze()
 #
-#         # TODO
 #         # if brain_map.size != distmat.shape[0]:
-#         #     e = "brain map and distance matrix must be same size along first "
+#       #     e = "brain map and distance matrix must be same size along first "
 #         #     e += "dimension\n"
 #         #     e += "brain_map.size: {}\n".format(brain_map.size)
 #         #     e += "distmat.shape: {}".format(distmat.shape)
@@ -197,8 +219,8 @@ def _dataio(x, delimiter=None):
 #     def smooth_variogram(self, *args, **kwargs):
 #         return self.strategy.smooth_variogram(*args, **kwargs)
 #
-#     def lin_regress(self, *args, **kwargs):
-#         return self.strategy.lin_regress(*args, **kwargs)
+#     def regress(self, *args, **kwargs):
+#         return self.strategy.regress(*args, **kwargs)
 #
 #     def sample(self):
 #         return self.strategy.sample()
@@ -260,8 +282,7 @@ def _dataio(x, delimiter=None):
 class Base:
     """ Base implementation of surrogate map generator. """
 
-    def __init__(self, brain_map, distmat, delimiter=' ',
-                 deltas=np.linspace(0.1, 0.9, 9),
+    def __init__(self, brain_map, distmat, deltas=np.linspace(0.1, 0.9, 9),
                  kernel='exp', umax=25, nbins=25, resample=False, h=None):
         """
 
@@ -289,8 +310,6 @@ class Base:
         h : float or None, default None
             Gaussian kernel bandwidth for variogram smoothing. If None, set to
             three times the spacing between variogram x-coordinates.
-        delimiter : str
-            character delimiting elements of files, if files provided
 
         Notes
         -----
@@ -300,7 +319,6 @@ class Base:
 
         """
 
-        self._delimiter = delimiter
         self.brain_map = brain_map
         self.dmat = distmat
         n = self._brain_map.size
@@ -332,9 +350,10 @@ class Base:
 
         # Smoothed variogram and variogram bins
         utrunc = self._u[self._uidx]
-        self._u0 = np.linspace(utrunc.min(), utrunc.max(), self._nbins)
+        self._bins = np.linspace(utrunc.min(), utrunc.max(), self._nbins)
         self.h = h
-        self._smvar, self._bins = self.smooth_variogram(self._v, return_u0=True)
+        self._smvar, self._bins = self.smooth_variogram(
+            self._v, return_bins=True)
 
         # Linear regression model
         self._lm = LinearRegression(fit_intercept=True)
@@ -380,7 +399,7 @@ class Base:
                 smvar_perm = self.smooth_variogram(vperm)
 
                 # Fit linear regression btwn smoothed variograms
-                res[delta] = self.lin_regress(smvar_perm, self._smvar)
+                res[delta] = self.regress(smvar_perm, self._smvar)
 
             alphas, betas, residuals = np.array(
                 [res[d] for d in self._deltas]).T
@@ -462,7 +481,7 @@ class Base:
         # Kernel-weighted sum
         return (weights * xkn).sum(axis=1) / weights.sum(axis=1)
 
-    def smooth_variogram(self, v, return_u0=False):
+    def smooth_variogram(self, v, return_bins=False):
         """
         Smooth an empirical variogram.
 
@@ -470,7 +489,7 @@ class Base:
         ----------
         v : (N,) np.ndarray
             Variogram y-coordinates, ie (x_i - x_j) ^ 2
-        return_u0 : bool, default False
+        return_bins : bool, default False
             Return distances at which the smoothed variogram was computed
 
         Returns
@@ -493,17 +512,17 @@ class Base:
                 "argument v: expected size {}, got {}".format(len(u), len(v)))
         # Subtract each element of u0 from each element of u
         # Each row corresponds to a unique element of u0
-        du = np.abs(u - self._u0[:, None])
+        du = np.abs(u - self._bins[:, None])
         w = np.exp(-np.square(2.68 * du / self._h) / 2)
         denom = w.sum(axis=1)
         wv = w * v[None, :]
         num = wv.sum(axis=1)
         output = num / denom
-        if not return_u0:
+        if not return_bins:
             return output
-        return output, self._u0
+        return output, self._bins
 
-    def lin_regress(self, x, y):
+    def regress(self, x, y):
         """
         Linearly regress `x` onto `y`.
 
@@ -531,16 +550,6 @@ class Base:
         res = np.sum(np.square(y-y_pred))
         return alpha, beta, res
 
-    def sample(self):
-        """
-
-        Returns
-        -------
-        np.arange(self.n)
-
-        """
-        return np.arange(self._nmap, dtype=np.int32)
-
     @property
     def brain_map(self):
         """ (N,) np.ndarray : brain map scalars """
@@ -564,8 +573,10 @@ class Base:
         checks.check_distmat(distmat=x_)
         n = self._brain_map.size
         if x_.shape != (n, n):
-            raise ValueError(
-                "distance matrix must have dimension consistent with brain map")
+            e = "Distance matrix must have dimensions consistent with brain map"
+            e += "\nDistance matrix shape: {}".format(x_.shape)
+            e += "\nBrain map size: {}".format(n)
+            raise ValueError(e)
         self._dmat = x_
 
     @property
@@ -635,7 +646,8 @@ class Base:
     @resample.setter
     def resample(self, x):
         if not isinstance(x, bool):
-            raise TypeError("expected bool, got {}".format(type(x)))
+            e = "parameter `resample`: expected bool, got {}".format(type(x))
+            raise TypeError(e)
         self._resample = x
 
     @property
@@ -646,9 +658,13 @@ class Base:
     @h.setter
     def h(self, x):
         if x is not None:
-            self._h = x
+            try:
+                self._h = float(x)
+            except (ValueError, TypeError):
+                e = "parameter `h`: expected numeric, got {}".format(type(x))
+                raise ValueError(e)
         else:   # set bandwidth equal to 3x bin spacing
-            self._h = 3.*np.mean(self._u0[1:] - self._u0[:-1])
+            self._h = 3.*np.mean(self._bins[1:] - self._bins[:-1])
 
 
 class Sampled:
@@ -656,8 +672,7 @@ class Sampled:
 
     def __init__(self, brain_map, distmat, index, ns=500,
                  deltas=np.arange(0.3, 1., 0.2), kernel='exp',
-                 umax=70, nbins=25, knn=1000, h=None, resample=False,
-                 delimiter=' '):
+                 umax=70, nbins=25, knn=1000, h=None, resample=False):
         """
 
         Parameters
@@ -697,8 +712,6 @@ class Sampled:
             three times the bin interval spacing is used.
         resample : bool, default False
             Resample surrogate map values from the empirical brain map
-        delimiter : str
-            character delimiting elements of files, if files provided
 
         Notes
         -----
@@ -712,7 +725,7 @@ class Sampled:
         ValueError : `brain_map` and `distmat` have inconsistent sizes
 
         """
-        self._delimiter = delimiter
+
         self.knn = knn
         self.brain_map = brain_map
         self.dmat = distmat
@@ -731,7 +744,8 @@ class Sampled:
         # Store k nearest neighbors from distance and index matrices
         self.kernel = kernel  # Smoothing kernel selection
         self._umax_value = np.percentile(self._dmat, self._umax)
-        self._u0 = np.linspace(self._dmat.min(), self._umax_value, self._nbins)
+        self._bins = np.linspace(
+            self._dmat.min(), self._umax_value, self._nbins)
         self.h = h
 
         # Linear regression model
@@ -778,7 +792,8 @@ class Sampled:
             uidx = np.where(u < self._umax_value)
 
             # Smooth empirical variogram
-            smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_u0=True)
+            smvar, u0 = self.smooth_variogram(
+                u[uidx], v[uidx], return_bins=True)
 
             res = dict.fromkeys(self._deltas)
 
@@ -797,7 +812,7 @@ class Sampled:
                 smvar_perm = self.smooth_variogram(u[uidx], vperm[uidx])
 
                 # Fit linear regression btwn smoothed variograms
-                res[d] = self.lin_regress(smvar_perm, smvar)
+                res[d] = self.regress(smvar_perm, smvar)
 
             alphas, betas, residuals = np.array(
                 [res[d] for d in self._deltas]).T
@@ -892,7 +907,7 @@ class Sampled:
         # Kernel-weighted sum
         return (weights * xkn).sum(axis=1) / weights.sum(axis=1)
 
-    def smooth_variogram(self, u, v, return_u0=False):
+    def smooth_variogram(self, u, v, return_bins=False):
         """
         Smooth an empirical variogram.
 
@@ -902,15 +917,15 @@ class Sampled:
             Pairwise distances, ie variogram x-coordinates
         v : (N,) np.ndarray
             Variogram y-coordinates, ie (x_i - x_j) ^ 2
-        return_u0 : bool, default False
+        return_bins : bool, default False
             Return distances at which smoothed variogram is computed
 
         Returns
         -------
-        (self.nbins,) np.ndarray
+        (nbins,) np.ndarray
             Smoothed variogram samples
-        (self.nbins) np.ndarray
-            Distances at which smoothed variogram was computed (returned only if
+        (nbins) np.ndarray
+            Distances at which smoothed variogram was computed (returned if
             return_u0 is True)
 
         Raises
@@ -923,17 +938,17 @@ class Sampled:
 
         # Subtract each element of u0 from each element of u.
         # Each row corresponds to a unique element of u0.
-        du = np.abs(u - self._u0[:, None])
+        du = np.abs(u - self._bins[:, None])
         w = np.exp(-np.square(2.68 * du / self._h) / 2)
         denom = w.sum(axis=1)
         wv = w * v[None, :]
         num = wv.sum(axis=1)
         output = num / denom
-        if not return_u0:
+        if not return_bins:
             return output
-        return output, self._u0
+        return output, self._bins
 
-    def lin_regress(self, x, y):
+    def regress(self, x, y):
         """
         Linearly regress `x` onto `y`.
 
@@ -1108,4 +1123,4 @@ class Sampled:
         if x is not None:
             self._h = x
         else:
-            self._h = 3. * (self._u0[1:] - self._u0[:-1]).mean()
+            self._h = 3. * (self._bins[1:] - self._bins[:-1]).mean()

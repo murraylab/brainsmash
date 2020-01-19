@@ -11,10 +11,11 @@ output_dir = "/Users/jbb/Desktop/"
 
 # Read data from file
 image = join(data_root, "myelin_L.pscalar.nii")
+# image = join(data_root, "myelin_L_parcel.txt")
 matrix = join(data_root, "left_parcel_distmat.npy")
 
-# myelin = load_data(image)
-# distmat = np.load(matrix)
+myelin = load_data(image)
+distmat = np.load(matrix)
 
 # # Confirm visually that the simulated variograms fit well
 # test_base_variogram_fits(brain_map=myelin, distmat=distmat, include_naive=True)
@@ -26,10 +27,10 @@ matrix = join(data_root, "left_parcel_distmat.npy")
 
 # Create a few surrogate maps and plot them
 # generator = Base(brain_map=myelin, distmat=distmat, resample=True)
-generator = Base(brain_map=image, distmat=matrix, resample=True)
+generator = Base(brain_map=myelin, distmat=distmat, resample=True)
 
-surrogate_maps = generator(n=3)
-for i in range(3):
+surrogate_maps = generator(n=2)
+for i in range(surrogate_maps.shape[1]):
     wbplot.pscalar(join(
         output_dir, "surrogate_{}.png".format(i)), surrogate_maps[i],
         hemisphere='left', vrange=(1.1, 1.5))
