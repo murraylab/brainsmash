@@ -48,11 +48,11 @@ def cortex(surface, outfile, euclid=False):
     coords = checks.check_surface(surface)
 
     if euclid:  # Pairwise Euclidean distance matrix
-        outfile = _euclidean(dist_file=dist_file, coords=coords)
+        of = _euclidean(dist_file=dist_file, coords=coords)
     else:  # Pairwise geodesic distance matrix
-        outfile = _geodesic(
+        of = _geodesic(
             surface=surface, dist_file=dist_file, coords=coords)
-    return outfile
+    return of
 
 
 def subcortex(image_file, fout):
@@ -104,7 +104,7 @@ def subcortex(image_file, fout):
     return outfile
 
 
-def parcellate(infile, dlabel_file, outfile, delimiter=" "):
+def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     """
     Parcellate a dense distance matrix.
 
@@ -118,6 +118,10 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
         Path to output text file WITHOUT extension (to be created)
     delimiter : str, default " "
         Delimiter between elements in `infile`
+    unassigned_value : int, default 0
+        Label value which indicates that a vertex/voxel is not assigned to
+        any parcel. This label is excluded from the output. 0 is the default
+        value used by Connectome Workbench, e.g. for `-cifti-parcellate`.
 
     Returns
     -------
@@ -141,13 +145,18 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
 
     """
 
+    print("\nComputing parcellated distance matrix\n")
+    m = "For a 32k-vertex cortical hemisphere, this takes about 30 mins "
+    m += "for the HCP MMP parcellation."
+    print(m)
+
     checks.check_outfile(outfile)
 
     # Strip file extensions and define output text file
     fout = files.stripext(outfile)
     dist_file = fout + '.txt'
 
-    # Load surface vertex parcel labels
+    # Load parcel labels
     labels = checks.check_image_file(dlabel_file)
 
     with open(infile, 'r') as fp:
@@ -158,18 +167,18 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
         for l in fp:
             if l.rstrip():
                 nrows += 1
-        fp.seek(0)  # return to beginning of file
         if not (labels.size == nrows == ncols):
             e = "Files must contain same number of areas\n"
             e += "{} areas in {}\n".format(labels.size, dlabel_file)
             e += "{} rows and {} cols in {}".format(nrows, ncols, infile)
             raise ValueError(e)
+        fp.seek(0)  # return to beginning of file
 
-        # Skip parcel label 0 -> masked value TODO discuss w/ john
+        # Skip unassigned parcel label
         unique_labels = np.unique(labels)
         nparcels = unique_labels.size
-        if 0 in unique_labels:
-            unique_labels = unique_labels[unique_labels != 0]
+        if unassigned_value in unique_labels:
+            unique_labels = unique_labels[unique_labels != unassigned_value]
             nparcels -= 1
 
         # Create vertex-level mask for each unique cortical parcel
@@ -177,26 +186,27 @@ def parcellate(infile, dlabel_file, outfile, delimiter=" "):
 
         # Loop over pairwise parcels at the level of surface vertices
         distance_matrix = np.zeros((nparcels, nparcels))
+
         for i, li in enumerate(unique_labels[:-1]):
 
             # Labels of parcels for which to compute mean geodesic distance
             labels_lj = unique_labels[i+1:]
 
             # Initialize lists in which to store pairwise vertex-level distances
-            parcel_distances = {lj: [] for lj in labels_lj}
+            parcel_distances = {lj: list() for lj in labels_lj}
 
             # Loop over vertices with parcel label i
             li_vertices = np.where(parcel_vertex_mask[li])[0]
-            for vi in li_vertices:
 
-                # Load distance from vertex vi to every other vertex
-                fp.seek(vi)
-                d = np.array(fp.readline().split(delimiter), dtype=np.float32)
-
-                # Update lists w/ dists from vertex vi to vertices in parcel j
-                for lj in labels_lj:
-                    vi_lj_distances = d[parcel_vertex_mask[lj]]
-                    parcel_distances[lj].append(vi_lj_distances)
+            fp.seek(0)
+            for vi, l in enumerate(fp):
+                if vi in li_vertices:
+                    # Load distance from vertex vi to every other vertex
+                    d = np.array(l.split(delimiter), dtype=np.float32)
+                    # Store dists from vertex vi to vertices in parcel j
+                    for lj in labels_lj:
+                        vi_lj_distances = d[parcel_vertex_mask[lj]]
+                        parcel_distances[lj].append(vi_lj_distances)
 
             # Compute average geodesic distances
             for j, lj in enumerate(labels_lj):
@@ -234,11 +244,17 @@ def _euclidean(dist_file, coords):
 
     Notes
     -----
-    Distances are computed one row at a time to reduce memory burden.
+    Distances are computed and written one row at a time to reduce memory load.
 
     """
-    # distmat = squareform(pdist(coords, metric='euclidean'))
+    # TODO This could probably be sped up by specifying a variable chunk size.
+    print("\nComputing Euclidean distance matrix\n")
+    m = "For a 32k-vertex cortical hemisphere, this may take 15-20 minutes."
+    print(m)
+
+    # Use the following line instead if you have sufficient memory
     # distmat = cdist(coords, coords)
+
     with open(dist_file, 'w') as fp:
         for point in coords:
             distances = cdist(
@@ -274,6 +290,10 @@ def _geodesic(surface, dist_file, coords):
 
     """
     nvert = coords.shape[0]
+
+    print("\nComputing geodesic distance matrix\n")
+    m = "For a 32k-vertex cortical hemisphere, this may take up to two hours."
+    print(m)
 
     # Files produced at runtime by Workbench commands
     temp = gettempdir()
