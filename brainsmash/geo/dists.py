@@ -1,8 +1,3 @@
-"""
-Functions to compute geodesic and Euclidean distance matrices from
-neuroimaging files.
-"""
-
 from ..neuro.io import load_data
 from ..neuro.io import export_cifti_mapping
 from ..utils import checks
@@ -81,7 +76,7 @@ def subcortex(fout, image_file=None):
 
     Raises
     ------
-    ValueError : `image_file` header does not contain volume information
+    ValueError : ``image_file`` header does not contain volume information
 
     """
     # TODO Need more robust error handling
@@ -111,13 +106,13 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     Parameters
     ----------
     infile : filename
-        Path to `delimiter`-separated distance matrix file
+        Path to ``delimiter``-separated distance matrix file
     dlabel_file : filename
         Path to parcellation file  (.dlabel.nii)
     outfile : filename
         Path to output text file WITHOUT extension (to be created)
     delimiter : str, default " "
-        Delimiter between elements in `infile`
+        Delimiter between elements in ``infile``
     unassigned_value : int, default 0
         Label value which indicates that a vertex/voxel is not assigned to
         any parcel. This label is excluded from the output. 0 is the default
@@ -131,17 +126,17 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     Notes
     -----
     For two parcels A and B, the inter-parcel distance is defined as the mean
-    distance between area i in parcel A and area j in parcel B, \forall i,j.
+    distance between area i in parcel A and area j in parcel B, for all i,j.
 
-    Inputs `infile` and `dlabel_file` should include the same anatomical
+    Inputs ``infile`` and ``dlabel_file`` should include the same anatomical
     structures, e.g. the left cortical hemisphere, and should have the same
     number of elements. If you need to isolate one anatomical structure from
-    `dlabel_file`, see the following Workbench function:
+    ``dlabel_file``, see the following Workbench function:
     https://www.humanconnectome.org/software/workbench-command/-cifti-separate
 
     Raises
     ------
-    ValueError : `infile` and `dlabel_file` have inconsistent sizes
+    ValueError : ``infile`` and ``dlabel_file`` have inconsistent sizes
 
     """
 
@@ -229,7 +224,7 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
 def _euclidean(dist_file, coords):
     """
     Compute three-dimensional pairwise Euclidean distance between rows of
-    `coords`. Write results to `dist_file`.
+    ``coords``. Write results to ``dist_file``.
 
     Parameters
     ----------
@@ -260,7 +255,7 @@ def _euclidean(dist_file, coords):
         for point in coords:
             distances = cdist(
                 np.expand_dims(point, 0), coords).squeeze()
-            line = " ".join([str(d) for d in distances]) + "\n"
+            line = " ".join([str(d) for d in distances])+"\n"
             fp.write(line)
     files.file_exists(f=dist_file)
     return dist_file
@@ -268,8 +263,8 @@ def _euclidean(dist_file, coords):
 
 def _geodesic(surface, dist_file, coords):
     """
-    Compute pairwise geodesic distance between rows of `coords`. Write results
-    to `dist_file`.
+    Compute pairwise geodesic distance between rows of ``coords``. Write results
+    to ``dist_file``.
 
     Parameters
     ----------

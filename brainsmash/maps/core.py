@@ -280,44 +280,44 @@ def _dataio(x):
 
 
 class Base:
-    """ Base implementation of surrogate map generator. """
+    """
+    Base implementation of surrogate map generator.
+
+    Parameters
+    ----------
+    brain_map : (N,) np.ndarray or filename
+        Scalar brain map
+    distmat : (N,N) np.ndarray or filename
+        Pairwise distance matrix
+    deltas : np.ndarray or list[float], default [0.1,0.2,...,0.9]
+        Proportion of neighbors to include for smoothing, in (0, 1]
+    kernel : str, default 'exp'
+        Kernel with which to smooth permuted maps:
+          'gaussian' : Gaussian function.
+          'exp' : Exponential decay function.
+          'invdist' : Inverse distance.
+          'uniform' : Uniform weights (distance independent).
+    umax : int, default 25
+        Percentile of the pairwise distance distribution at which to
+        truncate during variogram fitting
+    nbins : int, default 25
+        Number uniformly spaced distances at which to compute variogram
+    resample : bool, default False
+        Resample surrogate maps' values from empirical brain map
+    h : float or None, default None
+        Gaussian kernel bandwidth for variogram smoothing. If None, set to
+        three times the spacing between variogram x-coordinates.
+
+    Notes
+    -----
+    Passing resample=True preserves the distribution of values in empirical
+    map, with the possibility of worsening the simulated surrogate maps'
+    variograms fits.
+
+    """
 
     def __init__(self, brain_map, distmat, deltas=np.linspace(0.1, 0.9, 9),
                  kernel='exp', umax=25, nbins=25, resample=False, h=None):
-        """
-
-        Parameters
-        ----------
-        brain_map : (N,) np.ndarray or filename
-            Scalar brain map
-        distmat : (N,N) np.ndarray or filename
-            Pairwise distance matrix
-        deltas : np.ndarray or list[float], default [0.1,0.2,...,0.9]
-            Proportion of neighbors to include for smoothing, in (0, 1]
-        kernel : str, default 'exp'
-            Kernel with which to smooth permuted maps:
-            - 'gaussian' : gaussian function
-            - 'exp' : exponential decay function
-            - 'invdist' : inverse distance
-            - 'uniform' : uniform weights (distance independent)
-        umax : int, default 25
-            Percentile of the pairwise distance distribution at which to
-            truncate during variogram fitting
-        nbins : int, default 25
-            Number uniformly spaced distances at which to compute variogram
-        resample : bool, default False
-            Resample surrogate maps' values from empirical brain map
-        h : float or None, default None
-            Gaussian kernel bandwidth for variogram smoothing. If None, set to
-            three times the spacing between variogram x-coordinates.
-
-        Notes
-        -----
-        Passing resample=True preserves the distribution of values in empirical
-        map, with the possibility of worsening the simulated surrogate maps'
-        variograms fits.
-
-        """
 
         self.brain_map = brain_map
         self.dmat = distmat

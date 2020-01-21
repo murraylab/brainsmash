@@ -4,7 +4,6 @@ Evaluation metrics for randomly generated surrogate maps.
 
 from ..maps.core import Base
 from ..maps.core import Sampled
-# from ..maps.core import Smash
 import matplotlib.pyplot as plt
 import numpy as np
 
