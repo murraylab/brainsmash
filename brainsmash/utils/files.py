@@ -16,9 +16,10 @@ def stripext(f):
         `f` stripped of all extensions
 
     """
-    for s in Path(f).suffixes[::-1]:
-        f = f.strip(s)
-    return f
+    p = Path(f)
+    while p.suffixes:
+        p = p.with_suffix('')
+    return str(p)
 
 
 def file_exists(f):
@@ -53,6 +54,7 @@ def count_lines(filename):
     Returns
     -------
     int
+        number of lines in file
 
     """
     with open(filename, 'rb') as f:

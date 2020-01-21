@@ -13,7 +13,6 @@ from os import path
 from os import system
 import numpy as np
 
-# TODO add Notes/print statement to cortex/subcortex warning of extended runtime
 
 __all__ = ['cortex', 'subcortex', 'parcellate']
 
@@ -55,18 +54,18 @@ def cortex(surface, outfile, euclid=False):
     return of
 
 
-def subcortex(image_file, fout):
+def subcortex(fout, image_file=None):
     """
     Compute 3D Euclidean distance matrix between areas in `image` file.
 
     Parameters
     ----------
-    image_file : filename
+    fout : filename
+        Path to output text file
+    image_file : filename or None, default None
         Path to a CIFTI-2 format neuroimaging file (eg .dscalar.nii). MNI
         coordinates for each subcortical voxel are read from this file's
-        metadata.
-    fout : filename
-        Path to output text file WITHOUT extension (to be created)
+        metadata. If None, use dlabel file defined in ``brainsmash.config.py``.
 
     Returns
     -------
@@ -85,6 +84,7 @@ def subcortex(image_file, fout):
     ValueError : `image_file` header does not contain volume information
 
     """
+    # TODO Need more robust error handling
 
     checks.check_outfile(fout)
 
@@ -99,7 +99,7 @@ def subcortex(image_file, fout):
         raise ValueError(e)
 
     # Compute Euclidean distance matrix
-    coords = maps['Subcortex'].drop("structure", axis=1).values
+    coords = maps['subcortex'].drop("structure", axis=1).values
     outfile = _euclidean(dist_file=dist_file, coords=coords)
     return outfile
 
@@ -147,7 +147,8 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
 
     print("\nComputing parcellated distance matrix\n")
     m = "For a 32k-vertex cortical hemisphere, this takes about 30 mins "
-    m += "for the HCP MMP parcellation."
+    m += "for the HCP MMP parcellation. For subcortex, this takes about an hour"
+    m += " for the CAB-NP parcellation."
     print(m)
 
     checks.check_outfile(outfile)

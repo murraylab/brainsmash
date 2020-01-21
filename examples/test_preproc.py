@@ -1,4 +1,4 @@
-from brainsmash.geo.dists import cortex, parcellate
+from brainsmash.geo.dists import cortex, parcellate, subcortex
 from time import time
 
 # Compute dense geodesic distance matrix
@@ -28,5 +28,11 @@ ofpe += "test_euclid_dists_parcel.txt"
 t1 = time()
 parcellate(ofe, dlbl, ofpe)
 print(time() - t1)
+
+# Compute dense Euclidean distance matrix for subcortex
+soutfile = "/Users/jbb/Documents/Repos/brainsmash/examples/test_subcortex.txt"
+t1 = time()
+ofs = subcortex(soutfile)
+print(time()-t1)
 
 # Create memory-mapped arrays from new distance matrices
