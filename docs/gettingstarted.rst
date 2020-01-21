@@ -58,8 +58,44 @@ where ``surrogates`` is a numpy array with shape ``(1000,180)``. The empirical
 brain map and one of the surrogate maps are illustrated side-by-side below for
 comparison:
 
+.. figure::  images/brain_map.png
+   :align:   center
+
+   The empirical brain map.
+
+.. figure::  images/surrogate.png
+   :align:   center
+
+   One randomly generated surrogate brain map.
+
 By construction, both maps exhibit the same degree of spatial autocorrelation
-in their values.
+in their values. However, notice that the empirical brain map has a distribution
+of values more skewed towards higher values, indicated by dark purple. If you wish
+to generate surrogate maps which preserve (identically) the distribution of values
+in the empirical map, use the keyword argument ``resample`` when instantiating
+the class:
+
+.. code-block:: python
+
+   base = Base(brain_map=brain_map_file, distmat=dist_mat_file, resample=True)
+
+
+The surrogate map illustrated above, had it been generated using ``resample=True``,
+is shown below for comparison:
+
+.. figure::  images/surrogate_resampled.png
+  :align:   center
+
+  The surrogate brain map above, with values resampled from the empirical map.
+
+Note that using ``resample=True`` will in general reduce the degree to which the
+surrogate maps' autocorrelation matches the autocorrelation in the empirical map.
+However, this discrepancy tends to be small for parcellated brain maps, and tends
+to be larger for brain maps whose values are more strongly non-normal.
+
+.. note:: Shameless plug: the plots above (and others illustrated in these docs)
+  were auto-generated using our ``wbplot`` package, available through both `pip <https://pypi.org/project/wbplot/>`_
+  and `GitHub <https://github.com/jbburt/wbplot>`_.
 
 TODO: show evaluation plots?
 
