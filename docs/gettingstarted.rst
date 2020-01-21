@@ -54,7 +54,14 @@ Surrogate maps can then be generated with a call to the class instance:
 
         surrogates = base(n=1000)
 
-where ``surrogates`` is a numpy array with shape ``(1000,180)``.
+where ``surrogates`` is a numpy array with shape ``(1000,180)``. The empirical
+brain map and one of the surrogate maps are illustrated side-by-side below for
+comparison:
+
+By construction, both maps exhibit the same degree of spatial autocorrelation
+in their values.
+
+TODO: show evaluation plots?
 
 Dense surrogate maps
 --------------------
