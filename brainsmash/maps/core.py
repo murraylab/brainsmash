@@ -668,63 +668,63 @@ class Base:
 
 
 class Sampled:
-    """ Sampling implementation of surrogate map generator. """
+    """
+    Sampling implementation of surrogate map generator.
+
+    Parameters
+    ----------
+    brain_map : (N,) np.ndarray
+        Scalar brain map
+    distmat : (N,M) np.ndarray
+        Pairwise distance matrix between elements of `brain_map`. It may be
+        the full (N,N) distance matrix, if you have sufficient memory;
+        otherwise, use the subset (N,M), M<N. Note that if M<N, you must
+        also pass an index array of shape (N,M) indicating the index
+        (in `brain_map`) to which each element in `distmat` corresponds,
+        such that D[i,j] is the distance between x[i] and x[index[i,j]].
+    index : (N,M) np.ndarray or None
+        See above
+    ns : int, default 500
+        Take a subsample of `ns` rows from `distmat` when fitting variograms
+    deltas : np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
+        Proportions of neighbors to include for smoothing, in (0, 1]
+    kernel : str, default 'exp'
+        Kernel with which to smooth permuted maps
+        - 'gaussian' : gaussian function
+        - 'exp' : exponential decay function
+        - 'invdist' : inverse distance
+        - 'uniform' : uniform weights (distance independent)
+    umax : int, default 70
+        Percentile of the pairwise distance distribution (in `distmat`) at
+        which to truncate during variogram fitting
+    nbins : int, default 25
+        Number of uniformly spaced bins in which to compute smoothed
+        variogram
+    knn : int, default 1000
+        Number of nearest points to keep in the neighborhood of each sampled
+        point
+    h : float or None, default None
+        Gaussian kernel bandwidth for variogram smoothing. if h is None,
+        three times the bin interval spacing is used.
+    resample : bool, default False
+        Resample surrogate map values from the empirical brain map
+
+    Notes
+    -----
+    Passing resample=True will preserve the distribution of values in the
+    empirical map, at the expense of worsening simulated surrogate maps'
+    variograms fits. This worsening will increase as the empirical map
+    deviates from normality.
+
+    Raises
+    ------
+    ValueError : `brain_map` and `distmat` have inconsistent sizes
+
+    """
 
     def __init__(self, brain_map, distmat, index, ns=500,
                  deltas=np.arange(0.3, 1., 0.2), kernel='exp',
                  umax=70, nbins=25, knn=1000, h=None, resample=False):
-        """
-
-        Parameters
-        ----------
-        brain_map : (N,) np.ndarray
-            Scalar brain map
-        distmat : (N,M) np.ndarray
-            Pairwise distance matrix between elements of `brain_map`. It may be
-            the full (N,N) distance matrix, if you have sufficient memory;
-            otherwise, use the subset (N,M), M<N. Note that if M<N, you must
-            also pass an index array of shape (N,M) indicating the index
-            (in `brain_map`) to which each element in `distmat` corresponds,
-            such that D[i,j] is the distance between x[i] and x[index[i,j]].
-        index : (N,M) np.ndarray or None
-            See above
-        ns : int, default 500
-            Take a subsample of `ns` rows from `distmat` when fitting variograms
-        deltas : np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
-            Proportions of neighbors to include for smoothing, in (0, 1]
-        kernel : str, default 'exp'
-            Kernel with which to smooth permuted maps
-            - 'gaussian' : gaussian function
-            - 'exp' : exponential decay function
-            - 'invdist' : inverse distance
-            - 'uniform' : uniform weights (distance independent)
-        umax : int, default 70
-            Percentile of the pairwise distance distribution (in `distmat`) at
-            which to truncate during variogram fitting
-        nbins : int, default 25
-            Number of uniformly spaced bins in which to compute smoothed
-            variogram
-        knn : int, default 1000
-            Number of nearest points to keep in the neighborhood of each sampled
-            point
-        h : float or None, default None
-            Gaussian kernel bandwidth for variogram smoothing. if h is None,
-            three times the bin interval spacing is used.
-        resample : bool, default False
-            Resample surrogate map values from the empirical brain map
-
-        Notes
-        -----
-        Passing resample=True will preserve the distribution of values in the
-        empirical map, at the expense of worsening simulated surrogate maps'
-        variograms fits. This worsening will increase as the empirical map
-        deviates from normality.
-
-        Raises
-        ------
-        ValueError : `brain_map` and `distmat` have inconsistent sizes
-
-        """
 
         self.knn = knn
         self.brain_map = brain_map
