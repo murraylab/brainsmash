@@ -22,8 +22,7 @@ Sampled
 
 Computing distance matrices
 ---------------------------
-Connectome Workbench's command-line utility ``wb_command`` is a dependency
-for the following the utilities.
+.. note:: `Connectome Workbench <https://www.humanconnectome.org/software/connectome-workbench>`_ is a dependency for the following utilities.
 
 .. automodule:: brainsmash.geo.dists
     :members:
