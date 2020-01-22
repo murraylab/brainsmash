@@ -102,6 +102,8 @@ TODO: show evaluation plots?
 
 TODO: describe other kwargs, either here or elsewhere
 
+.. _dense:
+
 Dense surrogate maps
 --------------------
 Next, we'll demonstrate how to use BrainSMASH to generate surrogate maps for

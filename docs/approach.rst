@@ -37,6 +37,12 @@ The algorithm consists of the following steps:
 6. Steps 3-5 are repeated, each time varying the number of nearest neighbors, *k*, used to perform the spatial smoothing. (In BrainSMASH, *k* is parametrized as a fraction of the total number of areas; candidate values to iterate over may be specified by the user. TODO)
 7. The optimal value of *k* which minimizes SSE is used to produce a surrogate map whose SA is most closely matched to SA in the empirical map.
 
-geodesic vs euclidean distance
 
-For more details, see our preprint TODO
+Steps 2-7 are repeated for each surrogate map. A more memory efficient implementation of the algorithm,
+which utilizes random sampling and memory-mapped arrays, is described in the preprint (TODO) and :ref:`elsewhere in these docs <dense>`:
+in brief, steps 1 and 4 are performed on a random subset of brain areas, and the pairwise distance matrix is never loaded
+entirely into memory.
+
+The distance matrix can in theory be constructed using any distance measure. Here and in
+the preprint, we use geodesic distance (i.e., distance along the cortical surface) for
+cortical brain maps, and three-dimensional Euclidean distance for subcortical brain maps.
