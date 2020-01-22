@@ -1,7 +1,8 @@
-import brainsmash.utils._checks
-from brainsmash.workbench.io import load
-from brainsmash.workbench.io import _export_cifti_mapping
-from brainsmash.utils import checks
+""" Routines for constructing distance matrices from neuroimaging files. """
+
+from ..utils._checks import *
+from ..workbench.io import load
+from ..workbench.io import _export_cifti_mapping
 from scipy.spatial.distance import cdist
 from tempfile import gettempdir
 from os import path
@@ -32,14 +33,14 @@ def cortex(surface, outfile, euclid=False):
 
     """
 
-    checks._check_outfile(outfile)
+    check_outfile(outfile)
 
     # Strip file extensions and define output text file
-    outfile = brainsmash.utils._checks.stripext(outfile)
+    outfile = stripext(outfile)
     dist_file = outfile + '.txt'
 
     # Load surface file
-    coords = checks._check_surface(surface)
+    coords = check_surface(surface)
 
     if euclid:  # Pairwise Euclidean distance matrix
         of = _euclidean(dist_file=dist_file, coords=coords)
@@ -81,10 +82,10 @@ def subcortex(fout, image_file=None):
     """
     # TODO Need more robust error handling
 
-    checks._check_outfile(fout)
+    check_outfile(fout)
 
     # Strip file extensions and define output text file
-    fout = brainsmash.utils._checks.stripext(fout)
+    fout = stripext(fout)
     dist_file = fout + '.txt'
 
     # Load CIFTI mapping
@@ -146,14 +147,14 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     m += " for the CAB-NP parcellation."
     print(m)
 
-    checks._check_outfile(outfile)
+    check_outfile(outfile)
 
     # Strip file extensions and define output text file
-    fout = brainsmash.utils._checks.stripext(outfile)
+    fout = stripext(outfile)
     dist_file = fout + '.txt'
 
     # Load parcel labels
-    labels = checks._check_image_file(dlabel_file)
+    labels = check_image_file(dlabel_file)
 
     with open(infile, 'r') as fp:
 
@@ -217,7 +218,7 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
 
         # Write to file
         np.savetxt(fname=dist_file, X=distance_matrix)
-        brainsmash.utils._checks.file_exists(dist_file)
+        check_file_exists(dist_file)
         return dist_file
 
 
@@ -243,7 +244,6 @@ def _euclidean(dist_file, coords):
     Distances are computed and written one row at a time to reduce memory load.
 
     """
-    # TODO This could probably be sped up by specifying a variable chunk size.
     print("\nComputing Euclidean distance matrix\n")
     m = "For a 32k-vertex cortical hemisphere, this may take 15-20 minutes."
     print(m)
@@ -257,7 +257,7 @@ def _euclidean(dist_file, coords):
                 np.expand_dims(point, 0), coords).squeeze()
             line = " ".join([str(d) for d in distances])+"\n"
             fp.write(line)
-    brainsmash.utils._checks.file_exists(f=dist_file)
+    check_file_exists(f=dist_file)
     return dist_file
 
 
@@ -309,5 +309,5 @@ def _geodesic(surface, dist_file, coords):
             f.write(line + "\n")
             if not (ii % 1000):
                 print("Vertex {} of {} complete.".format(ii+1, nvert))
-    brainsmash.utils._checks.file_exists(f=dist_file)
+    check_file_exists(f=dist_file)
     return dist_file

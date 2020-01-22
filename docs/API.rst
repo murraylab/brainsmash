@@ -10,24 +10,29 @@ Generating surrogate maps
 Base
 ++++
 
-.. autoclass:: brainsmash.maps.core.Base
+.. autoclass:: brainsmash.mapgen.Base
     :members:
 
 Sampled
 +++++++
 
-.. autoclass:: brainsmash.maps.core.Sampled
+.. autoclass:: brainsmash.mapgen.Sampled
     :members:
-
 
 Computing distance matrices
 ---------------------------
 .. note:: `Connectome Workbench <https://www.humanconnectome.org/software/connectome-workbench>`_ is a dependency for the following utilities.
 
-.. automodule:: brainsmash.geo.dists
+.. automodule:: brainsmash.workbench.geo
     :members:
 
-References
-----------
+Neuroimaging data I/O
+---------------------
+.. note:: `Connectome Workbench <https://www.humanconnectome.org/software/connectome-workbench>`_ is a dependency for the following utilities.
 
-.. [1] TODO
+.. automodule:: brainsmash.workbench.io
+    :members:
+
+..  References
+..  ----------
+..   .. [1] TODO

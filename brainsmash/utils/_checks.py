@@ -1,5 +1,6 @@
-from brainsmash.utils import kernels
-from brainsmash.workbench.io import load
+from ..utils import kernels as kernel_funcs
+from ..config import kernels
+from ..workbench.io import load
 from pathlib import Path
 import numpy as np
 import nibabel as nib
@@ -108,12 +109,11 @@ def check_kernel(kernel):
     NotImplementedError : `kernel` is not included in `config.py`
 
     """
-    if kernel not in brainsmash.utils.kernels:
+    if kernel not in kernels:
         e = "'{}' is not a valid kernel\n".format(kernel)
-        e += "Valid kernels: {}".format(", ".join([k for k in
-                                                   brainsmash.utils.kernels]))
+        e += "Valid kernels: {}".format(", ".join([k for k in kernels]))
         raise NotImplementedError(e)
-    return getattr(kernels, kernel)
+    return getattr(kernel_funcs, kernel)
 
 
 def check_sampled(distmat, index):
@@ -330,7 +330,7 @@ def stripext(f):
     return str(p)
 
 
-def file_exists(f):
+def check_file_exists(f):
     """
     Check that file exists and has nonzero size.
 

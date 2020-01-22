@@ -1,8 +1,7 @@
-"""
-Functions for Connectome Workbench-style neuroimaging file I/O.
-"""
+""" Functions for Connectome Workbench-style neuroimaging file I/O. """
 
-from brainsmash.config import parcel_labels_lr
+from ..config import parcel_labels_lr
+from ..utils._checks import *
 import tempfile
 from os import path
 from os import system
@@ -10,7 +9,7 @@ import pandas as pd
 import nibabel as nib
 import numpy as np
 
-__all__ = ['load']
+__all__ = ['load', 'image2txt']
 
 
 def load(filename):
@@ -25,11 +24,11 @@ def load(filename):
     Returns
     -------
     (N,) np.ndarray
-        Neuroimaging data stored in `f`
+        Neuroimaging data stored in ``filename``
 
     Raises
     ------
-    TypeError : `f` has unknown filetype
+    TypeError : ``filename`` has unknown filetype
 
     """
     try:
@@ -50,15 +49,15 @@ def _export_cifti_mapping(image=None):
     image : filename or None, default None
         Path to NIFTI-2 format (.nii) neuroimaging file. The metadata
         from this file is used to determine the CIFTI indices and voxel
-        coordinates of elements in the image. If None, use ``parcel_labels_lr``
-        defined in `brainsmash/config.py`.
+        coordinates of elements in the image. By default (if None), use
+        ``brainsmash.config.parcel_labels_lr``.
 
     Returns
     -------
     maps : dict
         A dictionary containing the maps between CIFTI indices, surface
-        vertices, and volume voxels. Keys include 'cortex_left',
-        'cortex_right`, and 'subcortex'.
+        vertices, and volume voxels. Keys include ``'cortex_left'``,
+        ``'cortex_right```, and ``'subcortex'``.
 
     Notes
     -----
@@ -102,38 +101,38 @@ def _export_cifti_mapping(image=None):
     return maps
 
 
-def _load_gifti(f):
+def _load_gifti(filename):
     """
     Load data stored in a GIFTI (.gii) neuroimaging file.
 
     Parameters
     ----------
-    f : filename
+    filename : filename
         Path to GIFTI-format (.gii) neuroimaging file
 
     Returns
     -------
     np.ndarray
-        Neuroimaging data in `f`
+        Neuroimaging data in ``filename``
 
     """
-    return nib.load(f).darrays[0].data
+    return nib.load(filename).darrays[0].data
 
 
-def _load_cifti2(f):
+def _load_cifti2(filename):
     """
     Load data stored in a CIFTI-2 format neuroimaging file (e.g., .dscalar.nii
     and .dlabel.nii files).
 
     Parameters
     ----------
-    f : filename
+    filename : filename
         Path to CIFTI-2 format (.nii) file
 
     Returns
     -------
     np.ndarray
-        Neuroimaging data in `f`
+        Neuroimaging data in ``filename``
 
     Notes
     -----
@@ -141,7 +140,7 @@ def _load_cifti2(f):
     surface-based and/or volumetric data.
 
     """
-    return np.array(nib.load(f).get_data()).squeeze()
+    return np.array(nib.load(filename).get_data()).squeeze()
 
 
 def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
@@ -151,23 +150,21 @@ def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
     Parameters
     ----------
     image_file : filename
-        path to neuroimaging file
+        Path to input neuroimaging file
     outfile : filename
-        path to output txt file
+        Path to output txt file
     maskfile : filename or None, default None
+        Path to neuroimaging file containing a binary map where non-zero values
+        indicate masked brain areas.
 
     delimiter : str, default ' '
-        character used to delimit elements in `outfile`
-
-    Returns
-    -------
-    None
+        Character used to delimit elements in ``outfile``
 
     """
-    x = checks._check_image_file(image_file)
-    checks._check_outfile(outfile)
+    x = check_image_file(image_file)
+    check_outfile(outfile)
     if maskfile is not None:
-        mask = checks._check_image_file(maskfile).astype(bool)
+        mask = check_image_file(maskfile).astype(bool)
         x = x[~mask]
-    checks._is_string_like(delimiter)
+    is_string_like(delimiter)
     np.savetxt(outfile, x, delimiter=delimiter)
