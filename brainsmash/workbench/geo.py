@@ -1,7 +1,7 @@
-from ..neuro.io import load_data
-from ..neuro.io import export_cifti_mapping
-from ..utils import checks
-from ..utils import files
+import brainsmash.utils._checks
+from brainsmash.workbench.io import load
+from brainsmash.workbench.io import _export_cifti_mapping
+from brainsmash.utils import checks
 from scipy.spatial.distance import cdist
 from tempfile import gettempdir
 from os import path
@@ -32,14 +32,14 @@ def cortex(surface, outfile, euclid=False):
 
     """
 
-    checks.check_outfile(outfile)
+    checks._check_outfile(outfile)
 
     # Strip file extensions and define output text file
-    outfile = files.stripext(outfile)
+    outfile = brainsmash.utils._checks.stripext(outfile)
     dist_file = outfile + '.txt'
 
     # Load surface file
-    coords = checks.check_surface(surface)
+    coords = checks._check_surface(surface)
 
     if euclid:  # Pairwise Euclidean distance matrix
         of = _euclidean(dist_file=dist_file, coords=coords)
@@ -81,14 +81,14 @@ def subcortex(fout, image_file=None):
     """
     # TODO Need more robust error handling
 
-    checks.check_outfile(fout)
+    checks._check_outfile(fout)
 
     # Strip file extensions and define output text file
-    fout = files.stripext(fout)
+    fout = brainsmash.utils._checks.stripext(fout)
     dist_file = fout + '.txt'
 
     # Load CIFTI mapping
-    maps = export_cifti_mapping(image_file)
+    maps = _export_cifti_mapping(image_file)
     if "subcortex" not in maps.keys():
         e = "Subcortical information was not found in {}".format(image_file)
         raise ValueError(e)
@@ -146,14 +146,14 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     m += " for the CAB-NP parcellation."
     print(m)
 
-    checks.check_outfile(outfile)
+    checks._check_outfile(outfile)
 
     # Strip file extensions and define output text file
-    fout = files.stripext(outfile)
+    fout = brainsmash.utils._checks.stripext(outfile)
     dist_file = fout + '.txt'
 
     # Load parcel labels
-    labels = checks.check_image_file(dlabel_file)
+    labels = checks._check_image_file(dlabel_file)
 
     with open(infile, 'r') as fp:
 
@@ -217,7 +217,7 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
 
         # Write to file
         np.savetxt(fname=dist_file, X=distance_matrix)
-        files.file_exists(dist_file)
+        brainsmash.utils._checks.file_exists(dist_file)
         return dist_file
 
 
@@ -257,7 +257,7 @@ def _euclidean(dist_file, coords):
                 np.expand_dims(point, 0), coords).squeeze()
             line = " ".join([str(d) for d in distances])+"\n"
             fp.write(line)
-    files.file_exists(f=dist_file)
+    brainsmash.utils._checks.file_exists(f=dist_file)
     return dist_file
 
 
@@ -304,10 +304,10 @@ def _geodesic(surface, dist_file, coords):
         for ii in np.arange(coords.shape[0]):
             cmd = 'wb_command -surface-geodesic-distance "{0}" {1} "{2}" '
             system(cmd.format(surface, ii, distance_metric_file))
-            distance_from_iv = load_data(distance_metric_file)
+            distance_from_iv = load(distance_metric_file)
             line = " ".join([str(dij) for dij in distance_from_iv])
             f.write(line + "\n")
             if not (ii % 1000):
                 print("Vertex {} of {} complete.".format(ii+1, nvert))
-    files.file_exists(f=dist_file)
+    brainsmash.utils._checks.file_exists(f=dist_file)
     return dist_file

@@ -1,22 +1,13 @@
-""" Functions for statistical inference on surrogate maps.
-
-Surrogates -> pairwise null distribution
-Surrogates + map -> null distribution
-Null distribution + test statistic -> non-parametric p-value
-X multi-dimensional Pearson correlation coefficient (fast)
-X unique pairwise Pearson correlations between a set of vectors
-X non-parametric p-value
-
-"""
+""" Functions for performing statistical inference using surrogate maps. """
 
 import numpy as np
 
-# TODO __all__ = []
+__all__ = ['pearsonr', 'pairwise_r', 'pnonparp']
 
 
-def pearsonr_multi(x, y):
+def pearsonr(x, y):
     """
-    Multi-dimensional Pearson correlation coefficient.
+    Multi-dimensional Pearson correlation between rows of ``x`` and ``y``.
 
     Parameters
     ----------
@@ -29,9 +20,13 @@ def pearsonr_multi(x, y):
 
     Raises
     ------
-    ValueError : `x` and `y` are not same size along second axis
+    TypeError : ``x`` or ``y`` is not array_like
+    ValueError : ``x`` and ``y`` are not same size along second axis
 
     """
+    if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
+        raise TypeError('x and y must be numpy arrays')
+
     if x.ndim == 1:
         x = x.reshape(1, -1)
     if y.ndim == 1:
@@ -51,28 +46,35 @@ def pearsonr_multi(x, y):
     return cov / np.dot(s_x[:, np.newaxis], s_y[np.newaxis, :])
 
 
-def pairwise_r(X):
+def pairwise_r(X, flatten=False):
     """
-    Compute unique pairwise Pearson correlations between rows of `X`.
+    Compute pairwise Pearson correlations between rows of ``X``.
 
     Parameters
     ----------
     X : (N,M) np.ndarray
+    flatten : bool, default False
+        If True, return flattened upper triangular elements of corr. matrix
 
     Returns
     -------
-    (N*(N-1)/2,) np.ndarray
-        Flattened array of unique Pearson correlations
+    (N*(N-1)/2,) or (N,N) np.ndarray
+        Pearson correlation coefficients
 
     """
-    rp = pearsonr_multi(X, X)
+    rp = pearsonr(X, X)
+    if not flatten:
+        return rp
     triu_inds = np.triu_indices_from(rp, k=1)
     return rp[triu_inds].flatten()
 
 
-def nonparp(stat, dist):
+def pnonparp(stat, dist):
     """
     Compute two-sided non-parametric p-value.
+
+    Compute the fraction of elements in ``dist`` which are more extreme than
+    ``stat``.
 
     Parameters
     ----------
@@ -84,7 +86,7 @@ def nonparp(stat, dist):
     Returns
     -------
     float
-        Fraction of `dist` element which are more extreme than `stat`
+        Fraction of elements in ``dist`` which are more extreme than ``stat``
 
     """
     n = float(len(dist))

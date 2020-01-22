@@ -1,14 +1,15 @@
 from os.path import join, dirname, abspath
 
+# TODO document this file!
 
 # TODO __all__ = []
 
 kernels = ['exp', 'gaussian', 'invdist', 'uniform']
 
-root = dirname(dirname(abspath(__file__)))  # root directory path
-root = join(root, "brainsmash")
-data = join(root, "data")  # data directory
-surfaces = join(data, "surfaces")
+repo_root = dirname(dirname(abspath(__file__)))  # root directory path
+package_root = join(repo_root, "brainsmash")
+data = join(package_root, "data")  # data directory
+surfaces = join(data, "surfaces")  # surface files
 
 # -------------
 # Surface files
@@ -21,4 +22,3 @@ ctx_right_surface = join(
 parcel_labels_lr = join(
     data, "CortexSubcortex_ColeAnticevic_NetPartition_"
           "wSubcorGSR_netassignments_LR.dlabel.nii")
-scene = join(data, "Human.scene")

@@ -2,14 +2,12 @@
 Convert large data files written to disk to memory-mapped arrays for memory-
 efficient data retrieval.
 """
-
-from ..utils import files
-from ..utils import checks
+from brainsmash.utils._checks import *
 import numpy.lib.format
 from os import path
 import numpy as np
 
-__all__ = ['txt2mmap', 'image2txt']
+__all__ = ['txt2mmap']
 
 
 def txt2mmap(dist_file, output_dir, maskfile=None, delimiter=' '):
@@ -47,13 +45,13 @@ def txt2mmap(dist_file, output_dir, maskfile=None, delimiter=' '):
 
     """
 
-    nlines = files.count_lines(dist_file)
+    nlines = count_lines(dist_file)
     if not path.exists(output_dir):
         raise IOError("Output directory does not exist: {}".format(output_dir))
 
     # Load user-provided mask file
     if maskfile is not None:
-        mask = checks.check_image_file(maskfile).astype(bool)
+        mask = check_image_file(maskfile).astype(bool)
         if mask.size != nlines:
             e = "Distance matrix & mask file must contain same # of elements:\n"
             e += "{} rows in {}".format(nlines, dist_file)
@@ -99,35 +97,6 @@ def txt2mmap(dist_file, output_dir, maskfile=None, delimiter=' '):
         del fpi
 
     return {'distmat': npydfile, 'index': npyifile}  # Return filenames
-
-
-def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
-    """
-    Convert scalar data in a neuroimaging file to a text file.
-
-    Parameters
-    ----------
-    image_file : filename
-        path to neuroimaging file
-    outfile : filename
-        path to output txt file
-    maskfile : filename or None, default None
-
-    delimiter : str, default ' '
-        character used to delimit elements in `outfile`
-
-    Returns
-    -------
-    None
-
-    """
-    x = checks.check_image_file(image_file)
-    checks.check_outfile(outfile)
-    if maskfile is not None:
-        mask = checks.check_image_file(maskfile).astype(bool)
-        x = x[~mask]
-    checks.is_string_like(delimiter)
-    np.savetxt(outfile, x, delimiter=delimiter)
 
 
 def load_memmap(filename):

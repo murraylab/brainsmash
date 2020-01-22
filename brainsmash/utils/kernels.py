@@ -10,7 +10,7 @@ Available kernels:
 
 import numpy as np
 
-# TODO __all__ = []
+__all__ = ['gaussian', 'exp', 'invdist', 'uniform']
 
 
 def gaussian(d):

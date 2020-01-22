@@ -29,12 +29,12 @@ brain map values for 180 unilateral cortical parcels, and that ``dist_mat.txt`` 
 a 180x180 matrix containing the pairwise geodesic distances between parcels.
 
 Because working
-with parcellated data is not computationally expensive, we'll import the :class:`brainsmash.maps.core.Base`
+with parcellated data is not computationally expensive, we'll import the :class:`brainsmash.mapgen.Base`
 class (which does not utilize random sampling):
 
 .. code-block:: python
 
-        from brainsmash.maps.core import Base
+        from brainsmash.mapgen import Base
         brain_map_file = "brain_map.txt"  # use absolute paths if necessary!
         dist_mat_file = "dist_mat.txt"
 
@@ -129,7 +129,7 @@ in the following way:
 
 .. code-block:: python
 
-   from brainsmash.utils.preproc import txt2mmap
+   from brainsmash.utils import txt2mmap
    dist_mat_fin = "dist_mat.txt"  # input text file
    output_dir = "."               # directory to which output binaries are written
    output_files = txt2mmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
@@ -147,22 +147,22 @@ that will look something like:
    output_files = {'distmat': '/pathto/output_dir/distmat.npy',
                    'index': '/pathto/output_dir/index.npy'}
 
-These two files will be required inputs to the :class:`brainsmash.maps.core.Sampled` class.
+These two files will be required inputs to the :class:`brainsmash.mapgen.Sampled` class.
 
 .. note:: For additional computational speed-up, ``distmat.npy`` is sorted by
-  :func:`brainsmash.utils.preproc.txt2mmap` before it is written to file; the second file, ``index.npy``, is required because it contains
+  :func:`brainsmash.utils.txt2mmap` before it is written to file; the second file, ``index.npy``, is required because it contains
   the indices which were used to perform the sorting.
 
 This text to memory-mapped array conversion only ever needs to be run once for a given
 distance matrix.
 
-Finally, to generate surrogate maps we import the :class:`brainsmash.maps.core.Sampled` class
+Finally, to generate surrogate maps we import the :class:`brainsmash.mapgen.Sampled` class
 and create an instance by passing our brain map, memory-mapped distance matrix, and
 memory-mapped index files as arguments:
 
 .. code-block:: python
 
-        from brainsmash.maps.core import Sampled
+        from brainsmash.mapgen import Sampled
         brain_map_file = "brain_map_dense.txt"  # use absolute paths if necessary!
         dist_mat_mmap = output_files['distmat']
         index_mmap = output_files['index']

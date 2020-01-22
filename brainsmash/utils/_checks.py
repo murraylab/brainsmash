@@ -1,13 +1,8 @@
-from .. import config
-from ..utils import kernels
-from ..neuro.io import load_data
+from brainsmash.utils import kernels
+from brainsmash.workbench.io import load
 from pathlib import Path
 import numpy as np
 import nibabel as nib
-
-
-__all__ = ['check_map', 'check_distmat', 'check_kernel', 'check_sampled',
-           'check_image_file', 'check_deltas', 'check_umax', 'check_surface']
 
 
 def check_map(x):
@@ -113,9 +108,10 @@ def check_kernel(kernel):
     NotImplementedError : `kernel` is not included in `config.py`
 
     """
-    if kernel not in config.kernels:
+    if kernel not in brainsmash.utils.kernels:
         e = "'{}' is not a valid kernel\n".format(kernel)
-        e += "Valid kernels: {}".format(", ".join([k for k in config.kernels]))
+        e += "Valid kernels: {}".format(", ".join([k for k in
+                                                   brainsmash.utils.kernels]))
         raise NotImplementedError(e)
     return getattr(kernels, kernel)
 
@@ -179,7 +175,7 @@ def check_image_file(image):
 
     """
     try:
-        x = load_data(image)
+        x = load(image)
     except FileNotFoundError:
         raise FileNotFoundError("No such file: {}".format(image))
     except nib.loadsave.ImageFileError:
@@ -266,7 +262,7 @@ def check_surface(surface):
     ValueError : `surface` does not contain 3 columns (assumed to be X, Y, Z)
 
     """
-    coords = load_data(surface)
+    coords = load(surface)
     nvert, ndim = coords.shape
     if ndim != 3:
         e = "expected three columns in surface file but found {}".format(ndim)
@@ -311,3 +307,70 @@ def is_string_like(obj):
     except (TypeError, ValueError):
         return False
     return True
+
+
+def stripext(f):
+    """
+    Strip (possibly multiple) extensions from a file.
+
+    Parameters
+    ----------
+    f : str
+        file name, possibly with path and possibly with extension(s)
+
+    Returns
+    -------
+    f : str
+        `f` stripped of all extensions
+
+    """
+    p = Path(f)
+    while p.suffixes:
+        p = p.with_suffix('')
+    return str(p)
+
+
+def file_exists(f):
+    """
+    Check that file exists and has nonzero size.
+
+    Parameters
+    ----------
+    f : filename
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    IOError : file does not exist or has zero size
+
+    """
+    if not Path(f).exists() or Path(f).stat().st_size == 0:
+        raise IOError("{} was not successfully written to".format(f))
+
+
+def count_lines(filename):
+    """
+    Count number of lines in a file.
+
+    Parameters
+    ----------
+    filename : filename
+
+    Returns
+    -------
+    int
+        number of lines in file
+
+    """
+    with open(filename, 'rb') as f:
+        lines = 0
+        buf_size = 1024 * 1024
+        read_f = f.raw.read
+        buf = read_f(buf_size)
+        while buf:
+            lines += buf.count(b'\n')
+            buf = read_f(buf_size)
+        return lines
