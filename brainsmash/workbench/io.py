@@ -19,12 +19,12 @@ def load(filename):
     Parameters
     ----------
     filename : filename
-        Path to CIFTI-format neuroimaging file
+        Path to neuroimaging file
 
     Returns
     -------
     (N,) np.ndarray
-        Neuroimaging data stored in ``filename``
+        Brain map data stored in ``filename``
 
     Raises
     ------
@@ -38,6 +38,36 @@ def load(filename):
             return _load_cifti2(filename)
         except AttributeError:
             raise TypeError("This file cannot be loaded: {}".format(filename))
+
+
+def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
+    """
+    Convert scalar data in a neuroimaging file to a text file.
+
+    Parameters
+    ----------
+    image_file : filename
+        Path to input neuroimaging file
+    outfile : filename
+        Path to output txt file
+    maskfile : filename or None, default None
+        Path to neuroimaging file containing a binary map where non-zero values
+        indicate masked brain areas.
+    delimiter : str, default ' '
+        Character used to delimit elements in ``outfile``
+
+    Notes
+    -----
+    More generally, this can be done via ``wb_command -cifti-convert -to-text <image_file> <outfile>``.
+
+    """
+    x = check_image_file(image_file)
+    check_outfile(outfile)
+    if maskfile is not None:
+        mask = check_image_file(maskfile).astype(bool)
+        x = x[~mask]
+    is_string_like(delimiter)
+    np.savetxt(outfile, x, delimiter=delimiter)
 
 
 def _export_cifti_mapping(image=None):
@@ -141,30 +171,3 @@ def _load_cifti2(filename):
 
     """
     return np.array(nib.load(filename).get_data()).squeeze()
-
-
-def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
-    """
-    Convert scalar data in a neuroimaging file to a text file.
-
-    Parameters
-    ----------
-    image_file : filename
-        Path to input neuroimaging file
-    outfile : filename
-        Path to output txt file
-    maskfile : filename or None, default None
-        Path to neuroimaging file containing a binary map where non-zero values
-        indicate masked brain areas.
-
-    delimiter : str, default ' '
-        Character used to delimit elements in ``outfile``
-
-    """
-    x = check_image_file(image_file)
-    check_outfile(outfile)
-    if maskfile is not None:
-        mask = check_image_file(maskfile).astype(bool)
-        x = x[~mask]
-    is_string_like(delimiter)
-    np.savetxt(outfile, x, delimiter=delimiter)

@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-Connectome Workbench users who wish to first derive a geodesic distance matrix from a ``.surf.gii``
+Connectome Workbench users who wish to first derive a geodesic distance matrix from a ``*.surf.gii``
 file can begin :ref:`below <wb>`.
 
 Input data types
@@ -15,7 +15,10 @@ For illustration's sake, we will assume both required arguments have been writte
 to disk as whitespace-separated text files ``brain_map.txt`` and ``dist_mat.txt``.
 However, BrainSMASH can flexibly accommodate a variety of input types:
 
-- TODO
+- Delimited ``*.txt`` files
+- Neuroimaging files used by Connectome Workbench, including ``*scalar.nii`` files and ``*.func.gii`` metric files (assuming the files contain only a single brain map)
+- Data and memory-mapped arrays written to ``*.npy`` files
+- Numpy arrays and array-like objects
 
 To follow along with the first example below, you may download our `example data <https://github.com/jbburt/brainsmash/tree/master/examples>`_.
 TODO: host and link to dense data.
@@ -239,16 +242,16 @@ Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
   The number of randomly sampled brain areas used to generate a surrogate map.
 
 ``knn`` int, default 1000
-  Let **D** be the pairwise distance matrix. Assume each row of **D** has been sorted, in ascending order.
+  Let **D** be the pairwise distance matrix. Assume each row of **D** has been sorted, in ascending order. Then, because spatial autocorrelation is primarily a local effect, use only **D[:,:knn]**.
 
 ``deltas`` np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
-   See :ref:`above <deltas>`.
+   See :ref:`above <deltas>`. Note that fewer values are iterated over by default than in the ``Base`` class. Users with more time and/or patience are encouraged to expand the default list, as it may improve your surrogate maps.
 
 ``kernel`` str, default 'exp'
    See :ref:`above <kernel>`.
 
 ``umax`` int, default 70
-  See :ref:`above <umax>`. DIFF
+  See :ref:`above <umax>`. Note that this parameter is by default larger than for the ``Base`` class; this is in part because of the ``knn`` parameter above (which is used internally to reduce the distance matrix prior to determining ``umax``.
 
 ``nbins`` int, default 25
   See :ref:`above <nbins>`.
@@ -260,6 +263,9 @@ Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
    See :ref:`above <bw>`.
 
 .. note:: Dense data may be used with :class:`brainsmash.mapgen.base.Base` -- the examples are primarily partitioned in this way for illustration (but also in anticipation of users' local memory constraints).
+
+In general, the ``Sampled`` class has much more parameter sensitivity. You may need to adjust
+these parameters to get reliable variogram fits.
 
 Evaluating variogram fits
 -------------------------
@@ -273,7 +279,7 @@ compare surrogate maps' variograms to the empirical brain map's variogram:
    base_fit(brain_map_file, dist_mat_file, nsurr=100)
 
 
-This will produce a plot that looks something like:
+For well-chosen parameters, the code above will produce a plot that looks something like:
 
 .. figure::  images/variogram_fit.png
    :align:   center
@@ -286,12 +292,65 @@ keyword arguments (described above) can be specified after ``nsurr`` in
 the function calls to :func:`brainsmash.utils.eval.base_fit` and :func:`brainsmash.utils.eval.sampled_fit`-- for example, if
 you want to determine how changing free parameters influences your surrogates maps' variogram fits.
 
-.. note:: When using :func:`brainsmash.utils.eval.sampled_fit`, you must specify both ``index`` in addition to the brain map and distance matrix (see :ref:`above <memmap>`).
+.. note:: When using :func:`brainsmash.utils.eval.sampled_fit`, you must specify the memory-mapped ``index`` file in addition to the brain map and distance matrix files (see :ref:`above <memmap>`).
 
 .. _wb:
 
 Workbench users
 ---------------
-TODO
+The functionality described below is intended for users using `GIFTI- and CIFTI-format <https://balsa.wustl.edu/about/fileTypes>`_ surface-based neuroimaging files.
 
-TODO: is tutorials page even necessary after this?
+Neuroimaging data I/O
++++++++++++++++++++++
+To load data from a neuroimaging file into Python, use :func:`brainsmash.workbench.io.load`:
+
+.. code-block:: python
+
+   from brainsmash.workbench.io import load
+   f = "/path/to/myimage.dscalar.nii"
+   brain_map = load(f)  # type(brain_map) == numpy.ndarray
+
+Creating distance matrices
+++++++++++++++++++++++++++
+Functions to compute distance matrices are included in the :ref:`brainsmash.workbench.geo<distmats>` module.
+
+To compute a geodesic distance matrix for a cortical hemisphere, you could do the following:
+
+.. code-block:: python
+
+   from brainsmash.workbench.geo import cortex
+   surface = "/pathto/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii"
+   cortex(surface=surface, outfile="/pathto/dense_geodesic_distmat.txt", euclid=False)
+
+Note that this function takes approximately two hours to run for standard 32k surface meshes. To compute 3D
+Euclidean distances instead of surface-based geodesic distances, simply change ``euclid=True``.
+
+To compute a parcellated geodesic distance matrix, you could then do:
+
+.. code-block:: python
+
+   from brainsmash.workbench.geo import parcellate
+   infile = "/pathto/dense_geodesic_distmat.txt"
+   outfile = "/pathto/parcel_geodesic_distmat.txt"
+   dlabel = "Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_Final_Areas_Group_Colors.32k_fs_L.dlabel.nii"
+   parcellate(infile, dlabel, outfile)
+
+This code takes half an hour or less to run for the HCP MMP1.0. Note that your ``dlabel`` file needs to contain
+the same number of elements as your distance matrix does. If you have a whole-brain parcellation file, for example,
+and want to isolate the 32k left cortical hemisphere vertices, do:
+
+.. code-block:: bash
+
+   wb_command -cifti-separate yourparcellation_LR.dlabel.nii COLUMN -label CORTEX_LEFT yourparcellation_L.dlabel.nii
+
+from the command-line.
+
+To compute a Euclidean distance matrix for a cortical hemisphere, you could do the following:
+
+.. code-block:: python
+
+   from brainsmash.workbench.geo import cortex
+   surface = "/pathto/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii"
+   cortex(surface=surface, outfile="/pathto/dense_geodesic_distmat.txt", euclid=False)
+
+Note that this function takes approximately two hours to run for standard 32k surface meshes.

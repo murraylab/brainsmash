@@ -10,14 +10,16 @@ In BrainSMASH, spatial autocorrelation (SA) in brain maps is operationalized thr
 
    Variograms provide summary measures of pairwise variability as a function of distance.
 
-The variogram quantifies the variance between all pairs of points separated by distance *d*.
-Pure white noise, which has equal variability at all spatial scales, has a flat variogram.
-The blue curve above therefore corresponds to a brain map with very little SA. In contrast,
-highly spatially autocorrelated brain maps tend to have relatively less variability among spatially
-proximal areas -- at small *d* -- and therefore exhibit a positive slope in their variogram.
-The dark green curve above is therefore more spatially autocorrelated than the cyan curve.
-To produce an SA-preserving surrogate brain map, BrainSMASH generates random maps whose
-variograms are as similar as possible to the empirical map's variogram.
+The variogram quantifies, as a function of distance *d*, the variance between all pairs of points spatially separated by *d*.
+Pure white noise, for example, which has equal variability at all spatial scales, has a flat variogram (i.e., no distance dependence).
+In general, brain maps with very little SA will be nearly flat, like the blue curve above. In contrast,
+highly spatially autocorrelated brain maps have  less variability among spatially
+proximal areas -- at small *d* -- than among widely separated areas, and are therefore
+characterized by positive slopes in their variograms.
+The dark green curve above is therefore more spatially autocorrelated at small distances than the
+brain map which produced the cyan curve.
+**To generate SA-preserving surrogate brain maps, BrainSMASH produces random maps whose
+variograms are approximately matched to an empirical brain map's variogram.**
 
 The figure below provides a schematic representation of the generative process implemented
 in BrainSMASH:

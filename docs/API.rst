@@ -1,7 +1,7 @@
 .. _contents:
 
-API
-===
+API Documentation
+=================
 TODO
 
 Generating surrogate maps
@@ -18,6 +18,8 @@ Sampled
 
 .. autoclass:: brainsmash.mapgen.sampled.Sampled
     :members:
+
+.. _distmats:
 
 Computing distance matrices
 ---------------------------

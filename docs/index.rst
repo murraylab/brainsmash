@@ -21,11 +21,12 @@ Contents:
    :maxdepth: 1
 
    installation
-   gettingstarted
    approach
-   tutorials
+   gettingstarted
    API
    references
+
+.. tutorials
 
 Authors
 =======
