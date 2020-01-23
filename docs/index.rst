@@ -23,6 +23,7 @@ Contents:
    installation
    approach
    gettingstarted
+   example
    API
    references
 

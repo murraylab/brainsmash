@@ -52,7 +52,7 @@ def cortex(surface, outfile, euclid=False):
 
 def subcortex(fout, image_file=None):
     """
-    Compute 3D Euclidean distance matrix between areas in `image` file.
+    Compute 3D Euclidean distance matrix between areas in ``image_file``.
 
     Parameters
     ----------
@@ -71,9 +71,8 @@ def subcortex(fout, image_file=None):
     Notes
     -----
     Voxel indices are used as a proxy for physical distance, since the two are
-    related by a simple linear scaling. NOTE!! This assumes that voxels are
-    cubic, ie that the scaling is equivalent along each dimension, which as I
-    understand it is normally the case with Workbench-style files.
+    related by a simple linear scaling. Note that this assumes voxels are
+    cubic, i.e., that the scaling is equivalent along the x, y, and z dimension.
 
     Raises
     ------

@@ -2,7 +2,7 @@
 
 from ..mapgen.base import Base
 from ..mapgen.sampled import Sampled
-from ..mapgen._utils import dataio
+from ..mapgen._dataio import dataio
 import matplotlib.pyplot as plt
 import numpy as np
 

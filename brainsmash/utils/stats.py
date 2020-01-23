@@ -2,7 +2,7 @@
 
 import numpy as np
 
-__all__ = ['pearsonr', 'pairwise_r', 'pnonparp']
+__all__ = ['pearsonr', 'pairwise_r', 'nonparp']
 
 
 def pearsonr(x, y):
@@ -69,7 +69,7 @@ def pairwise_r(X, flatten=False):
     return rp[triu_inds].flatten()
 
 
-def pnonparp(stat, dist):
+def nonparp(stat, dist):
     """
     Compute two-sided non-parametric p-value.
 

@@ -2,39 +2,57 @@
 
 API Documentation
 =================
-TODO
 
-Generating surrogate maps
--------------------------
+brainsmash.mapgen
+-----------------
 
-Base
+base
 ++++
 
 .. autoclass:: brainsmash.mapgen.base.Base
     :members:
 
-Sampled
+sampled
 +++++++
 
 .. autoclass:: brainsmash.mapgen.sampled.Sampled
     :members:
 
+brainsmash.utils
+----------------
+
+memmap
+++++++
+
+.. automodule:: brainsmash.utils.memmap
+   :members:
+
+kernels
++++++++
+
+.. automodule:: brainsmash.utils.kernels
+    :members:
+
+stats
++++++
+
+.. automodule:: brainsmash.utils.stats
+    :members:
+
+workbench
+---------
+.. note:: `Connectome Workbench <https://www.humanconnectome.org/software/connectome-workbench>`_ is a dependency for many of the following utilities.
+
 .. _distmats:
 
-Computing distance matrices
----------------------------
-.. note:: `Connectome Workbench <https://www.humanconnectome.org/software/connectome-workbench>`_ is a dependency for the following utilities.
+geo
++++
 
 .. automodule:: brainsmash.workbench.geo
     :members:
 
-Neuroimaging data I/O
----------------------
-.. note:: `Connectome Workbench <https://www.humanconnectome.org/software/connectome-workbench>`_ is a dependency for the following utilities.
+io
+++
 
 .. automodule:: brainsmash.workbench.io
     :members:
-
-..  References
-..  ----------
-..   .. [1] TODO

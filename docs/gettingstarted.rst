@@ -1,9 +1,6 @@
 Getting Started
 ===============
 
-Connectome Workbench users who wish to first derive a geodesic distance matrix from a ``*.surf.gii``
-file can begin :ref:`below <wb>`.
-
 Input data types
 ----------------
 Using BrainSMASH requires specifying two inputs:
@@ -12,7 +9,7 @@ Using BrainSMASH requires specifying two inputs:
 - A distance matrix, containing a measure of distance between each pair of elements in the brain map
 
 For illustration's sake, we will assume both required arguments have been written
-to disk as whitespace-separated text files ``brain_map.txt`` and ``dist_mat.txt``.
+to disk as whitespace-separated text files ``parcel_myelin.txt`` and ``parcel_distmat.txt``.
 However, BrainSMASH can flexibly accommodate a variety of input types:
 
 - Delimited ``*.txt`` files
@@ -21,12 +18,16 @@ However, BrainSMASH can flexibly accommodate a variety of input types:
 - Numpy arrays and array-like objects
 
 To follow along with the first example below, you may download our `example data <https://github.com/jbburt/brainsmash/tree/master/examples>`_.
+Connectome Workbench users who wish to derive a distance matrix from a ``*.surf.gii``
+file may want to begin :ref:`below <wb>`, as these functions take a long time to run
+(but thankfully only ever need to be run once).
+
 TODO: host and link to dense data.
 
 Parcellated surrogate maps
 --------------------------
-For this example, we'll make the additional assumption that ``brain_map.txt`` contains
-brain map values for 180 unilateral cortical parcels, and that ``dist_mat.txt`` is
+For this example, we'll make the additional assumption that ``parcel_myelin.txt`` contains
+myelin map values for 180 unilateral cortical parcels, and that ``parcel_distmat.txt`` is
 a 180x180 matrix containing the pairwise geodesic distances between parcels.
 
 Because working
@@ -36,8 +37,8 @@ class (which does not utilize random sampling):
 .. code-block:: python
 
         from brainsmash.mapgen.base import Base
-        brain_map_file = "brain_map.txt"  # use absolute paths if necessary!
-        dist_mat_file = "dist_mat.txt"
+        brain_map_file = "parcel_myelin.txt"  # use absolute paths if necessary!
+        dist_mat_file = "parcel_distmat.txt"
 
 Note that if the two text files are not in the current directory, you'll need to
 include the absolute paths to the files in the variables defined above.
@@ -167,10 +168,12 @@ Prior to simulating surrogate maps, you'll need to convert
 the distance matrix to a memory-mapped binary file, which can be easily achieved
 in the following way:
 
+TODO -> dense dist file
+
 .. code-block:: python
 
    from brainsmash.utils.memmap import txt2memmap
-   dist_mat_fin = "dist_mat.txt"  # input text file
+   dist_mat_fin = "???"  # input text file
    output_dir = "."               # directory to which output binaries are written
    output_files = txt2memmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
 
@@ -294,8 +297,6 @@ you want to determine how changing free parameters influences your surrogates ma
 
 .. note:: When using :func:`brainsmash.utils.eval.sampled_fit`, you must specify the memory-mapped ``index`` file in addition to the brain map and distance matrix files (see :ref:`above <memmap>`).
 
-.. _wb:
-
 Workbench users
 ---------------
 The functionality described below is intended for users using `GIFTI- and CIFTI-format <https://balsa.wustl.edu/about/fileTypes>`_ surface-based neuroimaging files.
@@ -309,6 +310,8 @@ To load data from a neuroimaging file into Python, use :func:`brainsmash.workben
    from brainsmash.workbench.io import load
    f = "/path/to/myimage.dscalar.nii"
    brain_map = load(f)  # type(brain_map) == numpy.ndarray
+
+.. _wb:
 
 Creating distance matrices
 ++++++++++++++++++++++++++
@@ -345,12 +348,18 @@ and want to isolate the 32k left cortical hemisphere vertices, do:
 
 from the command-line.
 
-To compute a Euclidean distance matrix for a cortical hemisphere, you could do the following:
+To compute a Euclidean distance matrix for subcortex, you could do the following:
 
 .. code-block:: python
 
-   from brainsmash.workbench.geo import cortex
-   surface = "/pathto/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii"
-   cortex(surface=surface, outfile="/pathto/dense_geodesic_distmat.txt", euclid=False)
+   from brainsmash.workbench.geo import subcortex
+   image_file = "/pathto/image_with_subcortical_volumes.dscalar.nii"
+   subcortex(outfile="/pathto/subcortex_dists.txt", image_file=image_file)
 
-Note that this function takes approximately two hours to run for standard 32k surface meshes.
+Only three-dimensional Euclidean distance is currently implemented for subcortex.
+If you wish to create surrogate maps for=a single subcortical structure, first
+create a mask file for that structure, then pass the filename to keyword argument ``maskfile=``
+in :func:`brainsmash.utils.memmap.txt2memmap`.
+
+.. note:: If you mask your distance matrix, don't forget to mask your brain map as well.
+  One way this can be achieved is using :func:`brainsmash.workbench.io.image2txt`.

@@ -2,6 +2,7 @@
 Convert large data files written to disk to memory-mapped arrays for memory-
 efficient data retrieval.
 """
+from ..mapgen._dataio import dataio
 from ..mapgen._checks import *
 import numpy.lib.format
 from os import path
@@ -20,9 +21,10 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
         Path to `delimiter`-separated distance matrix file
     output_dir : filename
         Path to directory in which output files will be written
-    maskfile : filename or None, default None
-        Path to a neuroimaging file containing a mask. scalar data are
-        cast to boolean; all elements not equal to zero will therefore be masked
+    maskfile : filename or np.ndarray or None, default None
+        Path to a neuroimaging/txt file containing a mask, or a mask
+        represented as a numpy array. Mask scalars are cast to boolean, and
+        all elements not equal to zero will be masked.
     delimiter : str
         Delimiting character in `infile`
 
@@ -48,9 +50,9 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     if not path.exists(output_dir):
         raise IOError("Output directory does not exist: {}".format(output_dir))
 
-    # Load user-provided mask file
+    # Load mask if one was provided
     if maskfile is not None:
-        mask = check_image_file(maskfile).astype(bool)
+        mask = dataio(maskfile).astype(bool)
         if mask.size != nlines:
             e = "Distance matrix & mask file must contain same # of elements:\n"
             e += "{} rows in {}".format(nlines, dist_file)
@@ -59,8 +61,8 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
         mask_fileout = path.join(output_dir, "mask.txt")
         np.savetxt(  # Write to text file
             fname=mask_fileout, X=mask.astype(int), fmt="%i", delimiter=',')
-        nv = int((~mask).sum())
-        idx = np.arange(nlines)[~mask]
+        nv = int((~mask).sum())  # number of non-masked elements
+        idx = np.arange(nlines)[~mask]  # indices of non-masked elements
     else:
         nv = nlines
         idx = np.arange(nlines)

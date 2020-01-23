@@ -171,3 +171,66 @@ def _load_cifti2(filename):
 
     """
     return np.array(nib.load(filename).get_data()).squeeze()
+
+
+def check_image_file(image):
+    """
+    Check a neuroimaging file and return internal scalar neuroimaging data.
+
+    Parameters
+    ----------
+    image : filename
+        Path to neuroimaging file or txt file
+
+    Returns
+    -------
+    (N,) np.ndarray
+        Scalar brain map values
+
+    Raises
+    ------
+    FileNotFoundError : `image` does not exist
+    IOError : filetype not recognized
+    ValueError : `image` contains more than one neuroimaging map
+
+    """
+    try:
+        x = load(image)
+    except FileNotFoundError:
+        raise FileNotFoundError("No such file: {}".format(image))
+    except nib.loadsave.ImageFileError:
+        try:
+            x = np.loadtxt(image)
+        except (TypeError, ValueError):
+            e = "Cannot work out file type of {}".format(image)
+            raise IOError(e)
+    if x.ndim > 1:
+        raise ValueError("Image contains more than one map: {}".format(image))
+    return x
+
+
+def check_surface(surface):
+    """
+    Check and load MNI coordinates from a surface file.
+
+    Parameters
+    ----------
+    surface : filename
+        Path to GIFTI-format surface file (.surf.gii)
+
+    Returns
+    -------
+    (N,3) np.ndarray
+        MNI coordinates. columns 0,1,2 correspond to X,Y,Z coord, respectively
+
+    Raises
+    ------
+    ValueError : `surface` does not contain 3 columns (assumed to be X, Y, Z)
+
+    """
+    coords = load(surface)
+    nvert, ndim = coords.shape
+    if ndim != 3:
+        e = "expected three columns in surface file but found {}".format(ndim)
+        raise ValueError(e)
+    return coords
