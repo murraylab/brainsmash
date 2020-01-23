@@ -8,7 +8,7 @@ simulate surrogate brain maps with spatial autocorrelation that is matched
 to the spatial autocorrelation in an empirical map. Additional utilities are provided
 for users using Connectome Workbench style surface-based neuroimaging files.
 
-Exhaustive documentation can be fonud [here](https://brainsmash.readthedocs.io).
+Exhaustive documentation can be found [here](https://brainsmash.readthedocs.io).
 
 Dependencies
 ============
@@ -29,7 +29,7 @@ Installation
 ============
 ---
 
-BrainSmash is most easily installed using pip:
+BrainSMASH is most easily installed using pip:
 
     pip install brainsmash
 
@@ -41,13 +41,11 @@ You may also clone and install the source files manually:
 
 License
 -------
-
 The BrainSMASH source code is available under the GNU General Public License v3.0.
 
 Preprint
 --------
-
-Please cite the following preprint if you use BrainSMASH in your research: TODO
+Please cite the following preprint if you use BrainSMASH in your research: TODO 
 
 Core development team
 ---------------------
