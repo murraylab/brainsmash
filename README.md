@@ -3,23 +3,41 @@ BrainSMASH
 
 BrainSMASH (Brain Surrogate Maps with Spatially Autocorrelated Heterogeneity) is a 
 python-based computational platform for statistical testing of spatially
-autocorrelated brain maps. At the core of BrainSMASH is functionality to 
+autocorrelated brain maps. At the heart of BrainSMASH is the ability to 
 simulate surrogate brain maps with spatial autocorrelation that is matched
-to the spatial autocorrelation in an empirical map. Additional utilities are included
-for users utilizing Connectome Workbench style surface-based neuroimaging files.
+to the spatial autocorrelation in an empirical map. Additional utilities are provided
+for users using Connectome Workbench style surface-based neuroimaging files.
 
-For more detailed installation instructions, documentation, a quick start guide
-and examples, please refer to our [documentation](https://brainsmash.readthedocs.io).
+Exhaustive documentation can be fonud [here](https://brainsmash.readthedocs.io).
+
+Dependencies
+============
+Installing BrainSMASH requires:
+
+- Python 3+
+- [numpy](http://www.numpy.org)
+- [pandas](https://pandas.pydata.org)
+- [nibabel](http://nipy.org/nibabel)
+- [matplotlib](https://matplotlib.org)
+- [scikit-learn](http://scikit-learn.org/stable/index.html)
+
+If you wish to use the additional utilities provided for Connectome Workbench users, you must have
+[Connectome Workbench](https://www.humanconnectome.org/software/get-connectome-workbench) installed with the ``wb_command`` executable locatable in your
+system PATH environment variable.
 
 Installation
 ============
 ---
 
-### Step 1. TODO
+BrainSmash is most easily installed using pip:
 
-Usage
-=====
-TODO
+    pip install brainsmash
+
+You may also clone and install the source files manually:
+
+    git clone https://github.com/jbburt/brainsmash.git
+    cd brainsmash
+    python setup.py install
 
 License
 -------
