@@ -51,7 +51,6 @@ Core development team
 ---------------------
 
 * Joshua B Burt, Murray Lab - Yale University
-* Maxwell Shinn, Murray Lab - Yale University
 * John D Murray, Murray Lab - Yale University
 
 Change Log
