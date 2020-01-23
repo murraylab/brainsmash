@@ -1,28 +1,26 @@
 """ Evaluation metrics for randomly generated surrogate maps. """
 
-from brainsmash.mapgen import Base
-from brainsmash.mapgen import Sampled
+from ..mapgen.base import Base
+from ..mapgen.sampled import Sampled
+from ..mapgen._utils import dataio
 import matplotlib.pyplot as plt
 import numpy as np
 
-__all__ = ['sampled_fit', 'base_fit']
+__all__ = ['base_fit', 'sampled_fit']
 
 
-def base_fit(brain_map, distmat, nsurr=100, include_naive=False, **params):
+def base_fit(brain_map, distmat, nsurr=100, **params):
     """
     Test variogram fits for :class:`brainsmash.mapgen.Base`.
 
     Parameters
     ----------
-    brain_map : (N,) np.ndarray
+    brain_map : (N,) np.ndarray or filename
         Scalar brain map
-    distmat : (N,N) np.ndarray
+    distmat : (N,N) np.ndarray or filename
         Pairwise distance matrix between elements of ``brain_map``
     nsurr : int, default 100
         Number of simulated surrogate maps from which to compute variograms
-    include_naive : bool, default False
-        Compute and plot randomly shuffled ("naive") surrogate maps for
-        comparison
     params
         Keyword arguments for :class:`brainsmash.maps.Base`
 
@@ -37,14 +35,17 @@ def base_fit(brain_map, distmat, nsurr=100, include_naive=False, **params):
 
     """
 
+    x = dataio(brain_map)
+    d = dataio(distmat)
+
     # Instantiate surrogate map generator
-    generator = Base(brain_map=brain_map, distmat=distmat, **params)
+    generator = Base(brain_map=x, distmat=d, **params)
 
     # Simulate surrogate maps
     surrogate_maps = generator(n=nsurr)
 
     # Compute empirical variogram
-    v = generator.compute_variogram(brain_map)
+    v = generator.compute_variogram(x)
     emp_var, u0 = generator.smooth_variogram(v, return_bins=True)
 
     # Compute surrogate map variograms
@@ -53,19 +54,11 @@ def base_fit(brain_map, distmat, nsurr=100, include_naive=False, **params):
         v_null = generator.compute_variogram(surrogate_maps[i])
         surr_var[i] = generator.smooth_variogram(v_null, return_bins=False)
 
-    # Compute "naive" (randomly shuffled) surrogate maps for further comparison
-    if include_naive:
-        naive_surrs = np.array(
-            [np.random.permutation(brain_map) for _ in range(nsurr)])
-        naive_var = np.empty((nsurr, generator.nbins))
-        for i in range(nsurr):
-            v_null = generator.compute_variogram(naive_surrs[i])
-            naive_var[i] = generator.smooth_variogram(v_null, return_bins=False)
-
     # # Create plot for visual comparison
 
     # Plot empirical variogram
-    fig, ax = plt.subplots(figsize=(3, 3))
+    fig = plt.figure(figsize=(3, 3))
+    ax = fig.add_axes([0.12, 0.15, 0.8, 0.77])
     ax.scatter(u0, emp_var, s=20, facecolor='none', edgecolor='k',
                marker='o', lw=1, label='Empirical')
 
@@ -75,14 +68,6 @@ def base_fit(brain_map, distmat, nsurr=100, include_naive=False, **params):
     ax.fill_between(u0, mu-sigma, mu+sigma, facecolor='#377eb8',
                     edgecolor='none', alpha=0.3)
     ax.plot(u0, mu, color='#377eb8', label='SA-preserving', lw=1)
-
-    # Plot randomly shuffled surrogates' variogram fits
-    if include_naive:
-        mu = naive_var.mean(axis=0)
-        sigma = naive_var.std(axis=0)
-        ax.fill_between(u0, mu - sigma, mu + sigma, facecolor='#e41a1c',
-                        edgecolor='none', alpha=0.3)
-        ax.plot(u0, mu, color='#e41a1c', label='Shuffled', lw=1)
 
     # Make plot nice
     leg = ax.legend(loc=0)
@@ -98,8 +83,7 @@ def base_fit(brain_map, distmat, nsurr=100, include_naive=False, **params):
     plt.show()
 
 
-def sampled_fit(brain_map, distmat, index, nsurr=10, include_naive=False,
-                **params):
+def sampled_fit(brain_map, distmat, index, nsurr=10, **params):
     """
     Test variogram fits for :class:`brainsmash.mapgen.Sampled`.
 
@@ -113,9 +97,6 @@ def sampled_fit(brain_map, distmat, index, nsurr=10, include_naive=False,
         See :class:`brainsmash.core.Sampled`
     nsurr : int, default 10
         Number of simulated surrogate maps from which to compute variograms
-    include_naive : bool, default False
-        Compute and plot randomly shuffled ("naive") surrogate maps for
-        comparison.
     params
         Keyword arguments for :class:`brainsmash.maps.Sampled`
 
@@ -156,19 +137,11 @@ def sampled_fit(brain_map, distmat, index, nsurr=10, include_naive=False,
         surr_var[i] = generator.smooth_variogram(
             u=u[uidx], v=v_null[uidx], return_bins=False)
 
-    # Compute "naive" (randomly shuffled) surrogate maps for further comparison
-    if include_naive:
-        naive_surrs = [generator.permute_map() for _ in range(nsurr)]
-        naive_var = np.empty((nsurr, generator.nbins))
-        for i in range(nsurr):
-            v_null = generator.compute_variogram(naive_surrs[i], idx)
-            naive_var[i] = generator.smooth_variogram(
-                u=u[uidx], v=v_null[uidx], return_bins=False)
-
     # # Create plot for visual comparison
 
     # Plot empirical variogram
-    fig, ax = plt.subplots(figsize=(3, 3))
+    fig = plt.figure(figsize=(3, 3))
+    ax = fig.add_axes([0.12, 0.15, 0.8, 0.77])
     ax.scatter(u0, emp_var, s=20, facecolor='none', edgecolor='k',
                marker='o', lw=1, label='Empirical')
 
@@ -178,14 +151,6 @@ def sampled_fit(brain_map, distmat, index, nsurr=10, include_naive=False,
     ax.fill_between(u0, mu-sigma, mu+sigma, facecolor='#377eb8',
                     edgecolor='none', alpha=0.3)
     ax.plot(u0, mu, color='#377eb8', label='SA-preserving', lw=1)
-
-    # Plot randomly shuffled surrogates' variogram fits
-    if include_naive:
-        mu = naive_var.mean(axis=0)
-        sigma = naive_var.std(axis=0)
-        ax.fill_between(u0, mu - sigma, mu + sigma, facecolor='#e41a1c',
-                        edgecolor='none', alpha=0.3)
-        ax.plot(u0, mu, color='#e41a1c', label='Shuffled', lw=1)
 
     # Make plot nice
     leg = ax.legend(loc=0)

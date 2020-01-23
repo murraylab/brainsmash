@@ -12,11 +12,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../brainsmash/analysis/'))
-sys.path.insert(0, os.path.abspath('../brainsmash/geo/'))
-sys.path.insert(0, os.path.abspath('../brainsmash/maps/'))
-sys.path.insert(0, os.path.abspath('../brainsmash/neuro/'))
+sys.path.insert(0, os.path.abspath('../brainsmash/mapgen/'))
 sys.path.insert(0, os.path.abspath('../brainsmash/utils/'))
+sys.path.insert(0, os.path.abspath('../brainsmash/workbench/'))
 
 # -- Project information -----------------------------------------------------
 

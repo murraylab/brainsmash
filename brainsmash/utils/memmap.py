@@ -2,18 +2,17 @@
 Convert large data files written to disk to memory-mapped arrays for memory-
 efficient data retrieval.
 """
-from brainsmash.utils._checks import *
+from ..mapgen._checks import *
 import numpy.lib.format
 from os import path
 import numpy as np
 
-__all__ = ['txt2mmap']
+__all__ = ['txt2memmap']
 
 
-def txt2mmap(dist_file, output_dir, maskfile=None, delimiter=' '):
+def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     """
-    Create memory-mapped arrays expected by
-    :class:`brainsmash.maps.core.Sampled`.
+    Create memory-mapped arrays expected by :class:`brainsmash.mapgen.sampled.Sampled`.
 
     Parameters
     ----------

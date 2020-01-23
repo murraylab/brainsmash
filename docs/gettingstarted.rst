@@ -4,20 +4,18 @@ Getting Started
 Connectome Workbench users who wish to first derive a geodesic distance matrix from a ``.surf.gii``
 file can begin :ref:`below <wb>`.
 
-Prerequisites
--------------
+Input data types
+----------------
 Using BrainSMASH requires specifying two inputs:
 
 - A brain map, i.e. a one-dimensional scalar vector, and
-- A matrix containing a measure of distance between each pair of elements in the brain map
-
-Henceforth, the latter will be referred to simply as the "distance matrix".
+- A distance matrix, containing a measure of distance between each pair of elements in the brain map
 
 For illustration's sake, we will assume both required arguments have been written
 to disk as whitespace-separated text files ``brain_map.txt`` and ``dist_mat.txt``.
+However, BrainSMASH can flexibly accommodate a variety of input types:
 
-.. note::
-   BrainSMASH can flexibly accommodate a variety of input types, described TODO.
+- TODO
 
 To follow along with the first example below, you may download our `example data <https://github.com/jbburt/brainsmash/tree/master/examples>`_.
 TODO: host and link to dense data.
@@ -29,12 +27,12 @@ brain map values for 180 unilateral cortical parcels, and that ``dist_mat.txt`` 
 a 180x180 matrix containing the pairwise geodesic distances between parcels.
 
 Because working
-with parcellated data is not computationally expensive, we'll import the :class:`brainsmash.mapgen.Base`
+with parcellated data is not computationally expensive, we'll import the :class:`brainsmash.mapgen.base.Base`
 class (which does not utilize random sampling):
 
 .. code-block:: python
 
-        from brainsmash.mapgen import Base
+        from brainsmash.mapgen.base import Base
         brain_map_file = "brain_map.txt"  # use absolute paths if necessary!
         dist_mat_file = "dist_mat.txt"
 
@@ -98,9 +96,43 @@ to be larger for brain maps whose values are more strongly non-normal.
   and `GitHub <https://github.com/jbburt/wbplot>`_. ``wbplot`` currently only
   supports cortical data, and parcellated data must be in the `HCP's MMP parcellation <https://balsa.wustl.edu/study/show/RVVG>`_.
 
-TODO: show evaluation plots?
+Keyword arguments to :class:`brainsmash.mapgen.base.Base`
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-TODO: describe other kwargs, either here or elsewhere
+.. _deltas:
+
+``deltas`` np.ndarray or list[float], default [0.1,0.2,..,0.9]
+   The proportion of neighbors to include during the smoothing step, in the interval (0, 1]. This parameter specifies the different smoothing neighborhood sizes which are iterated over during the variogram optimization.
+
+.. _kernel:
+
+``kernel`` str, default 'exp'
+  The functional form of the smoothing kernel:
+
+  - ’gaussian’ : Gaussian function
+  - ‘exp’ : Exponential decay function
+  - ‘invdist’ : Inverse distance
+  - ‘uniform’ : Uniform weights (distance independent)
+
+.. _umax:
+
+``umax`` int, default 25
+  Percentile of the pairwise distance distribution at which to truncate during variogram fitting. The inclusion of this parameter is motivated by the fact that at large distances, pairwise variability is primarily driven by noise.
+
+.. _nbins:
+
+``nbins`` int, default 25
+  The number of uniformly spaced distance intervals within which to compute variance when constructing variograms. This parameter governs the granularity of your variogram. For noisy brain maps, this parameter should be small enough such that the variogram is smooth and continuous.
+
+.. _resample:
+
+``resample`` bool, default False
+  Resample surrogate maps’ values from empirical brain map, to preserve the distribution of values in each surrogate map. This may produce surrogate maps with poorer fits to the empirical map's variogram.
+
+.. _bw:
+
+``h`` float or None, default None
+  The bandwidth of the Gaussian kernel used to smooth the variogram. The variogram isn't particularly sensitive to this parameter, but it's included anyways. If this parameter is None, by default the bandwidth is set to three times the variogram distance interval (see ``nbins`` above).
 
 .. _dense:
 
@@ -123,21 +155,28 @@ locally as text files.
 
 TODO: link to hosted dense data
 
+.. _memmap:
+
+Creating memory-mapped arrays
++++++++++++++++++++++++++++++
+
 Prior to simulating surrogate maps, you'll need to convert
 the distance matrix to a memory-mapped binary file, which can be easily achieved
 in the following way:
 
 .. code-block:: python
 
-   from brainsmash.utils import txt2mmap
+   from brainsmash.utils.memmap import txt2memmap
    dist_mat_fin = "dist_mat.txt"  # input text file
    output_dir = "."               # directory to which output binaries are written
-   output_files = txt2mmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
+   output_files = txt2memmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
 
 The latter two keyword arguments are shown using their default values. If your
 text files are comma-delimited, for example, use ``delimiter=','`` instead. Moreover, if
 you wish to use only a subset of all areas (more on this later), you may also
 specify a mask (as a path to a neuroimaging file) using the ``maskfile`` argument.
+
+TODO maskfile?
 
 The return value ``output_files`` in the code block above is a ``dict`` object
 that will look something like:
@@ -147,7 +186,7 @@ that will look something like:
    output_files = {'distmat': '/pathto/output_dir/distmat.npy',
                    'index': '/pathto/output_dir/index.npy'}
 
-These two files will be required inputs to the :class:`brainsmash.mapgen.Sampled` class.
+These two files will be required inputs to the :class:`brainsmash.mapgen.sampled.Sampled` class.
 
 .. note:: For additional computational speed-up, ``distmat.npy`` is sorted by
   :func:`brainsmash.utils.txt2mmap` before it is written to file; the second file, ``index.npy``, is required because it contains
@@ -156,13 +195,13 @@ These two files will be required inputs to the :class:`brainsmash.mapgen.Sampled
 This text to memory-mapped array conversion only ever needs to be run once for a given
 distance matrix.
 
-Finally, to generate surrogate maps we import the :class:`brainsmash.mapgen.Sampled` class
+Finally, to generate surrogate maps we import the :class:`brainsmash.mapgen.sampled.Sampled` class
 and create an instance by passing our brain map, memory-mapped distance matrix, and
 memory-mapped index files as arguments:
 
 .. code-block:: python
 
-        from brainsmash.mapgen import Sampled
+        from brainsmash.mapgen.sampled import Sampled
         brain_map_file = "brain_map_dense.txt"  # use absolute paths if necessary!
         dist_mat_mmap = output_files['distmat']
         index_mmap = output_files['index']
@@ -193,6 +232,61 @@ dense surrogate maps on the cortical surface, are shown below:
 
   The dense surrogate brain map above, with values resampled from the empirical map.
 
+Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+``ns`` int, default 500
+  The number of randomly sampled brain areas used to generate a surrogate map.
+
+``knn`` int, default 1000
+  Let **D** be the pairwise distance matrix. Assume each row of **D** has been sorted, in ascending order.
+
+``deltas`` np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
+   See :ref:`above <deltas>`.
+
+``kernel`` str, default 'exp'
+   See :ref:`above <kernel>`.
+
+``umax`` int, default 70
+  See :ref:`above <umax>`. DIFF
+
+``nbins`` int, default 25
+  See :ref:`above <nbins>`.
+
+``resample`` bool, default False
+   See :ref:`above <resample>`.
+
+``h`` float or None, default None
+   See :ref:`above <bw>`.
+
+.. note:: Dense data may be used with :class:`brainsmash.mapgen.base.Base` -- the examples are primarily partitioned in this way for illustration (but also in anticipation of users' local memory constraints).
+
+Evaluating variogram fits
+-------------------------
+To assess the reliability of your surrogate maps, BrainSMASH includes a function to
+compare surrogate maps' variograms to the empirical brain map's variogram:
+
+.. code-block:: python
+
+   from brainsmash.utils.eval import base_fit
+   # from brainsmash.utils.eval import sampled_fit  analogous function for Sampled class
+   base_fit(brain_map_file, dist_mat_file, nsurr=100)
+
+
+This will produce a plot that looks something like:
+
+.. figure::  images/variogram_fit.png
+   :align:   center
+   :scale: 25 %
+
+   Assessing the surrogate maps' fit to the empirical data.
+
+Shown above is the mean and standard deviation across 100 surrogates. Optional
+keyword arguments (described above) can be specified after ``nsurr`` in
+the function calls to :func:`brainsmash.utils.eval.base_fit` and :func:`brainsmash.utils.eval.sampled_fit`-- for example, if
+you want to determine how changing free parameters influences your surrogates maps' variogram fits.
+
+.. note:: When using :func:`brainsmash.utils.eval.sampled_fit`, you must specify both ``index`` in addition to the brain map and distance matrix (see :ref:`above <memmap>`).
 
 .. _wb:
 

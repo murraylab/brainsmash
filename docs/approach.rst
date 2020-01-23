@@ -31,7 +31,7 @@ The algorithm consists of the following steps:
 
 1. The variogram for the empirical map is computed. This is the target variogram for the output surrogate maps.
 2. The empirical map is randomly permuted, breaking its spatial structure and randomizing its topography.
-3. Spatial autocorrelation among the samples is reintroduced by smoothing the permuted map with a distance-dependent kernel. (By default, BrainSMASH uses an exponentially decaying kernel, but other options are available (TODO: link).) Smoothing is performed using each area's *k* nearest neighboring areas. Varying this free parameter corresponds to changing the characteristic scale of the SA.
+3. Spatial autocorrelation among the samples is reintroduced by smoothing the permuted map with a distance-dependent kernel. (By default, BrainSMASH uses an exponentially decaying kernel, but other options are :ref:`available <kernel>`.) Smoothing is performed using each area's *k* nearest neighboring areas. Varying this free parameter corresponds to changing the characteristic scale of the SA.
 4. The smoothed map's variogram is computed and then regressed onto the variogram for the empirical map. (The regression coefficients define a transformation of the smoothed map which approximately recovers the SA in the empirical map.)
 5. The goodness-of-fit is quantified by computing the sum of squared error (SSE) in the variogram fit.
 6. Steps 3-5 are repeated, each time varying the number of nearest neighbors, *k*, used to perform the spatial smoothing. (In BrainSMASH, *k* is parametrized as a fraction of the total number of areas; candidate values to iterate over may be specified by the user. TODO)
@@ -39,7 +39,7 @@ The algorithm consists of the following steps:
 
 
 Steps 2-7 are repeated for each surrogate map. A more memory efficient implementation of the algorithm,
-which utilizes random sampling and memory-mapped arrays, is described in the preprint (TODO) and :ref:`elsewhere in these docs <dense>`:
+which utilizes random sampling and memory-mapped arrays, is described :ref:`here <dense>` and in the preprint (TODO):
 in brief, steps 1 and 4 are performed on a random subset of brain areas, and the pairwise distance matrix is never loaded
 entirely into memory.
 

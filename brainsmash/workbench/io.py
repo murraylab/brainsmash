@@ -1,7 +1,7 @@
 """ Functions for Connectome Workbench-style neuroimaging file I/O. """
 
 from ..config import parcel_labels_lr
-from ..utils._checks import *
+from ..mapgen._checks import *
 import tempfile
 from os import path
 from os import system

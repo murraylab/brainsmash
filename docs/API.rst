@@ -10,13 +10,13 @@ Generating surrogate maps
 Base
 ++++
 
-.. autoclass:: brainsmash.mapgen.Base
+.. autoclass:: brainsmash.mapgen.base.Base
     :members:
 
 Sampled
 +++++++
 
-.. autoclass:: brainsmash.mapgen.Sampled
+.. autoclass:: brainsmash.mapgen.sampled.Sampled
     :members:
 
 Computing distance matrices
