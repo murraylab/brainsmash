@@ -16,6 +16,7 @@ Installing BrainSMASH requires:
 
 - Python 3+
 - [numpy](http://www.numpy.org)
+- [scipy](https://www.scipy.org/)
 - [pandas](https://pandas.pydata.org)
 - [nibabel](http://nipy.org/nibabel)
 - [matplotlib](https://matplotlib.org)

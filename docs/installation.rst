@@ -9,6 +9,7 @@ Installing BrainSMASH requires:
 - `nibabel <http://nipy.org/nibabel>`_
 - `matplotlib <https://matplotlib.org/>`_
 - `scikit-learn <http://scikit-learn.org/stable/index.html>`_
+- `scipy <https://www.scipy.org/>`_
 
 BrainSMASH was developed and tested using Python 3.7. Backwards-compatibility
 with other Python3 versions is expected but not guaranteed. All Python package version dependencies are handled automatically if installing
