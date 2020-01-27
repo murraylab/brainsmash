@@ -24,7 +24,7 @@ Contents:
    approach
    gettingstarted
    example
-   API
+   api/index_api
    references
 
 .. tutorials

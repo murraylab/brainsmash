@@ -315,7 +315,7 @@ To load data from a neuroimaging file into Python, use :func:`brainsmash.workben
 
 Creating distance matrices
 ++++++++++++++++++++++++++
-Functions to compute distance matrices are included in the :ref:`brainsmash.workbench.geo<distmats>` module.
+Functions to compute distance matrices are included in the :ref:`brainsmash.workbench.geo<pysec-workbench-geo>` module.
 
 To compute a geodesic distance matrix for a cortical hemisphere, you could do the following:
 

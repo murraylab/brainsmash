@@ -1,8 +1,7 @@
 """ Routines for constructing distance matrices from neuroimaging files. """
 
-from ..mapgen._checks import *
-from ..workbench.io import load
-from ..workbench.io import _export_cifti_mapping
+from brainsmash.utils.checks import *
+from brainsmash.utils.dataio import load, _export_cifti_mapping
 from scipy.spatial.distance import cdist
 from tempfile import gettempdir
 from os import path
