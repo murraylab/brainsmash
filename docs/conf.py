@@ -11,6 +11,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
+import brainsmash
+
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../brainsmash/mapgen/'))
 sys.path.insert(0, os.path.abspath('../brainsmash/utils/'))
@@ -23,7 +25,7 @@ copyright = '2020, Joshua B. Burt, John D. Murray.'
 author = 'Joshua B. Burt'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+version = brainsmash.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -69,3 +71,6 @@ html_logo = 'images/logo.png'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = False

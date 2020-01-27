@@ -90,8 +90,6 @@ Executing the above code produces the following figure:
    :align:   center
    :scale: 25 %
 
-   The spatial autocorrelation-preserving surrogate map-informed null distribution is shown in blue.'
-
 We can plot a couple surrogate maps on the cortical surface using `wbplot <https://github.com/jbburt/wbplot>`_:
 
 .. code-block:: python
@@ -146,7 +144,7 @@ Executing the code above produces the following plot:
    :align:   center
    :scale: 25 %
 
-   Surrogate maps have the same autocorrelation structure as the empirical brain map.
+The surrogate maps exhibit the same autocorrelation structure as the empirical brain map.
 
 Finally, we'll compute non-parametric P-values using our two different
 null distributions:
