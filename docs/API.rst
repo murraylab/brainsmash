@@ -1,4 +1,5 @@
-.. _contents:
+.. currentmodule:: brainsmash
+
 
 API Documentation
 =================
