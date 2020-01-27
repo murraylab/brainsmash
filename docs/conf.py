@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.abspath('../brainsmash/mapgen/'))
 sys.path.insert(0, os.path.abspath('../brainsmash/utils/'))
 sys.path.insert(0, os.path.abspath('../brainsmash/workbench/'))
 
+autodoc_mock_imports = ['matplotlib', 'numpy', 'nibabel', 'sklearn', 'pandas', 'scipy']
+
 # -- Project information -----------------------------------------------------
 
 project = 'BrainSMASH'
