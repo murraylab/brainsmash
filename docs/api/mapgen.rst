@@ -3,13 +3,6 @@
 Generating Surrogate Brain Maps
 ===============================
 
-- :ref:`pysec-mapgen-base`
-- :ref:`pysec-mapgen-sampled`
-- :ref:`pysec-mapgen-eval`
-- :ref:`pysec-mapgen-kernels`
-- :ref:`pysec-mapgen-memmap`
-- :ref:`pysec-mapgen-stats`
-
 .. _pysec-mapgen-base:
 
 Base Implementation

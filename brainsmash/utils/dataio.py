@@ -85,7 +85,7 @@ def load(filename):
             raise TypeError("This file cannot be loaded: {}".format(filename))
 
 
-def _export_cifti_mapping(image=None):
+def export_cifti_mapping(image=None):
     """
     Compute the map from CIFTI indices to surface vertices and volume voxels.
 

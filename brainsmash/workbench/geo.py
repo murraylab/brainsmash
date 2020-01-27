@@ -1,7 +1,8 @@
 """ Routines for constructing distance matrices from neuroimaging files. """
 
-from brainsmash.utils.checks import *
-from brainsmash.utils.dataio import load, _export_cifti_mapping
+from ..utils.checks import *
+from .io import check_surface, check_image_file
+from ..utils.dataio import load, export_cifti_mapping
 from scipy.spatial.distance import cdist
 from tempfile import gettempdir
 from os import path
@@ -14,7 +15,7 @@ __all__ = ['cortex', 'subcortex', 'parcellate']
 
 def cortex(surface, outfile, euclid=False):
     """
-    Compute vertex-wise geodesic distance matrix for a cortical hemisphere.
+    Compute distance matrix for a cortical hemisphere.
 
     Parameters
     ----------
@@ -51,7 +52,7 @@ def cortex(surface, outfile, euclid=False):
 
 def subcortex(fout, image_file=None):
     """
-    Compute 3D Euclidean distance matrix between areas in ``image_file``.
+    Compute inter-voxel Euclidean distance matrix.
 
     Parameters
     ----------
@@ -87,7 +88,7 @@ def subcortex(fout, image_file=None):
     dist_file = fout + '.txt'
 
     # Load CIFTI mapping
-    maps = _export_cifti_mapping(image_file)
+    maps = export_cifti_mapping(image_file)
     if "subcortex" not in maps.keys():
         e = "Subcortical information was not found in {}".format(image_file)
         raise ValueError(e)

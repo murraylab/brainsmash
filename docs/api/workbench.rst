@@ -3,9 +3,6 @@
 Connectome Workbench Utilities
 ==============================
 
-- :ref:`pysec-workbench-geo`
-- :ref:`pysec-workbench-io`
-
 .. _pysec-workbench-geo:
 
 Constructing Distance Matrices
@@ -31,4 +28,3 @@ Neuroimaging Data I/O
    :toctree: ../../generated/
 
    image2txt
-   load

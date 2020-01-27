@@ -90,8 +90,8 @@ html_logo = 'images/logo.png'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = False
+# # If true, `todo` and `todoList` produce output, else they produce nothing.
+# todo_include_todos = False
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'BrainSMASHdoc'

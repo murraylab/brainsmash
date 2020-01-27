@@ -4,12 +4,12 @@ from ..utils.checks import *
 import nibabel as nib
 import numpy as np
 
-__all__ = ['image2txt']
+__all__ = ['image2txt', 'check_surface', 'check_image_file']
 
 
 def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
     """
-    Convert scalar data in a neuroimaging file to a text file.
+    Export neuroimaging data to txt file.
 
     Parameters
     ----------
