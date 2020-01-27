@@ -1,7 +1,6 @@
-include brainsmash/LICENSE
-include brainsmash/README.md
-include brainsmash/setup.py
-recursive-include brainsmash/examples/ *
+include LICENSE
+include README.md
+include setup.py
 recursive-include brainsmash/data/ *
 recursive-exclude brainsmash/__pycache__/ *
 recursive-exclude brainsmash/.idea/ *
