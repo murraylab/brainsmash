@@ -11,7 +11,6 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
-import brainsmash
 
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
@@ -30,7 +29,7 @@ copyright = '2020, Joshua B. Burt, John D. Murray.'
 author = 'Joshua B. Burt'
 
 # The full version, including alpha/beta/rc tags
-version = brainsmash.__version__
+version = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
