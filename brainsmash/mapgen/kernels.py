@@ -159,4 +159,4 @@ def check_kernel(kernel):
         e = "'{}' is not a valid kernel\n".format(kernel)
         e += "Valid kernels: {}".format(", ".join([k for k in kernels]))
         raise NotImplementedError(e)
-    return getattr(locals(), kernel)
+    return globals()[kernel]

@@ -1,5 +1,8 @@
-Example
-=======
+Examples
+========
+
+Cortical Hemisphere
+-------------------
 
 Here, we'll perform an analysis similar to those included in our pre-print (TODO), using the example
 data we've included in the `BrainSMASH GitHub repo <https://github.com/jbburt/brainsmash/tree/master/examples>`_.
@@ -24,7 +27,7 @@ empirical cortical thickness map:
 
 .. code-block:: python
 
-        from brainsmash.utils.stats import pearsonr, pairwise_r
+        from brainsmash.mapgen.stats import pearsonr, pairwise_r
 
         surrogate_brainmap_corrs = pearsonr(thickness, surrogate_maps).flatten()
         surrogate_pairwise_corrs = pairwise_r(surrogate_maps, flatten=True)
@@ -128,7 +131,7 @@ parcellated T1w/T2w map's variogram:
 
 .. code-block:: python
 
-   from brainsmash.utils.eval import base_fit
+   from brainsmash.mapgen.eval import base_fit
 
    base_fit(
        brain_map="parcel_myelin.txt",
@@ -151,9 +154,117 @@ null distributions:
 
 .. code-block:: python
 
-   from brainsmash.utils.stats import nonparp
+   from brainsmash.mapgen.stats import nonparp
 
    print("Spatially naive P-value:", nonparp(test_stat, naive_brainmap_corrs))
    print("SA-corrected P-value:", nonparp(test_stat, surrogate_brainmap_corrs))
 
 The two P-values for this example come out to ``P < 0.001`` and ``P=0.001``, respectively.
+
+.. _subcortex_example:
+
+Unilateral Subcortical Structure
+--------------------------------
+
+For a subcortical analysis you'll typically need:
+
+- A subcortical distance matrix
+- A subcortical brain map
+- A mask corresponding to our structure of interest
+
+We'll assume you use Connectome Workbench-style files and that you want to isolate
+one particular anatomical structure.
+
+.. note:: If you already have a distance matrix and a brain map for your subcortical
+  structure of interest, the workflow is identical to the cortical examples in
+  :ref:`Getting Started <getting_started>`.
+
+If you haven't already computed a subcortical distance matrix or downloaded our
+pre-computed version, please follow :ref:`these steps <subcortex_distmat>`.
+
+To isolate one subcortical structure from a whole-brain ``dscalar`` file, first do:
+
+.. code-block:: bash
+
+   wb_command -cifti-export-dense-mapping yourfile.dscalar.nii COLUMN -volume-all output.txt -structure
+
+We can then use the information contained in this file to isolate one particular structure, e.g. the left
+cerebellum:
+
+.. code-block:: python
+
+   from brainsmash.utils.dataio import load
+   import numpy as np
+   import pandas as pd
+
+   # Input files
+   image = "/path/to/yourfile.dscalar.nii"
+   wb_output = "output.txt"
+
+   # Load the output of the above command
+   df = pd.read_table(wb_output, header=None, index_col=0, sep=' ',
+            names=['structure', 'mni_i', 'mni_j', 'mni_k']).rename_axis('index')
+
+   # Get indices for left cerebellum
+   indices = df[df['structure'] == 'CEREBELLUM_LEFT'].index.values
+
+   # Create a binary mask
+   mask = np.ones(91282)  # assuming you're using a whole-brain file
+   mask[indices] = 0
+   np.savetxt("mask.txt", mask)
+
+   # Also saved a masked copy of the image
+   image_data = load(image)
+   masked_image = image_data[indices]
+   np.savetxt("masked_image.txt", masked_image)
+
+Next, we'll need to sort and memory-map of our distance matrix, but only for the
+pairwise distances between left cerebellar voxels:
+
+.. code-block:: python
+
+   from brainsmash.mapgen.memmap import txt2memmap
+
+   # Input files
+   image = "masked_image.txt"
+   mask = "mask.txt"
+   distmat = "/path/to/subcortical_distmat.txt"
+
+   output_files = txt2memmap(distmat, output_dir=".", maskfile=mask, delimiter=' ')
+
+Now, we can use the output files to instantiate our surrogate map generator. Here,
+we'll also use the keyword arguments which were used in our study for left cerebellum.
+First, we'll validate the variogram fit using these parameters:
+
+.. code-block:: python
+
+        from brainsmash.mapgen.eval import sampled_fit
+
+        brain_map = "masked_image.txt
+        distmat = output_files['distmat']
+        index = output_files['index']
+
+        kwargs = {'ns': 500,
+                  'knn': 1500,
+                  'nbins': 25,
+                  'deltas': [0.3, 0.5, 0.7, 0.9],
+                  'umax': 70
+                  }
+
+        sampled_fit(brain_map, distmat, index, nsurr=20, **kwargs)
+
+This produces the following plot:
+
+.. figure::  images/subcortex_fit.png
+   :align:   center
+   :scale: 25 %
+
+Having confirmed that the fit looks great, we simulate cerebellar surrogate maps
+with a call to ``gen``:
+
+.. code-block:: python
+
+        from brainsmash.mapgen.sampled import Sampled
+
+        gen = Sampled(brain_map, distmat, index, **kwargs)
+        surrogate_maps = gen(n=100)

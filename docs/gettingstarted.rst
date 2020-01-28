@@ -1,3 +1,5 @@
+.. _getting_started:
+
 Getting Started
 ===============
 
@@ -172,7 +174,7 @@ TODO -> dense dist file
 
 .. code-block:: python
 
-   from brainsmash.utils.memmap import txt2memmap
+   from brainsmash.mapgen.memmap import txt2memmap
    dist_mat_fin = "???"  # input text file
    output_dir = "."               # directory to which output binaries are written
    output_files = txt2memmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
@@ -195,7 +197,7 @@ that will look something like:
 These two files will be required inputs to the :class:`brainsmash.mapgen.sampled.Sampled` class.
 
 .. note:: For additional computational speed-up, ``distmat.npy`` is sorted by
-  :func:`brainsmash.utils.txt2mmap` before it is written to file; the second file, ``index.npy``, is required because it contains
+  :func:`brainsmash.mapgen.memmap.txt2memmap` before it is written to file; the second file, ``index.npy``, is required because it contains
   the indices which were used to perform the sorting.
 
 This text to memory-mapped array conversion only ever needs to be run once for a given
@@ -277,7 +279,7 @@ compare surrogate maps' variograms to the empirical brain map's variogram:
 
 .. code-block:: python
 
-   from brainsmash.utils.eval import base_fit
+   from brainsmash.mapgen.eval import base_fit
    # from brainsmash.utils.eval import sampled_fit  analogous function for Sampled class
    base_fit(brain_map_file, dist_mat_file, nsurr=100)
 
@@ -292,10 +294,10 @@ For well-chosen parameters, the code above will produce a plot that looks someth
 
 Shown above is the mean and standard deviation across 100 surrogates. Optional
 keyword arguments (described above) can be specified after ``nsurr`` in
-the function calls to :func:`brainsmash.utils.eval.base_fit` and :func:`brainsmash.utils.eval.sampled_fit`-- for example, if
+the function calls to :func:`brainsmash.mapgen.eval.base_fit` and :func:`brainsmash.mapgen.eval.sampled_fit`-- for example, if
 you want to determine how changing free parameters influences your surrogates maps' variogram fits.
 
-.. note:: When using :func:`brainsmash.utils.eval.sampled_fit`, you must specify the memory-mapped ``index`` file in addition to the brain map and distance matrix files (see :ref:`above <memmap>`).
+.. note:: When using :func:`brainsmash.mapgen.eval.sampled_fit`, you must specify the memory-mapped ``index`` file in addition to the brain map and distance matrix files (see :ref:`above <memmap>`).
 
 Workbench users
 ---------------
@@ -303,26 +305,24 @@ The functionality described below is intended for users using `GIFTI- and CIFTI-
 
 Neuroimaging data I/O
 +++++++++++++++++++++
-To load data from a neuroimaging file into Python, use :func:`brainsmash.workbench.io.load`:
+To load data from a neuroimaging file into Python, use :func:`brainsmash.utils.dataio.load`:
 
 .. code-block:: python
 
-   from brainsmash.workbench.io import load
+   from brainsmash.utils.dataio import load
    f = "/path/to/myimage.dscalar.nii"
    brain_map = load(f)  # type(brain_map) == numpy.ndarray
 
 .. _wb:
 
-Creating distance matrices
-++++++++++++++++++++++++++
-Functions to compute distance matrices are included in the :ref:`brainsmash.workbench.geo<pysec-workbench-geo>` module.
-
-To compute a geodesic distance matrix for a cortical hemisphere, you could do the following:
+Computing a cortical distance matrix
+++++++++++++++++++++++++++++++++++++
+To construct a geodesic distance matrix for a cortical hemisphere, you could do the following:
 
 .. code-block:: python
 
    from brainsmash.workbench.geo import cortex
-   surface = "/pathto/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii"
+   surface = "/path/to/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii"
    cortex(surface=surface, outfile="/pathto/dense_geodesic_distmat.txt", euclid=False)
 
 Note that this function takes approximately two hours to run for standard 32k surface meshes. To compute 3D
@@ -333,33 +333,45 @@ To compute a parcellated geodesic distance matrix, you could then do:
 .. code-block:: python
 
    from brainsmash.workbench.geo import parcellate
-   infile = "/pathto/dense_geodesic_distmat.txt"
-   outfile = "/pathto/parcel_geodesic_distmat.txt"
+   infile = "/path/to/dense_geodesic_distmat.txt"
+   outfile = "/path/to/parcel_geodesic_distmat.txt"
    dlabel = "Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_Final_Areas_Group_Colors.32k_fs_L.dlabel.nii"
    parcellate(infile, dlabel, outfile)
 
-This code takes half an hour or less to run for the HCP MMP1.0. Note that your ``dlabel`` file needs to contain
-the same number of elements as your distance matrix does. If you have a whole-brain parcellation file, for example,
+This code takes half an hour or less to run for the HCP MMP1.0. Note that the number of elements in ``dlabel`` must equal
+the number of rows/columns of your distance matrix. If you have a whole-brain parcellation file, for example,
 and want to isolate the 32k left cortical hemisphere vertices, do:
 
 .. code-block:: bash
 
-   wb_command -cifti-separate yourparcellation_LR.dlabel.nii COLUMN -label CORTEX_LEFT yourparcellation_L.dlabel.nii
+   wb_command -cifti-separate yourparcellation_LR.dlabel.nii COLUMN -label CORTEX_LEFT yourparcellation_L.label.gii
 
-from the command-line.
+You will then need to convert this GIFTI file to a CIFTI:
+
+.. code-block:: bash
+
+   wb_command -cifti-create-label yourparcellation_L.dlabel.nii -left-label yourparcellation_L.label.gii
+
+For more information, see the `-cifti-separate <https://www.humanconnectome.org/software/workbench-command/-cifti-separate>`_
+and `-cifti-create-label <https://www.humanconnectome.org/software/workbench-command/-cifti-create-label>`_ documentation.
+
+.. _subcortex_distmat:
+
+Computing a subcortical distance matrix
++++++++++++++++++++++++++++++++++++++++
 
 To compute a Euclidean distance matrix for subcortex, you could do the following:
 
 .. code-block:: python
 
    from brainsmash.workbench.geo import subcortex
-   image_file = "/pathto/image_with_subcortical_volumes.dscalar.nii"
-   subcortex(outfile="/pathto/subcortex_dists.txt", image_file=image_file)
+   image_file = "/path/to/image_with_subcortical_volumes.dscalar.nii"
+   subcortex(outfile="/path/to/subcortex_dists.txt", image_file=image_file)
 
 Only three-dimensional Euclidean distance is currently implemented for subcortex.
-If you wish to create surrogate maps for=a single subcortical structure, first
-create a mask file for that structure, then pass the filename to keyword argument ``maskfile=``
-in :func:`brainsmash.utils.memmap.txt2memmap`.
+If you wish to create surrogate maps for a single subcortical structure, you can either
+generate your own mask file and pass it to :func:`brainsmash.mapgen.memmap.txt2memmap`, or follow
+the procedure described :ref:`here <subcortex_example>`.
 
 .. note:: If you mask your distance matrix, don't forget to mask your brain map as well.
   One way this can be achieved is using :func:`brainsmash.workbench.io.image2txt`.

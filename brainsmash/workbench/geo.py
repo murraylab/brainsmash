@@ -3,6 +3,7 @@
 from ..utils.checks import *
 from .io import check_surface, check_image_file
 from ..utils.dataio import load, export_cifti_mapping
+from ..config import parcel_labels_lr
 from scipy.spatial.distance import cdist
 from tempfile import gettempdir
 from os import path
@@ -88,6 +89,8 @@ def subcortex(fout, image_file=None):
     dist_file = fout + '.txt'
 
     # Load CIFTI mapping
+    if image_file is None:
+        image_file = parcel_labels_lr
     maps = export_cifti_mapping(image_file)
     if "volume" not in maps.keys():
         e = "Subcortical information was not found in {}".format(image_file)

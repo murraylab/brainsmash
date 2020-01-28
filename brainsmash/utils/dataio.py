@@ -59,7 +59,7 @@ def dataio(x):
 
 def load(filename):
     """
-    Load data contained in a NIFTI-/GIFTI-format neuroimaging file.
+    Load data contained in a CIFTI2-/GIFTI-format neuroimaging file.
 
     Parameters
     ----------
@@ -134,7 +134,7 @@ def export_cifti_mapping(image=None):
     system(basecmd + "-surface CORTEX_RIGHT '{}'".format(right))
 
     maps = dict()
-    maps['subcortex'] = pd.read_table(
+    maps['volume'] = pd.read_table(
         volume, header=None, index_col=0, sep=' ',
         names=['structure', 'mni_i', 'mni_j', 'mni_k']).rename_axis('index')
 

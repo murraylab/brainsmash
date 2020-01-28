@@ -1,8 +1,8 @@
 """ Evaluation metrics for randomly generated surrogate maps. """
 
-from .base import Base
-from .sampled import Sampled
-from ..utils.dataio import dataio
+from brainsmash.mapgen.base import Base
+from brainsmash.mapgen.sampled import Sampled
+from brainsmash.utils.dataio import dataio
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -118,26 +118,28 @@ def sampled_fit(brain_map, distmat, index, nsurr=10, **params):
     # Simulate surrogate maps
     surrogate_maps = generator(n=nsurr)
 
-    # Randomly sample a subset of brain areas
-    idx = generator.sample()
-
-    # Compute empirical variogram
-    v = generator.compute_variogram(generator.brain_map, idx)
-    u = generator.dmat[idx, :]
-    umax = np.percentile(u, generator.umax)
-    uidx = np.where(u < umax)
-
-    emp_var, u0 = generator.smooth_variogram(
-        u=u[uidx], v=v[uidx], return_bins=True)
-
-    # Compute surrogate map variograms
+    # Compute empirical & surrogate map variograms
     surr_var = np.empty((nsurr, generator.nbins))
+    emp_var_samples = np.empty((nsurr, generator.nbins))
+    u0_samples = np.empty((nsurr, generator.nbins))
     for i in range(nsurr):
+        idx = generator.sample()  # Randomly sample a subset of brain areas
+        # Empirical
+        v = generator.compute_variogram(generator.brain_map, idx)
+        u = generator.dmat[idx, :]
+        umax = np.percentile(u, generator.umax)
+        uidx = np.where(u < umax)
+        emp_var_i, u0i = generator.smooth_variogram(
+            u=u[uidx], v=v[uidx], return_bins=True)
+        emp_var_samples[i], u0_samples[i] = emp_var_i, u0i
+        # Surrogate
         v_null = generator.compute_variogram(surrogate_maps[i], idx)
         surr_var[i] = generator.smooth_variogram(
             u=u[uidx], v=v_null[uidx], return_bins=False)
 
     # # Create plot for visual comparison
+    u0 = u0_samples.mean(axis=0)
+    emp_var = emp_var_samples.mean(axis=0)
 
     # Plot empirical variogram
     fig = plt.figure(figsize=(3, 3))

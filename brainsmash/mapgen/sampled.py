@@ -70,19 +70,18 @@ class Sampled:
                  deltas=np.arange(0.3, 1., 0.2), kernel='exp',
                  umax=70, nbins=25, knn=1000, h=None, resample=False):
 
-        self.knn = knn
         self.brain_map = brain_map
+        n = self._brain_map.size
+        self.nmap = int(n)
+        self.knn = knn
         self.dmat = distmat
         self.index = index
-        n = self._brain_map.size
         self.resample = resample
         self.nbins = int(nbins)
         self.deltas = deltas
         self.ns = int(ns)
-        self.nmap = int(n)
         self._user_h = h
         self.umax = umax
-
         self._ikn = np.arange(self._nmap)[:, None]
 
         # Store k nearest neighbors from distance and index matrices
@@ -446,7 +445,7 @@ class Sampled:
 
     @knn.setter
     def knn(self, x):
-        if x > self.nmap:
+        if x > self._nmap:
             raise ValueError('knn must be less than len(brain_map)')
         self._knn = int(x)
 

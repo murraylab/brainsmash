@@ -57,8 +57,8 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     if maskfile is not None:
         mask = dataio(maskfile).astype(bool)
         if mask.size != nlines:
-            e = "Distance matrix & mask file must contain same # of elements:\n"
-            e += "{} rows in {}".format(nlines, dist_file)
+            e = "Incompatible input sizes\n"
+            e += "{} rows in {}\n".format(nlines, dist_file)
             e += "{} elements in {}".format(mask.size, maskfile)
             raise ValueError(e)
         mask_fileout = path.join(output_dir, "mask.txt")
