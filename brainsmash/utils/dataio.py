@@ -41,15 +41,14 @@ def dataio(x):
             raise RuntimeError("file is empty: {}".format(x))
         if Path(x).suffix == ".npy":  # memmap
             return np.load(x, mmap_mode='r')
-        elif Path(x).suffix == ".txt":  # text file
+        if Path(x).suffix == ".txt":  # text file
             return np.loadtxt(x).squeeze()
-        else:
-            try:
-                return load(x)
-            except TypeError:
-                raise ValueError(
-                    "expected npy or txt or nii or gii file, got {}".format(
-                        Path(x).suffix))
+        try:
+            return load(x)
+        except TypeError:
+            raise ValueError(
+                "expected npy or txt or nii or gii file, got {}".format(
+                    Path(x).suffix))
     else:
         if not isinstance(x, np.ndarray):
             raise TypeError(

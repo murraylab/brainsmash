@@ -209,16 +209,18 @@ cerebellum:
    indices = df[df['structure'] == 'CEREBELLUM_LEFT'].index.values
 
    # Create a binary mask
-   mask = np.ones(91282)  # assuming you're using a whole-brain file
+   mask = np.ones(31870)  # volume has 31870 CIFTI indices in standard 91k mesh
+   indices -= 59412  # first 59412 indices in whole-brain maps are cortical
    mask[indices] = 0
-   np.savetxt("mask.txt", mask)
+   np.savetxt("mask.txt", mask)  # this mask has right dimension for distmat
 
    # Also saved a masked copy of the image
    image_data = load(image)
+   indices += 59412  # assuming image data is whole-brain!
    masked_image = image_data[indices]
    np.savetxt("masked_image.txt", masked_image)
 
-Next, we'll need to sort and memory-map of our distance matrix, but only for the
+Next, we'll need to sort and memory-map our distance matrix, but only for the
 pairwise distances between left cerebellar voxels:
 
 .. code-block:: python
@@ -228,7 +230,7 @@ pairwise distances between left cerebellar voxels:
    # Input files
    image = "masked_image.txt"
    mask = "mask.txt"
-   distmat = "/path/to/subcortical_distmat.txt"
+   distmat = "/path/to/subcortex_distmat.txt"
 
    output_files = txt2memmap(distmat, output_dir=".", maskfile=mask, delimiter=' ')
 
@@ -240,7 +242,7 @@ First, we'll validate the variogram fit using these parameters:
 
         from brainsmash.mapgen.eval import sampled_fit
 
-        brain_map = "masked_image.txt
+        brain_map = "masked_image.txt"
         distmat = output_files['distmat']
         index = output_files['index']
 
@@ -259,7 +261,7 @@ This produces the following plot:
    :align:   center
    :scale: 25 %
 
-Having confirmed that the fit looks great, we simulate cerebellar surrogate maps
+Having confirmed that the fit looks good, we simulate cerebellar surrogate maps
 with a call to ``gen``:
 
 .. code-block:: python
