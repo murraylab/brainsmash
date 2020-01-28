@@ -216,7 +216,7 @@ def check_outfile(filename):
 
 
 def is_string_like(obj):
-    """ Check whether obj behaves like a string. """
+    """ Check whether ``obj`` behaves like a string. """
     try:
         obj + ''
     except (TypeError, ValueError):
@@ -226,23 +226,20 @@ def is_string_like(obj):
 
 def stripext(f):
     """
-    Strip (possibly multiple) extensions from a file.
+    Strip extension from a file.
 
     Parameters
     ----------
-    f : str
-        file name, possibly with path and possibly with extension(s)
+    f : filename
+        Path to file with extension
 
     Returns
     -------
-    f : str
-        `f` stripped of all extensions
+    f : filename
+        Path to file without extension
 
     """
-    p = Path(f)
-    while p.suffixes:
-        p = p.with_suffix('')
-    return str(p)
+    return str(Path(f).with_suffix(''))
 
 
 def check_file_exists(f):

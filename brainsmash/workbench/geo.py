@@ -89,12 +89,12 @@ def subcortex(fout, image_file=None):
 
     # Load CIFTI mapping
     maps = export_cifti_mapping(image_file)
-    if "subcortex" not in maps.keys():
+    if "volume" not in maps.keys():
         e = "Subcortical information was not found in {}".format(image_file)
         raise ValueError(e)
 
     # Compute Euclidean distance matrix
-    coords = maps['subcortex'].drop("structure", axis=1).values
+    coords = maps['volume'].drop("structure", axis=1).values
     outfile = _euclidean(dist_file=dist_file, coords=coords)
     return outfile
 
