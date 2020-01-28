@@ -257,7 +257,7 @@ First, we'll validate the variogram fit using these parameters:
 
 This produces the following plot:
 
-.. figure::  images/subcortex_fit.png
+.. figure::  images/subcortex_var_fit.png
    :align:   center
    :scale: 25 %
 
