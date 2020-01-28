@@ -10,9 +10,8 @@ BrainSMASH (Brain Surrogate Maps with Spatially Autocorrelated Heterogeneity) is
 python-based computational platform for statistical testing of spatially
 autocorrelated brain maps. At the core of BrainSMASH is functionality to
 simulate surrogate brain maps with spatial autocorrelation that is matched
-to the spatial autocorrelation in an empirical map. Additional utilities are included
-for users utilizing Connectome Workbench style surface-based neuroimaging files.
-
+to the spatial autocorrelation in an empirical map. Additional utilities are provided
+for Connectome Workbench users who wish to analyze surface-based neuroimaging files.
 
 Contents:
 =========
