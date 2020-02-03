@@ -20,8 +20,6 @@ sys.path.insert(0, os.path.abspath("../brainsmash/mapgen/"))
 sys.path.insert(0, os.path.abspath("../brainsmash/workbench/"))
 sys.path.insert(0, os.path.abspath("../brainsmash/utils/"))
 
-# autodoc_mock_imports = ['matplotlib', 'numpy', 'nibabel', 'pandas', 'scipy']
-
 # -- Project information -----------------------------------------------------
 
 project = 'BrainSMASH'
@@ -88,9 +86,6 @@ html_logo = 'images/logo.png'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
-
-# # If true, `todo` and `todoList` produce output, else they produce nothing.
-# todo_include_todos = False
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'BrainSMASHdoc'
