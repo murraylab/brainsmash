@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as f:
     readme = f.read()
 
-requirements = ["numpy", "sklearn", "pandas", "scipy", "nibabel==2.1.0"]
+requirements = ["numpy", "sklearn", "pandas", "scipy", "matplotlib", "nibabel==2.1.0"]
 
 setup(
     name="brainsmash",
