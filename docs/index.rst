@@ -39,7 +39,7 @@ The BrainSMASH source code is available under the GNU General Public License v3.
 
 Support
 =======
-If you run into a problem or identify a bug in the source code, please send an email to joshua.burt@yale.edu or `create a new issue on GitHub <https://github.com/jbburt/brainsmash/issues>`_.
+If you run into a problem or identify a bug in the source code, please send the authors an email or `create a new issue on GitHub <https://github.com/murraylab/brainsmash/issues>`_.
 
 .. Indices and tables
    ==================

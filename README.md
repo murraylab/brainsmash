@@ -36,7 +36,7 @@ BrainSMASH is most easily installed using pip:
 
 You may also clone and install the source files manually:
 
-    git clone https://github.com/jbburt/brainsmash.git
+    git clone https://github.com/murraylab/brainsmash.git
     cd brainsmash
     python setup.py install
 
@@ -58,5 +58,5 @@ Change Log
 ==========
 ---
 
-* 1.0.1-1.0.2 Minor revisions to documentation and package internals.
+* 1.0.1 & 1.0.2 Minor revisions to documentation and package internals.
 * 1.0.0 Initial release.

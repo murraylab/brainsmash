@@ -43,11 +43,11 @@ BrainSmash is most easily installed via the Python package manager ``pip``:
 
         pip install brainsmash
 
-You may also clone and install the source files manually via the `GitHub repository <https://github.com/jbburt/brainsmash>`_:
+You may also clone and install the source files manually via the `GitHub repository <https://github.com/murraylab/brainsmash>`_:
 
 .. code-block:: bash
 
-        git clone https://github.com/jbburt/brainsmash.git
+        git clone https://github.com/murraylab/brainsmash.git
         cd brainsmash
         python setup.py install
 

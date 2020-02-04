@@ -19,7 +19,7 @@ However, BrainSMASH can flexibly accommodate a variety of input types:
 - Data and memory-mapped arrays written to ``*.npy`` files
 - Numpy arrays and array-like objects
 
-To follow along with the first example below, you may download our `example data <https://github.com/jbburt/brainsmash/tree/master/examples>`_.
+To follow along with the first example below, you may download our `example data <https://github.com/murraylab/brainsmash/tree/master/examples>`_.
 Connectome Workbench users who wish to derive a distance matrix from a ``*.surf.gii``
 file may want to begin :ref:`below <wb>`, as these functions take a long time to run
 (but thankfully only ever need to be run once).
@@ -99,7 +99,7 @@ to be larger for brain maps whose values are more strongly non-normal.
 
 .. note:: Shameless plug: the plots above
   were auto-generated using our ``wbplot`` package, available through both `pip <https://pypi.org/project/wbplot/>`_
-  and `GitHub <https://github.com/jbburt/wbplot>`_. ``wbplot`` currently only
+  and `GitHub <https://github.com/murraylab/wbplot>`_. ``wbplot`` currently only
   supports cortical data, and parcellated data must be in the `HCP's MMP parcellation <https://balsa.wustl.edu/study/show/RVVG>`_.
 
 Keyword arguments to :class:`brainsmash.mapgen.base.Base`

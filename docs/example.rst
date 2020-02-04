@@ -5,7 +5,7 @@ Cortical Hemisphere
 -------------------
 
 Here, we'll perform an analysis similar to those included in our pre-print (TODO), using the example
-data we've included in the `BrainSMASH GitHub repo <https://github.com/jbburt/brainsmash/tree/master/examples>`_.
+data we've included in the `BrainSMASH GitHub repo <https://github.com/murraylab/brainsmash/tree/master/examples>`_.
 
 First, create an instance of the ``Base`` class and generate 1000 surrogate maps:
 
@@ -93,7 +93,7 @@ Executing the above code produces the following figure:
    :align:   center
    :scale: 25 %
 
-We can plot a couple surrogate maps on the cortical surface using `wbplot <https://github.com/jbburt/wbplot>`_:
+We can plot a couple surrogate maps on the cortical surface using `wbplot <https://github.com/murraylab/wbplot>`_:
 
 .. code-block:: python
 

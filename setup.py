@@ -14,7 +14,7 @@ setup(
     description="Brain Surrogate Map with Autocorrelated Spatial Heterogeneity.",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/jbburt/brainsmash",
+    url="https://github.com/murraylab/brainsmash",
     packages=find_packages(),
     install_requires=requirements,
     python_requires='>=3',
