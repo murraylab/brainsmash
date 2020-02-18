@@ -84,7 +84,7 @@ class Base:
         utrunc = self._u[self._uidx]
         self._h = np.linspace(utrunc.min(), utrunc.max(), self._nh)
         self.b = b
-        self._smvar = self.smooth_variogram(self._v, return_h=True)
+        self._smvar = self.smooth_variogram(self._v)
 
         # Linear regression model
         self._lm = LinearRegression(fit_intercept=True)

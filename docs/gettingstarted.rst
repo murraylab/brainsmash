@@ -60,7 +60,7 @@ where ``surrogates`` is a numpy array with shape ``(1000,180)``. The empirical
 brain map and one of the surrogate maps are illustrated side-by-side below for
 comparison:
 
-.. figure::  images/x.png
+.. figure::  images/brain_map.png
    :align:   center
 
    The empirical T1w/T2w map.
