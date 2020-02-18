@@ -48,7 +48,7 @@ We'll create an instance of the class, passing our two files as arguments
 
 .. code-block:: python
 
-        base = Base(brain_map=brain_map_file, distmat=dist_mat_file)
+        base = Base(x=brain_map_file, distmat=dist_mat_file)
 
 Surrogate maps can then be generated with a call to the class instance:
 
@@ -60,7 +60,7 @@ where ``surrogates`` is a numpy array with shape ``(1000,180)``. The empirical
 brain map and one of the surrogate maps are illustrated side-by-side below for
 comparison:
 
-.. figure::  images/brain_map.png
+.. figure::  images/x.png
    :align:   center
 
    The empirical T1w/T2w map.
@@ -79,7 +79,7 @@ the class:
 
 .. code-block:: python
 
-   base = Base(brain_map=brain_map_file, distmat=dist_mat_file, resample=True)
+   base = Base(x=brain_map_file, distmat=dist_mat_file, resample=True)
 
 
 The surrogate map illustrated above, had it been generated using ``resample=True``,
@@ -120,12 +120,12 @@ Keyword arguments to :class:`brainsmash.mapgen.base.Base`
 
 .. _umax:
 
-``umax`` int, default 25
+``pv`` int, default 25
   Percentile of the pairwise distance distribution at which to truncate during variogram fitting. The inclusion of this parameter is motivated by the fact that at large distances, pairwise variability is primarily driven by noise.
 
 .. _nbins:
 
-``nbins`` int, default 25
+``nh`` int, default 25
   The number of uniformly spaced distance intervals within which to compute variance when constructing variograms. This parameter governs the granularity of your variogram. For noisy brain maps, this parameter should be small enough such that the variogram is smooth and continuous.
 
 .. _resample:
@@ -135,8 +135,8 @@ Keyword arguments to :class:`brainsmash.mapgen.base.Base`
 
 .. _bw:
 
-``h`` float or None, default None
-  The bandwidth of the Gaussian kernel used to smooth the variogram. The variogram isn't particularly sensitive to this parameter, but it's included anyways. If this parameter is None, by default the bandwidth is set to three times the variogram distance interval (see ``nbins`` above).
+``b`` float or None, default None
+  The bandwidth of the Gaussian kernel used to smooth the variogram. The variogram isn't particularly sensitive to this parameter, but it's included anyways. If this parameter is None, by default the bandwidth is set to three times the variogram distance interval (see ``nh`` above).
 
 .. _dense:
 
@@ -247,16 +247,16 @@ Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
 ``kernel`` str, default 'exp'
    See :ref:`above <kernel>`.
 
-``umax`` int, default 70
-  See :ref:`above <umax>`. Note that this parameter is by default larger than for the ``Base`` class; this is in part because of the ``knn`` parameter above (which is used internally to reduce the distance matrix prior to determining ``umax``.
+``pv`` int, default 70
+  See :ref:`above <pv>`. Note that this parameter is by default larger than for the ``Base`` class; this is in part because of the ``knn`` parameter above (which is used internally to reduce the distance matrix prior to determining ``pv``.
 
-``nbins`` int, default 25
-  See :ref:`above <nbins>`.
+``nh`` int, default 25
+  See :ref:`above <nh>`.
 
 ``resample`` bool, default False
    See :ref:`above <resample>`.
 
-``h`` float or None, default None
+``b`` float or None, default None
    See :ref:`above <bw>`.
 
 .. note:: Dense data may be used with :class:`brainsmash.mapgen.base.Base` -- the examples are primarily partitioned in this way for illustration (but also in anticipation of users' local memory constraints).
@@ -304,7 +304,7 @@ To load data from a neuroimaging file into Python, you may use :func:`brainsmash
 
    from brainsmash.utils.dataio import load
    f = "/path/to/myimage.dscalar.nii"
-   brain_map = load(f)  # type(brain_map) == numpy.ndarray
+   x = load(f)  # type(x) == numpy.ndarray
 
 .. _wb:
 

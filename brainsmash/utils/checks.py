@@ -3,7 +3,7 @@ import numpy as np
 
 __all__ = ['check_extensions',
            'check_outfile',
-           'check_umax',
+           'check_pv',
            'check_deltas',
            'check_map',
            'check_distmat',
@@ -87,7 +87,7 @@ def check_distmat(distmat):
 
     Raises
     ------
-    ValueError : `distmat` is not symmetric
+    ValueError : `D` is not symmetric
 
     """
     if not np.allclose(distmat, distmat.T):
@@ -112,23 +112,23 @@ def check_sampled(distmat, index):
     Raises
     ------
     ValueError : Arguments do not have identical dimensions
-    ValueError : `distmat` has not been sorted column-wise
-    TypeError : rows of `distmat` or `index` are not sorted (ascending)
+    ValueError : `D` has not been sorted column-wise
+    TypeError : rows of `D` or `index` are not sorted (ascending)
 
     """
     if not isinstance(distmat, np.ndarray) or not isinstance(index, np.ndarray):
-        raise TypeError("'distmat' and 'index' must be array_like")
+        raise TypeError("'D' and 'index' must be array_like")
     if distmat.shape != index.shape:
-        e = "`distmat` and `index` must have identical dimensions\n"
-        e += "distmat.shape: {}".format(distmat.shape)
+        e = "`D` and `index` must have identical dimensions\n"
+        e += "D.shape: {}".format(distmat.shape)
         e += "index.shape: {}".format(index.shape)
         raise ValueError(e)
     if isinstance(distmat, np.ndarray):
         if not np.all(distmat[:, 1:] >= distmat[:, :-1]):
-            raise ValueError("Each row of `distmat` must be sorted (ascending)")
+            raise ValueError("Each row of `D` must be sorted (ascending)")
     else:  # just test the first row
         if not np.all(distmat[0, 1:] >= distmat[0, :-1]):
-            raise ValueError("Each row of `distmat` must be sorted (ascending)")
+            raise ValueError("Each row of `D` must be sorted (ascending)")
 
 
 def check_deltas(deltas):
@@ -157,7 +157,7 @@ def check_deltas(deltas):
             raise ValueError("Each element of `deltas` must lie in (0,1]")
 
 
-def check_umax(umax):
+def check_pv(umax):
     """
     Check input argument `deltas`.
 
@@ -173,15 +173,15 @@ def check_umax(umax):
 
     Raises
     ------
-    ValueError : `umax` lies outside range (0,100]
+    ValueError : `pv` lies outside range (0,100]
 
     """
     try:
         umax = int(umax)
     except ValueError:
-        raise ValueError("parameter 'umax' must be an integer in (0,100]")
+        raise ValueError("parameter 'pv' must be an integer in (0,100]")
     if umax <= 0 or umax > 100:
-        raise ValueError("parameter 'umax' must be in (0,100]")
+        raise ValueError("parameter 'pv' must be in (0,100]")
     return umax
 
 

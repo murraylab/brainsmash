@@ -1,6 +1,6 @@
-brainsmash.mapgen.base.Base.umax
+brainsmash.mapgen.base.Base.pv
 ================================
 
 .. currentmodule:: brainsmash.mapgen.base
 
-.. autoproperty:: Base.umax
+.. autoproperty:: Base.pv

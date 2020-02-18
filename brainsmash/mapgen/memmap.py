@@ -31,7 +31,7 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     Returns
     -------
     dict
-        Keys are 'distmat' and 'index'; values are absolute paths to the
+        Keys are 'D' and 'index'; values are absolute paths to the
         corresponding binary files on disk.
 
     Notes
@@ -73,7 +73,7 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     # Build memory-mapped arrays
     with open(dist_file, 'r') as fp:
 
-        npydfile = path.join(output_dir, "distmat.npy")
+        npydfile = path.join(output_dir, "D.npy")
         npyifile = path.join(output_dir, "index.npy")
         fpd = numpy.lib.format.open_memmap(
             npydfile, mode='w+', dtype=np.float32, shape=(nv, nv))
@@ -100,7 +100,7 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
         del fpd  # Flush memory changes to disk
         del fpi
 
-    return {'distmat': npydfile, 'index': npyifile}  # Return filenames
+    return {'D': npydfile, 'index': npyifile}  # Return filenames
 
 
 def load_memmap(filename):

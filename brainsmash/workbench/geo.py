@@ -251,7 +251,7 @@ def _euclidean(dist_file, coords):
     print(m)
 
     # Use the following line instead if you have sufficient memory
-    # distmat = cdist(coords, coords)
+    # D = cdist(coords, coords)
 
     with open(dist_file, 'w') as fp:
         for point in coords:

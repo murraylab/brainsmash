@@ -12,16 +12,16 @@ brainsmash.mapgen.base.Base
       .. autosummary::
          :toctree:
       
-         Base.bins
-         Base.brain_map
-         Base.deltas
-         Base.dmat
          Base.h
+         Base.x
+         Base.deltas
+         Base.D
+         Base.b
          Base.kernel
-         Base.nbins
+         Base.nh
          Base.nmap
          Base.resample
-         Base.umax
+         Base.pv
    
    
 

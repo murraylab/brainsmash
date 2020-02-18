@@ -1,6 +1,6 @@
-brainsmash.mapgen.sampled.Sampled.h
+brainsmash.mapgen.sampled.Sampled.b
 ===================================
 
 .. currentmodule:: brainsmash.mapgen.sampled
 
-.. autoproperty:: Sampled.h
+.. autoproperty:: Sampled.b

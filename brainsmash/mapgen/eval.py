@@ -18,7 +18,7 @@ def base_fit(brain_map, distmat, nsurr=100, **params):
     brain_map : (N,) np.ndarray or filename
         Scalar brain map
     distmat : (N,N) np.ndarray or filename
-        Pairwise distance matrix between elements of ``brain_map``
+        Pairwise distance matrix between elements of ``x``
     nsurr : int, default 100
         Number of simulated surrogate maps from which to compute variograms
     params
@@ -39,20 +39,20 @@ def base_fit(brain_map, distmat, nsurr=100, **params):
     d = dataio(distmat)
 
     # Instantiate surrogate map generator
-    generator = Base(brain_map=x, distmat=d, **params)
+    generator = Base(x=x, D=d, **params)
 
     # Simulate surrogate maps
     surrogate_maps = generator(n=nsurr)
 
     # Compute empirical variogram
     v = generator.compute_variogram(x)
-    emp_var, u0 = generator.smooth_variogram(v, return_bins=True)
+    emp_var, u0 = generator.smooth_variogram(v, return_dists=True)
 
     # Compute surrogate map variograms
-    surr_var = np.empty((nsurr, generator.nbins))
+    surr_var = np.empty((nsurr, generator.nh))
     for i in range(nsurr):
         v_null = generator.compute_variogram(surrogate_maps[i])
-        surr_var[i] = generator.smooth_variogram(v_null, return_bins=False)
+        surr_var[i] = generator.smooth_variogram(v_null, return_dists=False)
 
     # # Create plot for visual comparison
 
@@ -92,7 +92,7 @@ def sampled_fit(brain_map, distmat, index, nsurr=10, **params):
     brain_map : (N,) np.ndarray
         Scalar brain map
     distmat : (N,N) np.ndarray or np.memmap
-        Pairwise distance matrix between elements of ``brain_map``
+        Pairwise distance matrix between elements of ``x``
     index : (N,N) np.ndarray or np.memmap
         See :class:`brainsmash.core.Sampled`
     nsurr : int, default 10

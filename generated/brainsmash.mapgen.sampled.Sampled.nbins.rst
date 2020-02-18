@@ -1,6 +1,6 @@
-brainsmash.mapgen.sampled.Sampled.nbins
+brainsmash.mapgen.sampled.Sampled.nh
 =======================================
 
 .. currentmodule:: brainsmash.mapgen.sampled
 
-.. autoproperty:: Sampled.nbins
+.. autoproperty:: Sampled.nh

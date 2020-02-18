@@ -12,18 +12,18 @@ brainsmash.mapgen.sampled.Sampled
       .. autosummary::
          :toctree:
       
-         Sampled.brain_map
+         Sampled.x
          Sampled.deltas
-         Sampled.dmat
-         Sampled.h
+         Sampled.D
+         Sampled.b
          Sampled.index
          Sampled.kernel
          Sampled.knn
-         Sampled.nbins
+         Sampled.nh
          Sampled.nmap
          Sampled.ns
          Sampled.resample
-         Sampled.umax
+         Sampled.pv
    
    
 

@@ -1,6 +1,6 @@
-brainsmash.mapgen.sampled.Sampled.dmat
+brainsmash.mapgen.sampled.Sampled.D
 ======================================
 
 .. currentmodule:: brainsmash.mapgen.sampled
 
-.. autoproperty:: Sampled.dmat
+.. autoproperty:: Sampled.D

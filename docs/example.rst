@@ -50,7 +50,7 @@ Now plot the results:
 
     sac = '#377eb8'  # autocorr-preserving
     rc = '#e41a1c'  # randomly shuffled
-    bins = np.linspace(-1, 1, 51)  # correlation bins
+    h = np.linspace(-1, 1, 51)  # correlation h
 
     # this is the empirical statistic we're creating a null distribution for
     test_stat = stats.pearsonr(myelin, thickness)[0]
@@ -61,9 +61,9 @@ Now plot the results:
 
     # plot the data
     ax.axvline(test_stat, 0, 0.8, color='k', linestyle='dashed', lw=1)
-    ax.hist(surrogate_brainmap_corrs, bins=bins, color=sac, alpha=1,
+    ax.hist(surrogate_brainmap_corrs, h=h, color=sac, alpha=1,
         density=True, clip_on=False, zorder=1)
-    ax2.hist(naive_brainmap_corrs, bins=bins, color=rc, alpha=0.7,
+    ax2.hist(naive_brainmap_corrs, h=h, color=rc, alpha=0.7,
         density=True, clip_on=False, zorder=2)
 
     # make the plot nice...
@@ -134,12 +134,12 @@ parcellated myelin map's variogram:
    from brainsmash.mapgen.eval import base_fit
 
    base_fit(
-       brain_map="LeftParcelMyelin.txt",
+       x="LeftParcelMyelin.txt",
        distmat="LeftParcelGeodesicDistmat.txt",
        nsurr=1000,
-       nbins=25,  # these are default kwargs, but shown here for demonstration
+       nh=25,  # these are default kwargs, but shown here for demonstration
        deltas=np.arange(0.1, 1, 0.1),
-       umax=25)  # kwargs are passed to brainsmash.mapgen.base.Base
+       pv=25)  # kwargs are passed to brainsmash.mapgen.base.Base
 
 Executing the code above produces the following plot:
 
@@ -242,18 +242,18 @@ First, we'll validate the variogram fit using these parameters:
 
         from brainsmash.mapgen.eval import sampled_fit
 
-        brain_map = "masked_image.txt"
+        x = "masked_image.txt"
         distmat = output_files['distmat']
         index = output_files['index']
 
         kwargs = {'ns': 500,
                   'knn': 1500,
-                  'nbins': 25,
+                  'nh': 25,
                   'deltas': [0.3, 0.5, 0.7, 0.9],
-                  'umax': 70
+                  'pv': 70
                   }
 
-        sampled_fit(brain_map, distmat, index, nsurr=20, **kwargs)
+        sampled_fit(x, distmat, index, nsurr=20, **kwargs)
 
 This produces the following plot:
 
@@ -268,5 +268,5 @@ with a call to the surrogate map generator:
 
         from brainsmash.mapgen.sampled import Sampled
 
-        gen = Sampled(brain_map, distmat, index, **kwargs)
+        gen = Sampled(x, distmat, index, **kwargs)
         surrogate_maps = gen(n=100)

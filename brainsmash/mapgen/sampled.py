@@ -3,7 +3,7 @@ Generate spatial autocorrelation-preserving surrogate maps from memory-mapped
 arrays and with random sampling.
 """
 from ..utils.dataio import dataio
-from ..utils.checks import check_map, check_umax, check_deltas
+from ..utils.checks import check_map, check_pv, check_deltas
 from .kernels import check_kernel
 from sklearn.linear_model import LinearRegression
 import numpy as np
@@ -20,16 +20,16 @@ class Sampled:
     brain_map : (N,) np.ndarray
         Scalar brain map
     distmat : (N,M) np.ndarray
-        Pairwise distance matrix between elements of `brain_map`. It may be
+        Pairwise distance matrix between elements of `x`. It may be
         the full (N,N) distance matrix, if you have sufficient memory;
         otherwise, use the subset (N,M), M<N. Note that if M<N, you must
         also pass an index array of shape (N,M) indicating the index
-        (in `brain_map`) to which each element in `distmat` corresponds,
+        (in `x`) to which each element in `D` corresponds,
         such that D[i,j] is the distance between x[i] and x[index[i,j]].
     index : (N,M) np.ndarray or None
         See above
     ns : int, default 500
-        Take a subsample of `ns` rows from `distmat` when fitting variograms
+        Take a subsample of `ns` rows from `D` when fitting variograms
     deltas : np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
         Proportions of neighbors to include for smoothing, in (0, 1]
     kernel : str, default 'exp'
@@ -39,16 +39,16 @@ class Sampled:
         - 'invdist' : inverse distance
         - 'uniform' : uniform weights (distance independent)
     umax : int, default 70
-        Percentile of the pairwise distance distribution (in `distmat`) at
+        Percentile of the pairwise distance distribution (in `D`) at
         which to truncate during variogram fitting
     nbins : int, default 25
-        Number of uniformly spaced bins in which to compute smoothed
+        Number of uniformly spaced h in which to compute smoothed
         variogram
     knn : int, default 1000
         Number of nearest points to keep in the neighborhood of each sampled
         point
     h : float or None, default None
-        Gaussian kernel bandwidth for variogram smoothing. if h is None,
+        Gaussian kernel bandwidth for variogram smoothing. if b is None,
         three times the bin interval spacing is used.
     resample : bool, default False
         Resample surrogate map values from the empirical brain map
@@ -62,7 +62,7 @@ class Sampled:
 
     Raises
     ------
-    ValueError : `brain_map` and `distmat` have inconsistent sizes
+    ValueError : `x` and `D` have inconsistent sizes
 
     """
 
@@ -240,7 +240,7 @@ class Sampled:
 
         Notes
         -----
-        Assumes `distmat` provided at runtime has been column-wise sorted.
+        Assumes `D` provided at runtime has been column-wise sorted.
 
         """
         jkn = self._index[:, :k]  # indices of k nearest neighbors
@@ -265,9 +265,9 @@ class Sampled:
 
         Returns
         -------
-        (nbins,) np.ndarray
+        (nh,) np.ndarray
             Smoothed variogram samples
-        (nbins) np.ndarray
+        (nh) np.ndarray
             Distances at which smoothed variogram was computed (returned if
             return_u0 is True)
 
@@ -356,7 +356,7 @@ class Sampled:
         n = self._brain_map.size
         if x_.shape[0] != n:
             raise ValueError(
-                "dmat size along axis=0 must equal brain map size")
+                "D size along axis=0 must equal brain map size")
         self._dmat = x_[:, 1:self._knn+1]  # prevent self-coupling
 
     @property
@@ -389,7 +389,7 @@ class Sampled:
 
     @umax.setter
     def umax(self, x):
-        umax = check_umax(x)
+        umax = check_pv(x)
         self._umax = umax
 
     @property
@@ -404,7 +404,7 @@ class Sampled:
 
     @property
     def nbins(self):
-        """ int : number of variogram distance bins """
+        """ int : number of variogram distance h """
         return self._nbins
 
     @nbins.setter
@@ -446,7 +446,7 @@ class Sampled:
     @knn.setter
     def knn(self, x):
         if x > self._nmap:
-            raise ValueError('knn must be less than len(brain_map)')
+            raise ValueError('knn must be less than len(x)')
         self._knn = int(x)
 
     @property

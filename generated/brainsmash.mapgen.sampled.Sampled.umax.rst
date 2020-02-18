@@ -1,6 +1,6 @@
-brainsmash.mapgen.sampled.Sampled.umax
+brainsmash.mapgen.sampled.Sampled.pv
 ======================================
 
 .. currentmodule:: brainsmash.mapgen.sampled
 
-.. autoproperty:: Sampled.umax
+.. autoproperty:: Sampled.pv
