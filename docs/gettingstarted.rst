@@ -170,7 +170,7 @@ in the following way:
 
    from brainsmash.mapgen.memmap import txt2memmap
    dist_mat_fin = "LeftDenseGeodesicDistmat.txt"  # input text file
-   output_dir = "."               # directory to which output binaries are written
+   output_dir = "."  # directory to which output binaries are written
    output_files = txt2memmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
 
 The latter two keyword arguments are shown using their default values. If your
@@ -262,7 +262,7 @@ Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
 .. note:: Dense data may be used with :class:`brainsmash.mapgen.base.Base` -- the examples are primarily partitioned in this way for illustration (but also in anticipation of users' local memory constraints).
 
 In general, the ``Sampled`` class has much more parameter sensitivity. You may need to adjust
-these parameters to get reliable variogram fits. However, you may use the functions in the :ref:`eval <pysec-mapgen-eval>` module, which we turn to next,
+these parameters to get reliable variogram fits. However, you may use the functions in the :ref:`variogram evaluation <pysec-mapgen-eval>` module, which we turn to next,
 to validate your variogram fits.
 
 Evaluating variogram fits
@@ -286,9 +286,9 @@ For well-chosen parameters, the code above will produce a plot that looks someth
    Assessing the surrogate maps' fit to the empirical data.
 
 Shown above is the mean and standard deviation across 100 surrogates. Optional
-keyword arguments for :class:`brainsmash.mapgen.base.Base` and :class:`brainsmash.mapgen.sampled.Sampled` can be specified after ``nsurr`` in
-the function calls to :func:`brainsmash.mapgen.eval.base_fit` and :func:`brainsmash.mapgen.eval.sampled_fit`-- for example, if
-you want to assess how changing the other parameters influences your surrogates maps' variogram fits.
+keyword arguments to the base and sampled class can be passed in
+the calls to the respective evaluation functions -- for example, if
+you want to assess how changing model parameters influences your surrogates maps' variogram fits.
 
 .. note:: When using :func:`brainsmash.mapgen.eval.sampled_fit`, you must specify the memory-mapped ``index`` file in addition to the brain map and distance matrix files (see :ref:`above <memmap>`).
 
