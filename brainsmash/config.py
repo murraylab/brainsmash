@@ -1,6 +1,6 @@
 from os.path import join, dirname, abspath
 
-# TODO document this file!
+# TODO document this file
 
 # TODO __all__ = []
 
