@@ -50,7 +50,7 @@ Now plot the results:
 
     sac = '#377eb8'  # autocorr-preserving
     rc = '#e41a1c'  # randomly shuffled
-    h = np.linspace(-1, 1, 51)  # correlation h
+    b = np.linspace(-1, 1, 51)  # correlation b
 
     # this is the empirical statistic we're creating a null distribution for
     test_stat = stats.pearsonr(myelin, thickness)[0]
@@ -61,9 +61,9 @@ Now plot the results:
 
     # plot the data
     ax.axvline(test_stat, 0, 0.8, color='k', linestyle='dashed', lw=1)
-    ax.hist(surrogate_brainmap_corrs, h=h, color=sac, alpha=1,
+    ax.hist(surrogate_brainmap_corrs, b=b, color=sac, alpha=1,
         density=True, clip_on=False, zorder=1)
-    ax2.hist(naive_brainmap_corrs, h=h, color=rc, alpha=0.7,
+    ax2.hist(naive_brainmap_corrs, b=b, color=rc, alpha=0.7,
         density=True, clip_on=False, zorder=2)
 
     # make the plot nice...

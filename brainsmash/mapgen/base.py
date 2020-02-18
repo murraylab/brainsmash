@@ -80,7 +80,7 @@ class Base:
             # find distance to k nearest neighbors for each area
             self._dkn[delta] = self._dmat[(self._ikn, self._jkn[delta])]
 
-        # Smoothed variogram and variogram h
+        # Smoothed variogram and variogram _b
         utrunc = self._u[self._uidx]
         self._h = np.linspace(utrunc.min(), utrunc.max(), self._nh)
         self.b = b
@@ -242,8 +242,8 @@ class Base:
         if len(u) != len(v):
             raise ValueError(
                 "argument v: expected size {}, got {}".format(len(u), len(v)))
-        # Subtract each h from each pairwise distance u
-        # Each row corresponds to a unique h
+        # Subtract each _b from each pairwise distance u
+        # Each row corresponds to a unique _b
         du = np.abs(u - self._h[:, None])
         w = np.exp(-np.square(2.68 * du / self._h) / 2)
         denom = w.sum(axis=1)
@@ -393,7 +393,7 @@ class Base:
             try:
                 self._b = float(x)
             except (ValueError, TypeError):
-                e = "parameter `b`: expected numeric, got {}".format(type(x))
+                e = "parameter `_b`: expected numeric, got {}".format(type(x))
                 raise ValueError(e)
         else:   # set bandwidth equal to 3x bin spacing
             self._b = 3.*np.mean(self._h[1:] - self._h[:-1])

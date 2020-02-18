@@ -12,7 +12,7 @@ brainsmash.mapgen.base.Base
       .. autosummary::
          :toctree:
       
-         Base.h
+         Base.b
          Base.x
          Base.deltas
          Base.D

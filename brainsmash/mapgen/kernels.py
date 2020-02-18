@@ -34,16 +34,16 @@ def gaussian(d):
 
     """
     try:  # 2-dim
-        return np.exp(-0.5 * np.square(d / d.max(axis=-1)[:, np.newaxis]))
+        return np.exp(-1.25 * np.square(d / d.max(axis=-1)[:, np.newaxis]))
     except IndexError:  # 1-dim
-        return np.exp(-0.5 * np.square(d/d.max()))
+        return np.exp(-1.25 * np.square(d/d.max()))
     except AttributeError:
         raise TypeError("expected array_like, got {}".format(type(d)))
 
 
 def exp(d):
     """
-    Exponentially decaying kernel.
+    Exponentially decaying kernel which truncates at e^{-1}.
 
     Parameters
     ----------
@@ -57,7 +57,7 @@ def exp(d):
 
     Notes
     -----
-    Characteristic length scale is set to d.max(axis=-1), ie the maximum
+    Characteristic length scale is set to d.max(axis=-1), i.e. the maximum
     distance within each row.
 
     Raises

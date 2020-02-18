@@ -1,6 +1,6 @@
 """
 Generate spatial autocorrelation-preserving surrogate maps from memory-mapped
-arrays and with random sampling.
+arrays with random subsampling.
 """
 from ..utils.dataio import dataio
 from ..utils.checks import check_map, check_pv, check_deltas
@@ -17,20 +17,18 @@ class Sampled:
 
     Parameters
     ----------
-    brain_map : (N,) np.ndarray
-        Scalar brain map
-    distmat : (N,M) np.ndarray
-        Pairwise distance matrix between elements of `x`. It may be
-        the full (N,N) distance matrix, if you have sufficient memory;
-        otherwise, use the subset (N,M), M<N. Note that if M<N, you must
-        also pass an index array of shape (N,M) indicating the index
-        (in `x`) to which each element in `D` corresponds,
-        such that D[i,j] is the distance between x[i] and x[index[i,j]].
-    index : (N,M) np.ndarray or None
+    x : (N,) np.ndarray
+        Target brain map
+    D : (N,N) np.ndarray
+        Pairwise distance matrix between elements of `x`. Each row of `D` should
+        be sorted. Indices used to sort each row are passed to the `index`
+        argument. See :func:`brainsmash.mapgen.memmap.txt2memmap` or the online
+        documentation for more details (brainsmash.readthedocs.io)
+    index : (N,N) np.ndarray or None
         See above
     ns : int, default 500
         Take a subsample of `ns` rows from `D` when fitting variograms
-    deltas : np.ndarray or list[float], default [0.3,0.5,0.7,0.9]
+    deltas : np.ndarray or List[float], default [0.3, 0.5, 0.7, 0.9]
         Proportions of neighbors to include for smoothing, in (0, 1]
     kernel : str, default 'exp'
         Kernel with which to smooth permuted maps
@@ -38,25 +36,23 @@ class Sampled:
         - 'exp' : exponential decay function
         - 'invdist' : inverse distance
         - 'uniform' : uniform weights (distance independent)
-    umax : int, default 70
+    pv : int, default 70
         Percentile of the pairwise distance distribution (in `D`) at
         which to truncate during variogram fitting
-    nbins : int, default 25
-        Number of uniformly spaced h in which to compute smoothed
-        variogram
+    nh : int, default 25
+        Number of uniformly spaced distances at which to compute variogram
     knn : int, default 1000
-        Number of nearest points to keep in the neighborhood of each sampled
-        point
-    h : float or None, default None
-        Gaussian kernel bandwidth for variogram smoothing. if b is None,
-        three times the bin interval spacing is used.
+        Number of nearest regions to keep in the neighborhood of each region
+    b : float or None, default None
+        Gaussian kernel bandwidth for variogram smoothing. if None,
+        three times the distance interval spacing is used.
     resample : bool, default False
-        Resample surrogate map values from the empirical brain map
+        Resample surrogate map values from the target brain map
 
     Notes
     -----
     Passing resample=True will preserve the distribution of values in the
-    empirical map, at the expense of worsening simulated surrogate maps'
+    target map, at the expense of worsening simulated surrogate maps'
     variograms fits. This worsening will increase as the empirical map
     more strongly deviates from normality.
 
@@ -66,30 +62,30 @@ class Sampled:
 
     """
 
-    def __init__(self, brain_map, distmat, index, ns=500,
+    def __init__(self, x, D, index, ns=500,
                  deltas=np.arange(0.3, 1., 0.2), kernel='exp',
-                 umax=70, nbins=25, knn=1000, h=None, resample=False):
+                 pv=70, nh=25, knn=1000, b=None, resample=False):
 
-        self.brain_map = brain_map
-        n = self._brain_map.size
+        self.x = x
+        n = self._x.size
         self.nmap = int(n)
         self.knn = knn
-        self.dmat = distmat
+        self.D = D
         self.index = index
         self.resample = resample
-        self.nbins = int(nbins)
+        self.nh = int(nh)
         self.deltas = deltas
         self.ns = int(ns)
-        self._user_h = h
-        self.umax = umax
+        self.b = b
+        self.pv = pv
         self._ikn = np.arange(self._nmap)[:, None]
 
         # Store k nearest neighbors from distance and index matrices
         self.kernel = kernel  # Smoothing kernel selection
-        self._umax_value = np.percentile(self._dmat, self._umax)
-        self._bins = np.linspace(
-            self._dmat.min(), self._umax_value, self._nbins)
-        self.h = h
+        self._dmax = np.percentile(self._D, self._pv)
+        self.h = np.linspace(self._D.min(), self._dmax, self._nh)
+        if not self._b:
+            self.b = 3 * (self.h[1] - self.h[0])
 
         # Linear regression model
         self._lm = LinearRegression(fit_intercept=True)
@@ -124,19 +120,18 @@ class Sampled:
             # Randomly permute map
             x_perm = self.permute_map()
 
-            # Randomly select subset of area pairs to use for variograms
+            # Randomly select subset of regions to use for variograms
             idx = self.sample()
 
             # Compute empirical variogram
-            v = self.compute_variogram(self._brain_map, idx)
+            v = self.compute_variogram(self._x, idx)
 
             # Variogram ordinates; use nearest neighbors because local effect
-            u = self._dmat[idx, :]
-            uidx = np.where(u < self._umax_value)
+            u = self._D[idx, :]
+            uidx = np.where(u < self._dmax)
 
             # Smooth empirical variogram
-            smvar, u0 = self.smooth_variogram(
-                u[uidx], v[uidx], return_bins=True)
+            smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_h=True)
 
             res = dict.fromkeys(self._deltas)
 
@@ -145,10 +140,10 @@ class Sampled:
                 k = int(d * self._knn)
 
                 # Smooth the permuted map using k nearest neighbors to
-                # reintroduce spatial autocorrelation.
+                # reintroduce spatial autocorrelation
                 sm_xperm = self.smooth_map(x=x_perm, k=k)
 
-                # Calculate empirical variogram of the smoothed permuted map
+                # Calculate variogram values for the smoothed permuted map
                 vperm = self.compute_variogram(sm_xperm, idx)
 
                 # Calculate smoothed variogram of the smoothed permuted map
@@ -175,7 +170,7 @@ class Sampled:
             surrs[i] = surr
 
         if self._resample:  # resample values from empirical map
-            sorted_map = np.sort(self._brain_map)
+            sorted_map = np.sort(self._x)
             for i, surr in enumerate(surrs):
                 ii = np.argsort(surr)
                 np.put(surr, ii, sorted_map)
@@ -184,23 +179,19 @@ class Sampled:
 
     def compute_variogram(self, x, idx):
         """
-        Compute empirical variogram of `x` from pairs of areas defined by `idx`.
+        Compute variogram of `x` using pairs of regions indexed by `idx`.
 
         Parameters
         ----------
         x : (N,) np.ndarray
-            Brain map scalars
+            Brain map
         idx : (ns,) np.ndarray[int]
-            Indices of randomly sampled points (ie, areas)
+            Indices of randomly sampled brain regions
 
         Returns
         -------
         v : (self.ns,) np.ndarray
-            Variogram y-coordinates, ie (x_i - x_j) ^ 2, for i,j in idx
-
-        Notes
-        -----
-        `idx` argument intended to take the form of return value of self.sample
+            Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2, for i,j in idx
 
         """
         # TODO THIS PRODUCES NANS IF NANS IN ORIGINAL MAP, BREAKING TEST_SAMPLED_VARIOGRAM_FITS
@@ -209,27 +200,27 @@ class Sampled:
 
     def permute_map(self):
         """
-        Return a random permutation of `self.x`.
+        Return a random permutation of the target brain map.
 
         Returns
         -------
         (N,) np.ndarray
-            Random permutation of empirical brain map
+            Random permutation of target brain map
 
         """
         perm_idx = np.random.permutation(self._nmap)
-        mask_perm = self._brain_map.mask[perm_idx]
-        x_perm = self._brain_map.data[perm_idx]
+        mask_perm = self._x.mask[perm_idx]
+        x_perm = self._x.data[perm_idx]
         return np.ma.masked_array(data=x_perm, mask=mask_perm)
 
     def smooth_map(self, x, k):
         """
-        Smooth `x` using `k` nearest neighbors.
+        Smooth `x` using `k` nearest neighboring regions.
 
         Parameters
         ----------
         x : (N,) np.ndarray
-            Brain map scalars
+            Brain map
         k : float
             Number of nearest neighbors to include for smoothing
 
@@ -240,36 +231,36 @@ class Sampled:
 
         Notes
         -----
-        Assumes `D` provided at runtime has been column-wise sorted.
+        Assumes `D` provided at runtime has been sorted.
 
         """
         jkn = self._index[:, :k]  # indices of k nearest neighbors
         xkn = x[jkn]  # values of k nearest neighbors
-        dkn = self._dmat[:, :k]  # distances to k nearest neighbors
+        dkn = self._D[:, :k]  # distances to k nearest neighbors
         weights = self._kernel(dkn)  # distance-weighted kernel
         # Kernel-weighted sum
         return (weights * xkn).sum(axis=1) / weights.sum(axis=1)
 
-    def smooth_variogram(self, u, v, return_bins=False):
+    def smooth_variogram(self, u, v, return_h=False):
         """
-        Smooth an empirical variogram.
+        Smooth a variogram.
 
         Parameters
         ----------
         u : (N,) np.ndarray
-            Pairwise distances, ie variogram x-coordinates
+            Pairwise distances, i.e. variogram x-coordinates
         v : (N,) np.ndarray
-            Variogram y-coordinates, ie (x_i - x_j) ^ 2
-        return_bins : bool, default False
+            Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
+        return_h : bool, default False
             Return distances at which smoothed variogram is computed
 
         Returns
         -------
         (nh,) np.ndarray
             Smoothed variogram samples
-        (nh) np.ndarray
+        (nh,) np.ndarray
             Distances at which smoothed variogram was computed (returned if
-            return_u0 is True)
+            `return_h` is True)
 
         Raises
         ------
@@ -279,17 +270,17 @@ class Sampled:
         if len(u) != len(v):
             raise ValueError("u and v must have same number of elements")
 
-        # Subtract each element of u0 from each element of u.
-        # Each row corresponds to a unique element of u0.
-        du = np.abs(u - self._bins[:, None])
-        w = np.exp(-np.square(2.68 * du / self._h) / 2)
+        # Subtract each element of b from each pairwise distance `u`.
+        # Each row corresponds to a unique b.
+        du = np.abs(u - self._h[:, None])
+        w = np.exp(-np.square(2.68 * du / self._b) / 2)
         denom = w.sum(axis=1)
         wv = w * v[None, :]
         num = wv.sum(axis=1)
         output = num / denom
-        if not return_bins:
+        if not return_h:
             return output
-        return output, self._bins
+        return output, self._h
 
     def regress(self, x, y):
         """
@@ -334,40 +325,40 @@ class Sampled:
             a=self._nmap, size=self._ns, replace=False).astype(np.int32)
 
     @property
-    def brain_map(self):
+    def x(self):
         """ (N,) np.ndarray : brain map scalars """
-        return np.copy(self._brain_map)
+        return np.copy(self._x)
 
-    @brain_map.setter
-    def brain_map(self, x):
+    @x.setter
+    def x(self, x):
         x_ = dataio(x)
         check_map(x=x_)
         brain_map = np.ma.masked_array(data=x_, mask=np.isnan(x_))
-        self._brain_map = brain_map
+        self._x = brain_map
 
     @property
-    def dmat(self):
+    def D(self):
         """ (N,N) np.memmap : Pairwise distance matrix """
-        return np.copy(self._dmat)
+        return np.copy(self._D)
 
-    @dmat.setter
-    def dmat(self, x):
+    @D.setter
+    def D(self, x):
         x_ = dataio(x)
-        n = self._brain_map.size
+        n = self._x.size
         if x_.shape[0] != n:
             raise ValueError(
                 "D size along axis=0 must equal brain map size")
-        self._dmat = x_[:, 1:self._knn+1]  # prevent self-coupling
+        self._D = x_[:, 1:self._knn + 1]  # prevent self-coupling
 
     @property
     def index(self):
-        """ (N,N) np.memmap : sort indices for each row of distance matrix """
+        """ (N,N) np.memmap : indexes used to sort each row of dist. matrix """
         return np.copy(self._index)
 
     @index.setter
     def index(self, x):
         x_ = dataio(x)
-        n = self._brain_map.size
+        n = self._x.size
         if x_.shape[0] != n:
             raise ValueError(
                 "index size along axis=0 must equal brain map size")
@@ -383,18 +374,18 @@ class Sampled:
         self._nmap = int(x)
 
     @property
-    def umax(self):
+    def pv(self):
         """ int : percentile of pairwise distances at which to truncate """
-        return self._umax
+        return self._pv
 
-    @umax.setter
-    def umax(self, x):
-        umax = check_pv(x)
-        self._umax = umax
+    @pv.setter
+    def pv(self, x):
+        pv = check_pv(x)
+        self._pv = pv
 
     @property
     def deltas(self):
-        """ np.ndarray or list[float] : proportions of nearest neighbors """
+        """ np.ndarray or List[float] : proportions of nearest neighbors """
         return self._deltas
 
     @deltas.setter
@@ -403,13 +394,13 @@ class Sampled:
         self._deltas = x
 
     @property
-    def nbins(self):
-        """ int : number of variogram distance h """
-        return self._nbins
+    def nh(self):
+        """ int : number of variogram distance intervals """
+        return self._nh
 
-    @nbins.setter
-    def nbins(self, x):
-        self._nbins = x
+    @nh.setter
+    def nh(self, x):
+        self._nh = x
 
     @property
     def kernel(self):
@@ -429,7 +420,7 @@ class Sampled:
 
     @property
     def resample(self):
-        """ bool : whether to resample surrogate maps from empirical maps """
+        """ bool : whether to resample surrogate map values from target maps """
         return self._resample
 
     @resample.setter
@@ -451,7 +442,7 @@ class Sampled:
 
     @property
     def ns(self):
-        """ int : number of randomly sampled areas for each generated map """
+        """ int : number of randomly sampled regions used to construct map """
         return self._ns
 
     @ns.setter
@@ -459,13 +450,19 @@ class Sampled:
         self._ns = int(x)
 
     @property
-    def h(self):
+    def b(self):
         """ numeric : Gaussian kernel bandwidth """
+        return self._b
+
+    @b.setter
+    def b(self, x):
+        self._b = x
+
+    @property
+    def h(self):
+        """ np.ndarray : distances at which variogram is evaluated """
         return self._h
 
     @h.setter
     def h(self, x):
-        if x is not None:
-            self._h = x
-        else:
-            self._h = 3. * (self._bins[1:] - self._bins[:-1]).mean()
+        self._h = x

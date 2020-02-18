@@ -283,6 +283,6 @@ def count_lines(filename):
         read_f = f.raw.read
         buf = read_f(buf_size)
         while buf:
-            lines += buf.count(b'\n')
+            lines += buf.count(_b'\n')
             buf = read_f(buf_size)
         return lines

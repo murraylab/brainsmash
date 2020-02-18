@@ -1,6 +1,6 @@
-brainsmash.mapgen.base.Base.h
+brainsmash.mapgen.base.Base.b
 ================================
 
 .. currentmodule:: brainsmash.mapgen.base
 
-.. autoproperty:: Base.h
+.. autoproperty:: Base.b

@@ -9,16 +9,16 @@ import numpy as np
 __all__ = ['base_fit', 'sampled_fit']
 
 
-def base_fit(brain_map, distmat, nsurr=100, **params):
+def base_fit(x, D, nsurr=100, **params):
     """
     Evaluate variogram fits for Base class.
 
     Parameters
     ----------
-    brain_map : (N,) np.ndarray or filename
-        Scalar brain map
-    distmat : (N,N) np.ndarray or filename
-        Pairwise distance matrix between elements of ``x``
+    x : (N,) np.ndarray or filename
+        Target brain map
+    D : (N,N) np.ndarray or filename
+        Pairwise distance matrix between regions in ``x``
     nsurr : int, default 100
         Number of simulated surrogate maps from which to compute variograms
     params
@@ -31,12 +31,12 @@ def base_fit(brain_map, distmat, nsurr=100, **params):
     Notes
     -----
     Generates and shows a matplotlib plot instance illustrating the fit of
-    the surrogates' variograms to the empirical map's variogram.
+    the surrogates' variograms to the target map's variogram.
 
     """
 
-    x = dataio(brain_map)
-    d = dataio(distmat)
+    x = dataio(x)
+    d = dataio(D)
 
     # Instantiate surrogate map generator
     generator = Base(x=x, D=d, **params)
@@ -83,15 +83,15 @@ def base_fit(brain_map, distmat, nsurr=100, **params):
     plt.show()
 
 
-def sampled_fit(brain_map, distmat, index, nsurr=10, **params):
+def sampled_fit(x, D, index, nsurr=10, **params):
     """
     Evaluate variogram fits for Sampled class.
 
     Parameters
     ----------
-    brain_map : (N,) np.ndarray
-        Scalar brain map
-    distmat : (N,N) np.ndarray or np.memmap
+    x : (N,) np.ndarray
+        Target brain map
+    D : (N,N) np.ndarray or np.memmap
         Pairwise distance matrix between elements of ``x``
     index : (N,N) np.ndarray or np.memmap
         See :class:`brainsmash.core.Sampled`
@@ -107,41 +107,39 @@ def sampled_fit(brain_map, distmat, index, nsurr=10, **params):
     Notes
     -----
     Generates and shows a matplotlib plot instance illustrating the fit of
-    the surrogates' variograms to the empirical map's variogram.
+    the surrogates' variograms to the target map's variogram.
 
     """
 
     # Instantiate surrogate map generator
-    generator = Sampled(
-        brain_map=brain_map, distmat=distmat, index=index, **params)
+    generator = Sampled(x=x, D=D, index=index, **params)
 
     # Simulate surrogate maps
     surrogate_maps = generator(n=nsurr)
 
-    # Compute empirical & surrogate map variograms
-    surr_var = np.empty((nsurr, generator.nbins))
-    emp_var_samples = np.empty((nsurr, generator.nbins))
-    u0_samples = np.empty((nsurr, generator.nbins))
+    # Compute target & surrogate map variograms
+    surr_var = np.empty((nsurr, generator.nh))
+    emp_var_samples = np.empty((nsurr, generator.nh))
+    u0_samples = np.empty((nsurr, generator.nh))
     for i in range(nsurr):
         idx = generator.sample()  # Randomly sample a subset of brain areas
-        # Empirical
-        v = generator.compute_variogram(generator.brain_map, idx)
-        u = generator.dmat[idx, :]
-        umax = np.percentile(u, generator.umax)
+        v = generator.compute_variogram(generator.x, idx)
+        u = generator.D[idx, :]
+        umax = np.percentile(u, generator.pv)
         uidx = np.where(u < umax)
         emp_var_i, u0i = generator.smooth_variogram(
-            u=u[uidx], v=v[uidx], return_bins=True)
+            u=u[uidx], v=v[uidx], return_h=True)
         emp_var_samples[i], u0_samples[i] = emp_var_i, u0i
         # Surrogate
         v_null = generator.compute_variogram(surrogate_maps[i], idx)
         surr_var[i] = generator.smooth_variogram(
-            u=u[uidx], v=v_null[uidx], return_bins=False)
+            u=u[uidx], v=v_null[uidx], return_h=False)
 
     # # Create plot for visual comparison
     u0 = u0_samples.mean(axis=0)
     emp_var = emp_var_samples.mean(axis=0)
 
-    # Plot empirical variogram
+    # Plot target variogram
     fig = plt.figure(figsize=(3, 3))
     ax = fig.add_axes([0.12, 0.15, 0.8, 0.77])
     ax.scatter(u0, emp_var, s=20, facecolor='none', edgecolor='k',
