@@ -170,7 +170,7 @@ For a subcortical analysis you'll typically need:
 
 - A subcortical distance matrix
 - A subcortical brain map
-- A mask corresponding to our structure of interest
+- A mask corresponding to a structure of interest
 
 We'll assume you use Connectome Workbench-style files and that you want to isolate
 one particular anatomical structure.
@@ -230,7 +230,7 @@ pairwise distances between left cerebellar voxels:
    # Input files
    image = "masked_image.txt"
    mask = "mask.txt"
-   distmat = "/path/to/subcortex_distmat.txt"
+   distmat = "/path/to/SubcortexDenseEuclideanDistmat.txt"
 
    output_files = txt2memmap(distmat, output_dir=".", maskfile=mask, delimiter=' ')
 
@@ -262,7 +262,7 @@ This produces the following plot:
    :scale: 25 %
 
 Having confirmed that the fit looks good, we simulate cerebellar surrogate maps
-with a call to ``gen``:
+with a call to the surrogate map generator:
 
 .. code-block:: python
 
