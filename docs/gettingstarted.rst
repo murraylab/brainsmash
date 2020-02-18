@@ -48,7 +48,7 @@ We'll create an instance of the class, passing our two files as arguments
 
 .. code-block:: python
 
-        base = Base(x=brain_map_file, distmat=dist_mat_file)
+        base = Base(x=brain_map_file, D=dist_mat_file)
 
 Surrogate maps can then be generated with a call to the class instance:
 
@@ -79,7 +79,7 @@ the class:
 
 .. code-block:: python
 
-   base = Base(x=brain_map_file, distmat=dist_mat_file, resample=True)
+   base = Base(x=brain_map_file, D=dist_mat_file, resample=True)
 
 
 The surrogate map illustrated above, had it been generated using ``resample=True``,
