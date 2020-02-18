@@ -19,7 +19,7 @@ However, BrainSMASH can flexibly accommodate a variety of input types:
 - Data and memory-mapped arrays written to ``*.npy`` files
 - Numpy arrays and array-like objects
 
-To follow along with the first example below, you may download our `example data <https://drive.google.com/open?id=1HZxh7aOral_blIQHQkT7IX525RaMyjPp>`_.
+To follow along with the examples below, you can download our `example data <https://drive.google.com/open?id=1HZxh7aOral_blIQHQkT7IX525RaMyjPp>`_.
 Connectome Workbench users who wish to derive a distance matrix from a ``*.surf.gii``
 file may want to begin :ref:`below <wb>`, as these functions take a long time to run
 (but thankfully only ever need to be run once).
@@ -155,9 +155,7 @@ supercomputer access are encouraged to use the ``Base`` implementation described
 above.
 
 Again, we'll assume that the user already has a brain map and distance matrix saved
-locally as text files.
-
-TODO: link to hosted dense data
+locally as text files (or downloaded from `here <https://drive.google.com/open?id=1HZxh7aOral_blIQHQkT7IX525RaMyjPp>`_).
 
 .. _memmap:
 
@@ -168,23 +166,19 @@ Prior to simulating surrogate maps, you'll need to convert
 the distance matrix to a memory-mapped binary file, which can be easily achieved
 in the following way:
 
-TODO -> dense dist file
-
 .. code-block:: python
 
    from brainsmash.mapgen.memmap import txt2memmap
-   dist_mat_fin = "???"  # input text file
+   dist_mat_fin = "LeftDenseGeodesicDistmat.txt"  # input text file
    output_dir = "."               # directory to which output binaries are written
    output_files = txt2memmap(dist_mat_fin, output_dir, maskfile=None, delimiter=' ')
 
 The latter two keyword arguments are shown using their default values. If your
 text files are comma-delimited, for example, use ``delimiter=','`` instead. Moreover, if
-you wish to use only a subset of all areas (more on this later), you may also
-specify a mask (as a path to a neuroimaging file) using the ``maskfile`` argument.
+you wish to use only a subset of all brain regions, you may also specify a mask
+(as a path to a neuroimaging file) using the ``maskfile`` argument.
 
-TODO maskfile?
-
-The return value ``output_files`` in the code block above is a ``dict`` object
+The return value ``output_files`` in the code block above is a ``dict`` type object
 that will look something like:
 
 .. code-block:: python
@@ -192,41 +186,41 @@ that will look something like:
    output_files = {'distmat': '/pathto/output_dir/distmat.npy',
                    'index': '/pathto/output_dir/index.npy'}
 
-These two files will be required inputs to the :class:`brainsmash.mapgen.sampled.Sampled` class.
+These two files are required inputs to the :class:`brainsmash.mapgen.sampled.Sampled` class.
 
 .. note:: For additional computational speed-up, ``distmat.npy`` is sorted by
   :func:`brainsmash.mapgen.memmap.txt2memmap` before it is written to file; the second file, ``index.npy``, is required because it contains
-  the indices which were used to perform the sorting.
+  the indices which were used to sort the distance matrix.
 
 This text to memory-mapped array conversion only ever needs to be run once for a given
 distance matrix.
 
-Finally, to generate surrogate maps we import the :class:`brainsmash.mapgen.sampled.Sampled` class
+Finally, to generate surrogate maps, we import the :class:`brainsmash.mapgen.sampled.Sampled` class
 and create an instance by passing our brain map, memory-mapped distance matrix, and
-memory-mapped index files as arguments:
+memory-mapped index file as arguments:
 
 .. code-block:: python
 
         from brainsmash.mapgen.sampled import Sampled
-        brain_map_file = "brain_map_dense.txt"  # use absolute paths if necessary!
+        brain_map_file = "LeftDenseMyelin.txt"  # use absolute paths if necessary!
         dist_mat_mmap = output_files['distmat']
         index_mmap = output_files['index']
         sampled = Sampled(brain_map_file, dist_mat_mmap, index_mmap)
 
-and randomly generate surrogate maps with a call to the instance:
+We then randomly generate surrogate maps with a call to the class instance:
 
 .. code-block:: python
 
         surrogates = sampled(n=10)
 
 Here, as above, we've implicitly left all keyword arguments -- one of which is ``resample`` --
-left as their default values. The three analogous plots to those above, illustrating the
-dense surrogate maps on the cortical surface, are shown below:
+left as their default values. The three images analogous to those shown above, illustrating the
+dense maps on the cortical surface, are shown below:
 
 .. figure::  images/dense_brain_map.png
    :align:   center
 
-   The dense empirical brain map.
+   The dense empirical T1w/T2w map.
 
 .. figure::  images/dense_surrogate_map.png
    :align:   center
@@ -268,7 +262,8 @@ Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
 .. note:: Dense data may be used with :class:`brainsmash.mapgen.base.Base` -- the examples are primarily partitioned in this way for illustration (but also in anticipation of users' local memory constraints).
 
 In general, the ``Sampled`` class has much more parameter sensitivity. You may need to adjust
-these parameters to get reliable variogram fits.
+these parameters to get reliable variogram fits. You may use the functions in the :ref:`eval <pysec-mapgen-eval>` module
+to validate your variogram fits.
 
 Evaluating variogram fits
 -------------------------
