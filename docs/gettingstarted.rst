@@ -11,7 +11,7 @@ Using BrainSMASH requires specifying two inputs:
 - A distance matrix, containing a measure of distance between each pair of elements in the brain map
 
 For illustration's sake, we will assume both required arguments have been written
-to disk as whitespace-separated text files ``parcel_myelin.txt`` and ``parcel_distmat.txt``.
+to disk as whitespace-separated text files ``LeftParcelMyelin.txt`` and ``LeftParcelGeodesicDistmat.txt``.
 However, BrainSMASH can flexibly accommodate a variety of input types:
 
 - Delimited ``*.txt`` files
@@ -19,17 +19,15 @@ However, BrainSMASH can flexibly accommodate a variety of input types:
 - Data and memory-mapped arrays written to ``*.npy`` files
 - Numpy arrays and array-like objects
 
-To follow along with the first example below, you may download our `example data <https://github.com/murraylab/brainsmash/tree/master/examples>`_.
+To follow along with the first example below, you may download our `example data <https://drive.google.com/open?id=1HZxh7aOral_blIQHQkT7IX525RaMyjPp>`_.
 Connectome Workbench users who wish to derive a distance matrix from a ``*.surf.gii``
 file may want to begin :ref:`below <wb>`, as these functions take a long time to run
 (but thankfully only ever need to be run once).
 
-TODO: host and link to dense data.
-
 Parcellated surrogate maps
 --------------------------
-For this example, we'll make the additional assumption that ``parcel_myelin.txt`` contains
-myelin map values for 180 unilateral cortical parcels, and that ``parcel_distmat.txt`` is
+For this example, we'll make the additional assumption that ``LeftParcelMyelin.txt`` contains
+myelin map values for 180 unilateral cortical parcels, and that ``LeftParcelGeodesicDistmat.txt`` is
 a 180x180 matrix containing the pairwise geodesic distances between parcels.
 
 Because working
@@ -39,8 +37,8 @@ class (which does not utilize random sampling):
 .. code-block:: python
 
         from brainsmash.mapgen.base import Base
-        brain_map_file = "parcel_myelin.txt"  # use absolute paths if necessary!
-        dist_mat_file = "parcel_distmat.txt"
+        brain_map_file = "LeftParcelMyelin.txt"  # use absolute paths if necessary!
+        dist_mat_file = "LeftParcelGeodesicDistmat.txt"
 
 Note that if the two text files are not in the current directory, you'll need to
 include the absolute paths to the files in the variables defined above.
@@ -99,7 +97,7 @@ to be larger for brain maps whose values are more strongly non-normal.
 
 .. note:: Shameless plug: the plots above
   were auto-generated using our ``wbplot`` package, available through both `pip <https://pypi.org/project/wbplot/>`_
-  and `GitHub <https://github.com/murraylab/wbplot>`_. ``wbplot`` currently only
+  and `GitHub <https://github.com/jbburt/wbplot>`_. ``wbplot`` currently only
   supports cortical data, and parcellated data must be in the `HCP's MMP parcellation <https://balsa.wustl.edu/study/show/RVVG>`_.
 
 Keyword arguments to :class:`brainsmash.mapgen.base.Base`
