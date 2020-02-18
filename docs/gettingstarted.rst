@@ -316,7 +316,7 @@ To construct a geodesic distance matrix for a cortical hemisphere, you can do th
 
    from brainsmash.workbench.geo import cortex
    surface = "/path/to/S1200.L.midthickness_MSMAll.32k_fs_LR.surf.gii"
-   cortex(surface=surface, outfile="/pathto/dense_geodesic_distmat.txt", euclid=False)
+   cortex(surface=surface, outfile="/pathto/LeftDenseGeodesicDistmat.txt", euclid=False)
 
 Note that this function takes approximately two hours to run for standard 32k surface meshes. To compute 3D
 Euclidean distances instead of surface-based geodesic distances, simply pass ``euclid=True``.
@@ -359,7 +359,7 @@ To compute a Euclidean distance matrix for subcortex, you could do the following
 
    from brainsmash.workbench.geo import subcortex
    image_file = "/path/to/image_with_subcortical_volumes.dscalar.nii"
-   subcortex(outfile="/path/to/subcortex_dists.txt", image_file=image_file)
+   subcortex(outfile="/path/to/SubcortexDenseEuclidDistmat.txt", image_file=image_file)
 
 Only three-dimensional Euclidean distance is currently implemented for subcortex.
 If you wish to create surrogate maps for a single subcortical structure, you can either
