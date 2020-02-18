@@ -73,7 +73,7 @@ def subcortex(fout, image_file=None):
     -----
     Voxel indices are used as a proxy for physical distance, since the two are
     related by a simple linear scaling. Note that this assumes voxels are
-    cubic, i.e., that the scaling is equivalent along the x, y, and z dimension.
+    cubic, i.e., that the scaling is equivalent along the X, Y, and z dimension.
 
     Raises
     ------

@@ -53,7 +53,7 @@ class Base:
 
         self.x = x
         self.D = D
-        n = self._brain_map.size
+        n = self._x.size
         self.resample = resample
         self.nh = nh
         self.deltas = deltas
@@ -62,15 +62,15 @@ class Base:
         self.kernel = kernel  # Smoothing kernel selection
         self._ikn = np.arange(n)[:, None]
         self._triu = np.triu_indices(self._nmap, k=1)  # upper triangular inds
-        self._u = self._dmat[self._triu]  # variogram x-coordinate
-        self._v = self.compute_variogram(self._brain_map)  # variogram y-coord
+        self._u = self._D[self._triu]  # variogram X-coordinate
+        self._v = self.compute_variogram(self._x)  # variogram Y-coord
 
         # Get indices of pairs with u < pv'th percentile
         self._uidx = np.where(self._u < np.percentile(self._u, self._pv))[0]
         self._uisort = np.argsort(self._u[self._uidx])
 
         # Find sorted indices of first `kmax` elements of each row of dist. mat.
-        self._disort = np.argsort(self._dmat, axis=-1)
+        self._disort = np.argsort(self._D, axis=-1)
         self._jkn = dict.fromkeys(deltas)
         self._dkn = dict.fromkeys(deltas)
         for delta in deltas:
@@ -78,14 +78,13 @@ class Base:
             # find index of k nearest neighbors for each area
             self._jkn[delta] = self._disort[:, 1:k+1]  # prevent self-coupling
             # find distance to k nearest neighbors for each area
-            self._dkn[delta] = self._dmat[(self._ikn, self._jkn[delta])]
+            self._dkn[delta] = self._D[(self._ikn, self._jkn[delta])]
 
         # Smoothed variogram and variogram _b
         utrunc = self._u[self._uidx]
         self._h = np.linspace(utrunc.min(), utrunc.max(), self._nh)
         self.b = b
-        self._smvar, self._h = self.smooth_variogram(
-            self._v, return_dists=True)
+        self._smvar = self.smooth_variogram(self._v, return_h=True)
 
         # Linear regression model
         self._lm = LinearRegression(fit_intercept=True)
@@ -149,7 +148,7 @@ class Base:
             surrs[i] = surr
 
         if self._resample:  # resample values from empirical map
-            sorted_map = np.sort(self._brain_map)
+            sorted_map = np.sort(self._x)
             for i, surr in enumerate(surrs):
                 ii = np.argsort(surr)
                 np.put(surr, ii, sorted_map)
@@ -168,7 +167,7 @@ class Base:
         Returns
         -------
         v : (N(N-1)/2,) np.ndarray
-           Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
+           Variogram Y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
 
         """
         diff_ij = np.subtract.outer(x, x)
@@ -185,9 +184,9 @@ class Base:
             Random permutation of target brain map
 
         """
-        perm_idx = np.random.permutation(np.arange(self._brain_map.size))
-        mask_perm = self._brain_map.mask[perm_idx]
-        x_perm = self._brain_map.data[perm_idx]
+        perm_idx = np.random.permutation(np.arange(self._x.size))
+        mask_perm = self._x.mask[perm_idx]
+        x_perm = self._x.data[perm_idx]
         return np.ma.masked_array(data=x_perm, mask=mask_perm)
 
     def smooth_map(self, x, delta):
@@ -213,7 +212,7 @@ class Base:
         # Kernel-weighted sum
         return (weights * xkn).sum(axis=1) / weights.sum(axis=1)
 
-    def smooth_variogram(self, v, return_dists=False):
+    def smooth_variogram(self, v, return_h=False):
         """
         Smooth a variogram.
 
@@ -221,7 +220,7 @@ class Base:
         ----------
         v : (N,) np.ndarray
             Variogram values, i.e. 0.5 * (x_i - x_j) ^ 2
-        return_dists : bool, default False
+        return_h : bool, default False
             Return distances at which the smoothed variogram was computed
 
         Returns
@@ -230,7 +229,7 @@ class Base:
             Smoothed variogram values
         (self.nh) np.ndarray
             Distances at which smoothed variogram was computed (returned only if
-            `return_dists` is True)
+            `return_h` is True)
 
         Raises
         ------
@@ -242,15 +241,15 @@ class Base:
         if len(u) != len(v):
             raise ValueError(
                 "argument v: expected size {}, got {}".format(len(u), len(v)))
-        # Subtract each _b from each pairwise distance u
-        # Each row corresponds to a unique _b
+        # Subtract each h from each pairwise distance u
+        # Each row corresponds to a unique h
         du = np.abs(u - self._h[:, None])
-        w = np.exp(-np.square(2.68 * du / self._h) / 2)
+        w = np.exp(-np.square(2.68 * du / self._b) / 2)
         denom = w.sum(axis=1)
         wv = w * v[None, :]
         num = wv.sum(axis=1)
         output = num / denom
-        if not return_dists:
+        if not return_h:
             return output
         return output, self._h
 
@@ -285,31 +284,31 @@ class Base:
     @property
     def x(self):
         """ (N,) np.ndarray : brain map scalar array """
-        return self._brain_map
+        return self._x
 
     @x.setter
     def x(self, x):
         x_ = dataio(x)
         check_map(x=x_)
         brain_map = np.ma.masked_array(data=x_, mask=np.isnan(x_))
-        self._brain_map = brain_map
+        self._x = brain_map
 
     @property
     def D(self):
         """ (N,N) np.ndarray : Pairwise distance matrix """
-        return self._dmat
+        return self._D
 
     @D.setter
     def D(self, x):
         x_ = dataio(x)
-        check_distmat(distmat=x_)
-        n = self._brain_map.size
+        check_distmat(D=x_)
+        n = self._x.size
         if x_.shape != (n, n):
             e = "Distance matrix must have dimensions consistent with brain map"
             e += "\nDistance matrix shape: {}".format(x_.shape)
             e += "\nBrain map size: {}".format(n)
             raise ValueError(e)
-        self._dmat = x_
+        self._D = x_
 
     @property
     def nmap(self):

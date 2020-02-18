@@ -5,14 +5,14 @@ import numpy as np
 __all__ = ['pearsonr', 'pairwise_r', 'nonparp']
 
 
-def pearsonr(x, y):
+def pearsonr(X, Y):
     """
-    Multi-dimensional Pearson correlation between rows of ``x`` and ``y``.
+    Multi-dimensional Pearson correlation between rows of ``X`` and ``Y``.
 
     Parameters
     ----------
-    x : (N,P) np.ndarray
-    y : (M,P) np.ndarray
+    X : (N,P) np.ndarray
+    Y : (M,P) np.ndarray
 
     Returns
     -------
@@ -24,24 +24,24 @@ def pearsonr(x, y):
     ValueError : ``x`` and ``y`` are not same size along second axis
 
     """
-    if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
-        raise TypeError('x and y must be numpy arrays')
+    if not isinstance(X, np.ndarray) or not isinstance(Y, np.ndarray):
+        raise TypeError('X and Y must be numpy arrays')
 
-    if x.ndim == 1:
-        x = x.reshape(1, -1)
-    if y.ndim == 1:
-        y = y.reshape(1, -1)
+    if X.ndim == 1:
+        X = X.reshape(1, -1)
+    if Y.ndim == 1:
+        Y = Y.reshape(1, -1)
 
-    n = x.shape[1]
-    if n != y.shape[1]:
-        raise ValueError('x and y must be same size along axis=1')
+    n = X.shape[1]
+    if n != Y.shape[1]:
+        raise ValueError('X and Y must be same size along axis=1')
 
-    mu_x = x.mean(axis=1)
-    mu_y = y.mean(axis=1)
+    mu_x = X.mean(axis=1)
+    mu_y = Y.mean(axis=1)
 
-    s_x = x.std(axis=1, ddof=n - 1)
-    s_y = y.std(axis=1, ddof=n - 1)
-    cov = np.dot(x, y.T) - n * np.dot(
+    s_x = X.std(axis=1, ddof=n - 1)
+    s_y = Y.std(axis=1, ddof=n - 1)
+    cov = np.dot(X, Y.T) - n * np.dot(
         mu_x[:, np.newaxis], mu_y[np.newaxis, :])
     return cov / np.dot(s_x[:, np.newaxis], s_y[np.newaxis, :])
 

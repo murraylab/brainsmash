@@ -21,7 +21,7 @@ def check_map(x):
     Parameters
     ----------
     x : np.ndarray
-        Brain map scalars
+        Brain map
 
     Returns
     -------
@@ -50,9 +50,9 @@ def check_extensions(filename, exts):
     Parameters
     ----------
     filename : str
-        path to file
+        Path to file
     exts : List[str]
-        list of allowed file extensions for `filename`
+        List of allowed file extensions for `filename`
 
     Returns
     -------
@@ -72,13 +72,13 @@ def check_extensions(filename, exts):
     return True if ext in exts else False
 
 
-def check_distmat(distmat):
+def check_distmat(D):
     """
     Check that a distance matrix conforms to expectations.
 
     Parameters
     ----------
-    distmat : (N,N) np.ndarray
+    D : (N,N) np.ndarray
         Pairwise distance matrix
 
     Returns
@@ -87,20 +87,20 @@ def check_distmat(distmat):
 
     Raises
     ------
-    ValueError : `D` is not symmetric
+    ValueError : ``D`` is not symmetric
 
     """
-    if not np.allclose(distmat, distmat.T):
+    if not np.allclose(D, D.T):
         raise ValueError("Distance matrix must be symmetric")
 
 
-def check_sampled(distmat, index):
+def check_sampled(D, index):
     """
     Check arguments provided to :class:`brainsmash.core.Sampled`.
 
     Parameters
     ----------
-    distmat : np.ndarray or np.memmap
+    D : np.ndarray or np.memmap
         Pairwise distance matrix
     index : np.ndarray or np.memmap
         See :class:`brainsmash.maps.core.Sampled`
@@ -112,28 +112,28 @@ def check_sampled(distmat, index):
     Raises
     ------
     ValueError : Arguments do not have identical dimensions
-    ValueError : `D` has not been sorted column-wise
-    TypeError : rows of `D` or `index` are not sorted (ascending)
+    ValueError : ``D`` has not been sorted column-wise
+    TypeError : rows of ``D`` or ``index`` are not sorted (ascending)
 
     """
-    if not isinstance(distmat, np.ndarray) or not isinstance(index, np.ndarray):
+    if not isinstance(D, np.ndarray) or not isinstance(index, np.ndarray):
         raise TypeError("'D' and 'index' must be array_like")
-    if distmat.shape != index.shape:
+    if D.shape != index.shape:
         e = "`D` and `index` must have identical dimensions\n"
-        e += "D.shape: {}".format(distmat.shape)
+        e += "D.shape: {}".format(D.shape)
         e += "index.shape: {}".format(index.shape)
         raise ValueError(e)
-    if isinstance(distmat, np.ndarray):
-        if not np.all(distmat[:, 1:] >= distmat[:, :-1]):
+    if isinstance(D, np.ndarray):
+        if not np.all(D[:, 1:] >= D[:, :-1]):
             raise ValueError("Each row of `D` must be sorted (ascending)")
     else:  # just test the first row
-        if not np.all(distmat[0, 1:] >= distmat[0, :-1]):
+        if not np.all(D[0, 1:] >= D[0, :-1]):
             raise ValueError("Each row of `D` must be sorted (ascending)")
 
 
 def check_deltas(deltas):
     """
-    Check input argument `deltas`.
+    Check input argument ``deltas``.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ def check_deltas(deltas):
     Raises
     ------
     TypeError : `deltas` is not a List or np.ndarray object
-    ValueError : One or more elements of `deltas` lies outside (0,1]
+    ValueError : One or more elements of ``deltas`` lies outside (0,1]
 
     """
     if not isinstance(deltas, list) and not isinstance(deltas, np.ndarray):
@@ -157,13 +157,13 @@ def check_deltas(deltas):
             raise ValueError("Each element of `deltas` must lie in (0,1]")
 
 
-def check_pv(umax):
+def check_pv(pv):
     """
-    Check input argument `deltas`.
+    Check input argument ``pv``.
 
     Parameters
     ----------
-    umax : int
+    pv : int
         Percentile of the pairwise distance distribution at which to truncate
         during variogram fitting.
 
@@ -173,16 +173,16 @@ def check_pv(umax):
 
     Raises
     ------
-    ValueError : `pv` lies outside range (0,100]
+    ValueError : ``pv`` lies outside range (0, 100]
 
     """
     try:
-        umax = int(umax)
+        pv = int(pv)
     except ValueError:
         raise ValueError("parameter 'pv' must be an integer in (0,100]")
-    if umax <= 0 or umax > 100:
+    if pv <= 0 or pv > 100:
         raise ValueError("parameter 'pv' must be in (0,100]")
-    return umax
+    return pv
 
 
 def check_outfile(filename):
@@ -200,7 +200,7 @@ def check_outfile(filename):
 
     Raises
     ------
-    IOError : Parent directory of `f` does not exist
+    IOError : Parent directory of ``f`` does not exist
     ValueError : directory provided instead of file
 
     """
@@ -283,6 +283,6 @@ def count_lines(filename):
         read_f = f.raw.read
         buf = read_f(buf_size)
         while buf:
-            lines += buf.count(_b'\n')
+            lines += buf.count(b'\n')
             buf = read_f(buf_size)
         return lines
