@@ -4,8 +4,8 @@ Examples
 Cortical Hemisphere
 -------------------
 
-Here, we'll perform an analysis similar to those included in our pre-print (TODO), using the example
-data we've included in the `BrainSMASH GitHub repo <https://github.com/murraylab/brainsmash/tree/master/examples>`_.
+Here, we'll perform an analysis similar to those included in our pre-print, using our
+`example data <https://drive.google.com/drive/folders/1HZxh7aOral_blIQHQkT7IX525RaMyjPp>`_.
 
 First, create an instance of the ``Base`` class and generate 1000 surrogate maps:
 
@@ -15,11 +15,11 @@ First, create an instance of the ``Base`` class and generate 1000 surrogate maps
         import numpy as np
 
         # load parcellated structural neuroimaging maps
-        myelin = np.loadtxt("parcel_myelin.txt")
-        thickness = np.loadtxt("parcel_thickness.txt")
+        myelin = np.loadtxt("LeftParcelMyelin.txt")
+        thickness = np.loadtxt("LeftParcelThickness.txt")
 
         # instantiate class and generate 1000 surrogates
-        gen = Base(myelin, "parcel_distmat.txt")  # accepts numpy arrays as well as filenames
+        gen = Base(myelin, "LeftParcelGeodesicDistmat.txt")  # note: can pass numpy arrays as well as filenames
         surrogate_maps = gen(n=1000)
 
 Next, compute the Pearson correlation between each surrogate myelin map and the
@@ -93,7 +93,7 @@ Executing the above code produces the following figure:
    :align:   center
    :scale: 25 %
 
-We can plot a couple surrogate maps on the cortical surface using `wbplot <https://github.com/murraylab/wbplot>`_:
+We can plot a couple surrogate maps on the cortical surface using `wbplot <https://github.com/jbburt/wbplot>`_:
 
 .. code-block:: python
 
@@ -127,15 +127,15 @@ Executing the above code produces the following three images:
    :scale: 25 %
 
 We'll assess our surrogate maps' reliability using their fit to the
-parcellated T1w/T2w map's variogram:
+parcellated myelin map's variogram:
 
 .. code-block:: python
 
    from brainsmash.mapgen.eval import base_fit
 
    base_fit(
-       brain_map="parcel_myelin.txt",
-       distmat="parcel_distmat.txt",
+       brain_map="LeftParcelMyelin.txt",
+       distmat="LeftParcelGeodesicDistmat.txt",
        nsurr=1000,
        nbins=25,  # these are default kwargs, but shown here for demonstration
        deltas=np.arange(0.1, 1, 0.1),
@@ -149,17 +149,17 @@ Executing the code above produces the following plot:
 
 The surrogate maps exhibit the same autocorrelation structure as the empirical brain map.
 
-Finally, we'll compute non-parametric P-values using our two different
+Finally, we'll compute non-parametric *p*-values using our two different
 null distributions:
 
 .. code-block:: python
 
    from brainsmash.mapgen.stats import nonparp
 
-   print("Spatially naive P-value:", nonparp(test_stat, naive_brainmap_corrs))
-   print("SA-corrected P-value:", nonparp(test_stat, surrogate_brainmap_corrs))
+   print("Spatially naive p-value:", nonparp(test_stat, naive_brainmap_corrs))
+   print("SA-corrected p-value:", nonparp(test_stat, surrogate_brainmap_corrs))
 
-The two P-values for this example come out to ``P < 0.001`` and ``P=0.001``, respectively.
+The two *p*-values for this example come out to ``P < 0.001`` and ``P=0.001``, respectively.
 
 .. _subcortex_example:
 
