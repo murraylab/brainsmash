@@ -262,13 +262,13 @@ Keyword arguments to :class:`brainsmash.mapgen.sampled.Sampled`
 .. note:: Dense data may be used with :class:`brainsmash.mapgen.base.Base` -- the examples are primarily partitioned in this way for illustration (but also in anticipation of users' local memory constraints).
 
 In general, the ``Sampled`` class has much more parameter sensitivity. You may need to adjust
-these parameters to get reliable variogram fits. You may use the functions in the :ref:`eval <pysec-mapgen-eval>` module
+these parameters to get reliable variogram fits. However, you may use the functions in the :ref:`eval <pysec-mapgen-eval>` module, which we turn to next,
 to validate your variogram fits.
 
 Evaluating variogram fits
 -------------------------
-To assess the reliability of your surrogate maps, BrainSMASH includes a function to
-compare surrogate maps' variograms to the empirical brain map's variogram:
+To assess the reliability of your surrogate maps, BrainSMASH includes functionality to
+compare surrogate maps' variograms to the target brain map's variogram:
 
 .. code-block:: python
 
@@ -286,9 +286,9 @@ For well-chosen parameters, the code above will produce a plot that looks someth
    Assessing the surrogate maps' fit to the empirical data.
 
 Shown above is the mean and standard deviation across 100 surrogates. Optional
-keyword arguments (described above) can be specified after ``nsurr`` in
+keyword arguments for :class:`brainsmash.mapgen.base.Base` and :class:`brainsmash.mapgen.sampled.Sampled` can be specified after ``nsurr`` in
 the function calls to :func:`brainsmash.mapgen.eval.base_fit` and :func:`brainsmash.mapgen.eval.sampled_fit`-- for example, if
-you want to determine how changing free parameters influences your surrogates maps' variogram fits.
+you want to assess how changing the other parameters influences your surrogates maps' variogram fits.
 
 .. note:: When using :func:`brainsmash.mapgen.eval.sampled_fit`, you must specify the memory-mapped ``index`` file in addition to the brain map and distance matrix files (see :ref:`above <memmap>`).
 
@@ -298,7 +298,7 @@ The functionality described below is intended for users using `GIFTI- and CIFTI-
 
 Neuroimaging data I/O
 +++++++++++++++++++++
-To load data from a neuroimaging file into Python, use :func:`brainsmash.utils.dataio.load`:
+To load data from a neuroimaging file into Python, you may use :func:`brainsmash.utils.dataio.load`. For example:
 
 .. code-block:: python
 
@@ -310,7 +310,7 @@ To load data from a neuroimaging file into Python, use :func:`brainsmash.utils.d
 
 Computing a cortical distance matrix
 ++++++++++++++++++++++++++++++++++++
-To construct a geodesic distance matrix for a cortical hemisphere, you could do the following:
+To construct a geodesic distance matrix for a cortical hemisphere, you can do the following:
 
 .. code-block:: python
 
@@ -319,7 +319,7 @@ To construct a geodesic distance matrix for a cortical hemisphere, you could do 
    cortex(surface=surface, outfile="/pathto/dense_geodesic_distmat.txt", euclid=False)
 
 Note that this function takes approximately two hours to run for standard 32k surface meshes. To compute 3D
-Euclidean distances instead of surface-based geodesic distances, simply change ``euclid=True``.
+Euclidean distances instead of surface-based geodesic distances, simply pass ``euclid=True``.
 
 To compute a parcellated geodesic distance matrix, you could then do:
 
