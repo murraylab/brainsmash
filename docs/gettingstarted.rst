@@ -326,20 +326,20 @@ To compute a parcellated geodesic distance matrix, you could then do:
 .. code-block:: python
 
    from brainsmash.workbench.geo import parcellate
-   infile = "/path/to/dense_geodesic_distmat.txt"
-   outfile = "/path/to/parcel_geodesic_distmat.txt"
+   infile = "/path/to/LeftDenseGeodesicDistmat.txt"
+   outfile = "/path/to/LeftParcelGeodesicDistmat.txt"
    dlabel = "Q1-Q6_RelatedValidation210.CorticalAreas_dil_Final_Final_Areas_Group_Colors.32k_fs_L.dlabel.nii"
    parcellate(infile, dlabel, outfile)
 
 This code takes half an hour or less to run for the HCP MMP1.0. Note that the number of elements in ``dlabel`` must equal
-the number of rows/columns of your distance matrix. If you have a whole-brain parcellation file, for example,
-and want to isolate the 32k left cortical hemisphere vertices, do:
+the number of rows/columns of your distance matrix. If you had a whole-brain parcellation file and needed to isolate
+the left cortical hemisphere, for example, you could do:
 
 .. code-block:: bash
 
    wb_command -cifti-separate yourparcellation_LR.dlabel.nii COLUMN -label CORTEX_LEFT yourparcellation_L.label.gii
 
-You will then need to convert this GIFTI file to a CIFTI:
+You will then need to convert this GIFTI file to a CIFTI file:
 
 .. code-block:: bash
 
