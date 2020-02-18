@@ -63,12 +63,12 @@ comparison:
 .. figure::  images/brain_map.png
    :align:   center
 
-   The empirical brain map.
+   The empirical T1w/T2w map.
 
 .. figure::  images/surrogate.png
    :align:   center
 
-   One randomly generated surrogate brain map.
+   One randomly generated surrogate map.
 
 By construction, both maps exhibit the same degree of spatial autocorrelation
 in their values. However, notice that the empirical brain map has a distribution
