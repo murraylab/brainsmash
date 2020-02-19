@@ -135,7 +135,7 @@ parcellated myelin map's variogram:
 
    base_fit(
        x="LeftParcelMyelin.txt",
-       distmat="LeftParcelGeodesicDistmat.txt",
+       D="LeftParcelGeodesicDistmat.txt",
        nsurr=1000,
        nh=25,  # these are default kwargs, but shown here for demonstration
        deltas=np.arange(0.1, 1, 0.1),
