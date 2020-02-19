@@ -22,7 +22,7 @@ def image2txt(image_file, outfile, maskfile=None, delimiter=' '):
         Path to neuroimaging file containing a binary map where non-zero values
         indicate masked brain regions.
     delimiter : str, default ' '
-        Character used to delimit elements in ``image_file``
+        Character used to delimit elements in `image_file`
 
     Notes
     -----
@@ -54,9 +54,9 @@ def check_image_file(image):
 
     Raises
     ------
-    FileNotFoundError : ``image`` does not exist
+    FileNotFoundError : `image` does not exist
     IOError : filetype not recognized
-    ValueError : ``image`` contains more than one neuroimaging map
+    ValueError : `image` contains more than one neuroimaging map
 
     """
     try:

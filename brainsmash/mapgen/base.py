@@ -167,7 +167,7 @@ class Base:
         Returns
         -------
         v : (N(N-1)/2,) np.ndarray
-           Variogram Y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
+           Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
 
         """
         diff_ij = np.subtract.outer(x, x)

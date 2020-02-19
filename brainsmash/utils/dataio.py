@@ -68,11 +68,11 @@ def load(filename):
     Returns
     -------
     (N,) np.ndarray
-        Brain map data stored in ``filename``
+        Brain map data stored in `filename`
 
     Raises
     ------
-    TypeError : ``filename`` has unknown filetype
+    TypeError : `filename` has unknown filetype
 
     """
     try:
@@ -100,13 +100,13 @@ def export_cifti_mapping(image=None):
     -------
     maps : dict
         A dictionary containing the maps between CIFTI indices, surface
-        vertices, and volume voxels. Keys include ``'cortex_left'``,
-        ``'cortex_right```, and ``'volume'``.
+        vertices, and volume voxels. Keys include 'cortex_left',
+        'cortex_right', and 'volume'.
 
     Notes
     -----
-    ``Image`` must be a whole-brain NIFTI file for this
-    See the Workbench documentation here for more details:
+    `image` must be a whole-brain NIFTI file for this function to work
+    as-written. See the Workbench documentation here for more details:
     https://www.humanconnectome.org/software/workbench-command/-cifti-export-dense-mapping.
 
     """
@@ -158,7 +158,7 @@ def _load_gifti(filename):
     Returns
     -------
     np.ndarray
-        Neuroimaging data in ``filename``
+        Neuroimaging data in `filename`
 
     """
     return nib.load(filename).darrays[0].data
@@ -177,7 +177,7 @@ def _load_cifti2(filename):
     Returns
     -------
     np.ndarray
-        Neuroimaging data in ``filename``
+        Neuroimaging data in `filename`
 
     Notes
     -----

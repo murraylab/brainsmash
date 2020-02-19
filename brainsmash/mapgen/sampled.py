@@ -20,14 +20,14 @@ class Sampled:
     x : (N,) np.ndarray
         Target brain map
     D : (N,N) np.ndarray
-        Pairwise distance matrix between elements of ``x``. Each row of ``D`` should
-        be sorted. Indices used to sort each row are passed to the ``index``
+        Pairwise distance matrix between elements of `x`. Each row of `D` should
+        be sorted. Indices used to sort each row are passed to the `index`
         argument. See :func:`brainsmash.mapgen.memmap.txt2memmap` or the online
         documentation for more details (brainsmash.readthedocs.io)
     index : (N,N) np.ndarray or None
         See above
     ns : int, default 500
-        Take a subsample of ``ns`` rows from ``D`` when fitting variograms
+        Take a subsample of `ns` rows from `D` when fitting variograms
     deltas : np.ndarray or List[float], default [0.3, 0.5, 0.7, 0.9]
         Proportions of neighbors to include for smoothing, in (0, 1]
     kernel : str, default 'exp'
@@ -37,7 +37,7 @@ class Sampled:
         - 'invdist' : inverse distance
         - 'uniform' : uniform weights (distance independent)
     pv : int, default 70
-        Percentile of the pairwise distance distribution (in ``D``) at
+        Percentile of the pairwise distance distribution (in `D`) at
         which to truncate during variogram fitting
     nh : int, default 25
         Number of uniformly spaced distances at which to compute variogram
@@ -58,7 +58,7 @@ class Sampled:
 
     Raises
     ------
-    ValueError : ``x`` and ``D`` have inconsistent sizes
+    ValueError : `x` and `D` have inconsistent sizes
 
     """
 
@@ -179,7 +179,7 @@ class Sampled:
 
     def compute_variogram(self, x, idx):
         """
-        Compute variogram of ``x`` using pairs of regions indexed by ``idx``.
+        Compute variogram of `x` using pairs of regions indexed by `idx`.
 
         Parameters
         ----------
@@ -191,7 +191,7 @@ class Sampled:
         Returns
         -------
         v : (self.ns,) np.ndarray
-            Variogram Y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2, for i,j in idx
+            Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2, for i,j in idx
 
         """
         # TODO THIS PRODUCES NANS IF NANS IN ORIGINAL MAP, BREAKING TEST_SAMPLED_VARIOGRAM_FITS
@@ -215,7 +215,7 @@ class Sampled:
 
     def smooth_map(self, x, k):
         """
-        Smooth ``x`` using ``k`` nearest neighboring regions.
+        Smooth `x` using `k` nearest neighboring regions.
 
         Parameters
         ----------
@@ -231,7 +231,7 @@ class Sampled:
 
         Notes
         -----
-        Assumes ``D`` provided at runtime has been sorted.
+        Assumes `D` provided at runtime has been sorted.
 
         """
         jkn = self._index[:, :k]  # indices of k nearest neighbors
@@ -250,7 +250,7 @@ class Sampled:
         u : (N,) np.ndarray
             Pairwise distances, i.e. variogram X-coordinates
         v : (N,) np.ndarray
-            Variogram Y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
+            Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
         return_h : bool, default False
             Return distances at which smoothed variogram is computed
 
@@ -260,11 +260,11 @@ class Sampled:
             Smoothed variogram samples
         (nh,) np.ndarray
             Distances at which smoothed variogram was computed (returned if
-            ``return_h`` is True)
+            `return_h` is True)
 
         Raises
         ------
-        ValueError : ``u`` and ``v`` are not identically sized
+        ValueError : `u` and `v` are not identically sized
 
         """
         if len(u) != len(v):

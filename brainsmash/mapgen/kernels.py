@@ -1,11 +1,4 @@
-""" Kernels used to smooth randomly permuted surrogate maps.
-
-Available kernels:
-- Gaussian
-- Exponential
-- Inverse distance
-- Uniform (i.e., distance independent)
-
+""" Kernels used to smooth randomly permuted brain maps.
 """
 
 import numpy as np
@@ -30,7 +23,7 @@ def gaussian(d):
 
     Raises
     ------
-    TypeError : ``d`` is not array_like
+    TypeError : `d` is not array_like
 
     """
     try:  # 2-dim
@@ -62,7 +55,7 @@ def exp(d):
 
     Raises
     ------
-    TypeError : ``d`` is not array_like
+    TypeError : `d` is not array_like
 
     """
     try:  # 2-dim
@@ -85,12 +78,12 @@ def invdist(d):
     Returns
     -------
     (N,) or (M,N) np.ndarray
-        Inverse distance, ie d^(-1)
+        Inverse distance, i.e. d^{-1}
 
     Raises
     ------
     ZeroDivisionError : `d` includes zero value
-    TypeError : ``d`` is not array_like
+    TypeError : `d` is not array_like
 
     """
     try:
@@ -103,7 +96,7 @@ def invdist(d):
 
 def uniform(d):
     """
-    Uniform (ie, distance independent) kernel.
+    Uniform (i.e., distance independent) kernel.
 
     Parameters
     ----------
@@ -121,7 +114,7 @@ def uniform(d):
 
     Raises
     ------
-    TypeError : ``d`` is not array_like
+    TypeError : `d` is not array_like
 
     """
     try:  # 2-dim
@@ -147,8 +140,8 @@ def check_kernel(kernel):
 
     Notes
     -----
-    If `kernel` is included in `config.py`, a function with the same name must
-    be defined in `utils.kernels.py`.
+    If `kernel` is included in ``config.py``, a function with the same name must
+    be defined in ``mapgen.kernels.py``.
 
     Raises
     ------

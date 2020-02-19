@@ -7,7 +7,7 @@ __all__ = ['pearsonr', 'pairwise_r', 'nonparp']
 
 def pearsonr(X, Y):
     """
-    Multi-dimensional Pearson correlation between rows of ``X`` and ``Y``.
+    Multi-dimensional Pearson correlation between rows of `X` and `Y`.
 
     Parameters
     ----------
@@ -20,8 +20,8 @@ def pearsonr(X, Y):
 
     Raises
     ------
-    TypeError : ``x`` or ``y`` is not array_like
-    ValueError : ``x`` and ``y`` are not same size along second axis
+    TypeError : `x` or `y` is not array_like
+    ValueError : `x` and `y` are not same size along second axis
 
     """
     if not isinstance(X, np.ndarray) or not isinstance(Y, np.ndarray):
@@ -48,7 +48,7 @@ def pearsonr(X, Y):
 
 def pairwise_r(X, flatten=False):
     """
-    Compute pairwise Pearson correlations between rows of ``X``.
+    Compute pairwise Pearson correlations between rows of `X`.
 
     Parameters
     ----------
@@ -73,8 +73,8 @@ def nonparp(stat, dist):
     """
     Compute two-sided non-parametric p-value.
 
-    Compute the fraction of elements in ``dist`` which are more extreme than
-    ``stat``.
+    Compute the fraction of elements in `dist` which are more extreme than
+    `stat`.
 
     Parameters
     ----------
@@ -86,7 +86,7 @@ def nonparp(stat, dist):
     Returns
     -------
     float
-        Fraction of elements in ``dist`` which are more extreme than ``stat``
+        Fraction of elements in `dist` which are more extreme than `stat`
 
     """
     n = float(len(dist))

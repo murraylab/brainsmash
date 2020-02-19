@@ -94,7 +94,7 @@ def sampled_fit(x, D, index, nsurr=10, **params):
     D : (N,N) np.ndarray or np.memmap
         Pairwise distance matrix between elements of ``x``
     index : (N,N) np.ndarray or np.memmap
-        See :class:`brainsmash.core.Sampled`
+        See :class:`brainsmash.mapgen.sampled.Sampled`
     nsurr : int, default 10
         Number of simulated surrogate maps from which to compute variograms
     params

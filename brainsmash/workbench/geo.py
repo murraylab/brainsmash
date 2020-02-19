@@ -73,14 +73,14 @@ def subcortex(fout, image_file=None):
     -----
     Voxel indices are used as a proxy for physical distance, since the two are
     related by a simple linear scaling. Note that this assumes voxels are
-    cubic, i.e., that the scaling is equivalent along the X, Y, and z dimension.
+    cubic, i.e., that the scaling is equivalent along the x, y, and z dimension.
 
     Raises
     ------
-    ValueError : ``image_file`` header does not contain volume information
+    ValueError : `image_file` header does not contain volume information
 
     """
-    # TODO Need more robust error handling
+    # TODO add more robust error handling
 
     check_outfile(fout)
 
@@ -109,17 +109,17 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     Parameters
     ----------
     infile : filename
-        Path to ``delimiter``-separated distance matrix file
+        Path to `delimiter`-separated distance matrix file
     dlabel_file : filename
         Path to parcellation file  (.dlabel.nii)
     outfile : filename
-        Path to output text file WITHOUT extension (to be created)
-    delimiter : str, default " "
-        Delimiter between elements in ``infile``
+        Path to output text file (to be created)
+    delimiter : str, default ' '
+        Delimiter between elements in `infile`
     unassigned_value : int, default 0
         Label value which indicates that a vertex/voxel is not assigned to
         any parcel. This label is excluded from the output. 0 is the default
-        value used by Connectome Workbench, e.g. for `-cifti-parcellate`.
+        value used by Connectome Workbench, e.g. for ``-cifti-parcellate``.
 
     Returns
     -------
@@ -131,15 +131,15 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
     For two parcels A and B, the inter-parcel distance is defined as the mean
     distance between area i in parcel A and area j in parcel B, for all i,j.
 
-    Inputs ``infile`` and ``dlabel_file`` should include the same anatomical
+    Inputs `infile` and `dlabel_file` should include the same anatomical
     structures, e.g. the left cortical hemisphere, and should have the same
     number of elements. If you need to isolate one anatomical structure from
-    ``dlabel_file``, see the following Workbench function:
+    `dlabel_file`, see the following Workbench function:
     https://www.humanconnectome.org/software/workbench-command/-cifti-separate
 
     Raises
     ------
-    ValueError : ``infile`` and ``dlabel_file`` have inconsistent sizes
+    ValueError : `infile` and `dlabel_file` have inconsistent sizes
 
     """
 
@@ -227,7 +227,7 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
 def _euclidean(dist_file, coords):
     """
     Compute three-dimensional pairwise Euclidean distance between rows of
-    ``coords``. Write results to ``dist_file``.
+    `coords`. Write results to `dist_file`.
 
     Parameters
     ----------
@@ -265,8 +265,8 @@ def _euclidean(dist_file, coords):
 
 def _geodesic(surface, dist_file, coords):
     """
-    Compute pairwise geodesic distance between rows of ``coords``. Write results
-    to ``dist_file``.
+    Compute pairwise geodesic distance between rows of `coords`. Write results
+    to `dist_file`.
 
     Parameters
     ----------

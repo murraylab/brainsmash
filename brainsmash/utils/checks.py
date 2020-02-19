@@ -87,7 +87,7 @@ def check_distmat(D):
 
     Raises
     ------
-    ValueError : ``D`` is not symmetric
+    ValueError : `D` is not symmetric
 
     """
     if not np.allclose(D, D.T):
@@ -96,14 +96,14 @@ def check_distmat(D):
 
 def check_sampled(D, index):
     """
-    Check arguments provided to :class:`brainsmash.core.Sampled`.
+    Check arguments provided to :class:`brainsmash.mapgen.sampled.Sampled`.
 
     Parameters
     ----------
     D : np.ndarray or np.memmap
         Pairwise distance matrix
     index : np.ndarray or np.memmap
-        See :class:`brainsmash.maps.core.Sampled`
+        See :class:`brainsmash.mapgen.sampled.Sampled`
 
     Returns
     -------
@@ -112,8 +112,8 @@ def check_sampled(D, index):
     Raises
     ------
     ValueError : Arguments do not have identical dimensions
-    ValueError : ``D`` has not been sorted column-wise
-    TypeError : rows of ``D`` or ``index`` are not sorted (ascending)
+    ValueError : `D` has not been sorted column-wise
+    TypeError : rows of `D` or `index` are not sorted (ascending)
 
     """
     if not isinstance(D, np.ndarray) or not isinstance(index, np.ndarray):
@@ -133,7 +133,7 @@ def check_sampled(D, index):
 
 def check_deltas(deltas):
     """
-    Check input argument ``deltas``.
+    Check input argument `deltas`.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ def check_deltas(deltas):
     Raises
     ------
     TypeError : `deltas` is not a List or np.ndarray object
-    ValueError : One or more elements of ``deltas`` lies outside (0,1]
+    ValueError : One or more elements of `deltas` lies outside (0,1]
 
     """
     if not isinstance(deltas, list) and not isinstance(deltas, np.ndarray):
@@ -159,7 +159,7 @@ def check_deltas(deltas):
 
 def check_pv(pv):
     """
-    Check input argument ``pv``.
+    Check input argument `pv`.
 
     Parameters
     ----------
@@ -173,7 +173,7 @@ def check_pv(pv):
 
     Raises
     ------
-    ValueError : ``pv`` lies outside range (0, 100]
+    ValueError : `pv` lies outside range (0, 100]
 
     """
     try:
@@ -200,8 +200,8 @@ def check_outfile(filename):
 
     Raises
     ------
-    IOError : Parent directory of ``f`` does not exist
-    ValueError : directory provided instead of file
+    IOError : Parent directory of `filename` does not exist
+    ValueError : directory was provided instead of file
 
     """
     if Path(filename).is_dir():
@@ -216,7 +216,7 @@ def check_outfile(filename):
 
 
 def is_string_like(obj):
-    """ Check whether ``obj`` behaves like a string. """
+    """ Check whether `obj` behaves like a string. """
     try:
         obj + ''
     except (TypeError, ValueError):

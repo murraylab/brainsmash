@@ -18,7 +18,7 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     Parameters
     ----------
     dist_file : filename
-        Path to ``delimiter``-separated distance matrix file
+        Path to `delimiter`-separated distance matrix file
     output_dir : filename
         Path to directory in which output files will be written
     maskfile : filename or np.ndarray or None, default None
@@ -26,7 +26,7 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
         represented as a numpy array. Mask scalars are cast to boolean, and
         all elements not equal to zero will be masked.
     delimiter : str
-        Delimiting character in ``dist_file``
+        Delimiting character in `dist_file`
 
     Returns
     -------
@@ -39,12 +39,12 @@ def txt2memmap(dist_file, output_dir, maskfile=None, delimiter=' '):
     Each row of the distance matrix is sorted before writing to file. Thus, a
     second mem-mapped array is necessary, the i-th row of which contains
     argsort(d[i]).
-    If ``maskfile`` is not None, a binary mask.txt file will also be written to
+    If `maskfile` is not None, a binary mask.txt file will also be written to
     the output directory.
 
     Raises
     ------
-    IOError : ``output_dir`` doesn't exist
+    IOError : `output_dir` doesn't exist
     ValueError : Mask image and distance matrix have inconsistent sizes
 
     """
