@@ -58,4 +58,5 @@ Change Log
 ==========
 ---
 
+* 0.0.6 Fixed masked dense array handling.
 * 0.0.1 Initial beta release.

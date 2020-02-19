@@ -18,7 +18,7 @@ def base_fit(x, D, nsurr=100, **params):
     x : (N,) np.ndarray or filename
         Target brain map
     D : (N,N) np.ndarray or filename
-        Pairwise distance matrix between regions in ``x``
+        Pairwise distance matrix between regions in `x`
     nsurr : int, default 100
         Number of simulated surrogate maps from which to compute variograms
     params
@@ -92,7 +92,7 @@ def sampled_fit(x, D, index, nsurr=10, **params):
     x : (N,) np.ndarray
         Target brain map
     D : (N,N) np.ndarray or np.memmap
-        Pairwise distance matrix between elements of ``x``
+        Pairwise distance matrix between elements of `x`
     index : (N,N) np.ndarray or np.memmap
         See :class:`brainsmash.mapgen.sampled.Sampled`
     nsurr : int, default 10

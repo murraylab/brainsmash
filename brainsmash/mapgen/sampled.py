@@ -175,6 +175,8 @@ class Sampled:
                 ii = np.argsort(surr)
                 np.put(surr, ii, sorted_map)
 
+        if self._ismasked:
+            return np.ma.masked_array(data=surrs, mask=np.isnan(surrs)).squeeze()
         return surrs.squeeze()
 
     def compute_variogram(self, x, idx):
@@ -327,13 +329,21 @@ class Sampled:
     @property
     def x(self):
         """ (N,) np.ndarray : brain map scalars """
+        if self._ismasked:
+            return np.ma.copy(self._x)
         return np.copy(self._x)
 
     @x.setter
     def x(self, x):
+        self._ismasked = False
         x_ = dataio(x)
         check_map(x=x_)
-        brain_map = np.ma.masked_array(data=x_, mask=np.isnan(x_))
+        mask = np.isnan(x_)
+        if mask.any():
+            self._ismasked = True
+            brain_map = np.ma.masked_array(data=x_, mask=mask)
+        else:
+            brain_map = x_
         self._x = brain_map
 
     @property
