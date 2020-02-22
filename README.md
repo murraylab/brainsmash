@@ -47,7 +47,9 @@ The BrainSMASH source code is available under the GNU General Public License v3.
 Preprint
 --------
 Please cite the following preprint if you use BrainSMASH in your research:
-https://www.biorxiv.org/content/10.1101/2020.02.18.955054v1
+
+Burt, J.B., Helmer, M., Shinn, M.W., Anticevic, A., Murray, J.D. (2020). Generative modeling of brain maps with spatial autocorrelation. bioRxiv doi: 10.1101/2020.02.18.955054v1
+
 
 Core development team
 ---------------------
