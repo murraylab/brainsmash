@@ -46,7 +46,8 @@ The BrainSMASH source code is available under the GNU General Public License v3.
 
 Preprint
 --------
-Please cite the following preprint if you use BrainSMASH in your research: TODO 
+Please cite the following preprint if you use BrainSMASH in your research:
+https://www.biorxiv.org/content/10.1101/2020.02.18.955054v1
 
 Core development team
 ---------------------
@@ -58,5 +59,6 @@ Change Log
 ==========
 ---
 
+* 0.0.7 Removed console print statements.
 * 0.0.6 Fixed masked dense array handling.
 * 0.0.1 Initial beta release.

@@ -114,7 +114,7 @@ class Base:
         print("Generating {} maps...".format(n))
         surrs = np.empty((n, self._nmap))
         for i in range(n):  # generate random maps
-            print(i+1)
+
             xperm = self.permute_map()  # Randomly permute values
             res = dict.fromkeys(self._deltas)
 

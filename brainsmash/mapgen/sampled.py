@@ -48,6 +48,8 @@ class Sampled:
         three times the distance interval spacing is used.
     resample : bool, default False
         Resample surrogate map values from the target brain map
+    verbose : bool, default False
+        Print surrogate count each time new surrogate map created
 
     Notes
     -----
@@ -62,10 +64,11 @@ class Sampled:
 
     """
 
-    def __init__(self, x, D, index, ns=500,
-                 deltas=np.arange(0.3, 1., 0.2), kernel='exp',
-                 pv=70, nh=25, knn=1000, b=None, resample=False):
+    def __init__(self, x, D, index, ns=500, pv=70, nh=25, knn=1000, b=None,
+                 deltas=np.arange(0.3, 1., 0.2), kernel='exp', resample=False,
+                 verbose=False):
 
+        self._verbose = verbose
         self.x = x
         n = self._x.size
         self.nmap = int(n)
@@ -115,7 +118,8 @@ class Sampled:
         print("Generating {} maps...".format(n))
         surrs = np.empty((n, self._nmap))
         for i in range(n):  # generate random maps
-            print(i+1)
+            if self._verbose:
+                print(i+1)
 
             # Randomly permute map
             x_perm = self.permute_map()
@@ -176,7 +180,8 @@ class Sampled:
                 np.put(surr, ii, sorted_map)
 
         if self._ismasked:
-            return np.ma.masked_array(data=surrs, mask=np.isnan(surrs)).squeeze()
+            return np.ma.masked_array(
+                data=surrs, mask=np.isnan(surrs)).squeeze()
         return surrs.squeeze()
 
     def compute_variogram(self, x, idx):
@@ -196,7 +201,6 @@ class Sampled:
             Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2, for i,j in idx
 
         """
-        # TODO THIS PRODUCES NANS IF NANS IN ORIGINAL MAP, BREAKING TEST_SAMPLED_VARIOGRAM_FITS
         diff_ij = x[idx][:, None] - x[self._index[idx, :]]
         return 0.5 * np.square(diff_ij)
 
