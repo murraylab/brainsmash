@@ -185,4 +185,4 @@ def _load_cifti2(filename):
     surface-based and/or volumetric data.
 
     """
-    return np.array(nib.load(filename).get_data()).squeeze()
+    return np.asanyarray(nib.load(filename).dataobj).squeeze()
