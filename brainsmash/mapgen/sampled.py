@@ -17,14 +17,14 @@ class Sampled:
 
     Parameters
     ----------
-    x : (N,) np.ndarray
+    x : filename or 1D np.ndarray
         Target brain map
-    D : (N,N) np.ndarray
+    D : filename or (N,N) np.ndarray or np.memmap
         Pairwise distance matrix between elements of `x`. Each row of `D` should
         be sorted. Indices used to sort each row are passed to the `index`
         argument. See :func:`brainsmash.mapgen.memmap.txt2memmap` or the online
         documentation for more details (brainsmash.readthedocs.io)
-    index : (N,N) np.ndarray or None
+    index : filename or (N,N) np.ndarray or np.memmap
         See above
     ns : int, default 500
         Take a subsample of `ns` rows from `D` when fitting variograms
@@ -115,7 +115,8 @@ class Sampled:
         surrogate maps' variogram fits.
 
         """
-        print("Generating {} maps...".format(n))
+        if self._verbose:
+            print("Generating {} maps...".format(n))
         surrs = np.empty((n, self._nmap))
         for i in range(n):  # generate random maps
             if self._verbose:
@@ -197,7 +198,7 @@ class Sampled:
 
         Returns
         -------
-        v : (self.ns,) np.ndarray
+        v : (ns,ns) np.ndarray
             Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2, for i,j in idx
 
         """
@@ -254,9 +255,9 @@ class Sampled:
         Parameters
         ----------
         u : (N,) np.ndarray
-            Pairwise distances, i.e. variogram X-coordinates
+            Pairwise distances, ie variogram x-coordinates
         v : (N,) np.ndarray
-            Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
+            Squared differences, ie ariogram y-coordinates
         return_h : bool, default False
             Return distances at which smoothed variogram is computed
 

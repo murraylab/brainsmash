@@ -111,7 +111,6 @@ class Base:
         worsening the surrogate maps' variogram fit.
 
         """
-        print("Generating {} maps...".format(n))
         surrs = np.empty((n, self._nmap))
         for i in range(n):  # generate random maps
 
@@ -392,7 +391,7 @@ class Base:
             try:
                 self._b = float(x)
             except (ValueError, TypeError):
-                e = "parameter `_b`: expected numeric, got {}".format(type(x))
+                e = "bandwidth b: expected numeric, got {}".format(type(x))
                 raise ValueError(e)
         else:   # set bandwidth equal to 3x bin spacing
             self._b = 3.*np.mean(self._h[1:] - self._h[:-1])
