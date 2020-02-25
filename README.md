@@ -61,6 +61,7 @@ Change Log
 ==========
 ---
 
+* 0.0.9 Fixed bug in Sampled.sampled.permute_map().
 * 0.0.8 Relaxed nibabel version dependency.
 * 0.0.7 Removed console print statements.
 * 0.0.6 Fixed masked dense array handling.

@@ -216,9 +216,11 @@ class Sampled:
 
         """
         perm_idx = np.random.permutation(self._nmap)
-        mask_perm = self._x.mask[perm_idx]
-        x_perm = self._x.data[perm_idx]
-        return np.ma.masked_array(data=x_perm, mask=mask_perm)
+        if self._ismasked:
+            mask_perm = self._x.mask[perm_idx]
+            x_perm = self._x.data[perm_idx]
+            return np.ma.masked_array(data=x_perm, mask=mask_perm)
+        return self._x[perm_idx]
 
     def smooth_map(self, x, k):
         """
