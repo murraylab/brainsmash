@@ -303,8 +303,8 @@ To load data from a neuroimaging file into Python, you may use :func:`brainsmash
 .. code-block:: python
 
    from brainsmash.utils.dataio import load
-   f = "/path/to/myimage.dscalar.nii"
-   x = load(f)  # type(x) == numpy.ndarray
+   objective = "/path/to/myimage.dscalar.nii"
+   x = load(objective)  # type(x) == numpy.ndarray
 
 .. _wb:
 

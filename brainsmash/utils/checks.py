@@ -235,7 +235,7 @@ def stripext(f):
 
     Returns
     -------
-    f : filename
+    objective : filename
         Path to file without extension
 
     """
