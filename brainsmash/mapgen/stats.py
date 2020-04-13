@@ -2,7 +2,7 @@
 
 import numpy as np
 
-__all__ = ['pearsonr', 'pairwise_r', 'nonparp']
+__all__ = ['pearsonr', 'pairwise_r', 'nonparp', 'r2', 'nrmsd']
 
 
 def pearsonr(X, Y):
@@ -91,46 +91,3 @@ def nonparp(stat, dist):
     """
     n = float(len(dist))
     return np.sum(np.abs(dist) > abs(stat)) / n
-
-
-def r2(y, ypred):
-    """
-    Compute coefficient of determination.
-
-    Parameters
-    ----------
-    y : (N,) np.ndarray
-        target vector
-    ypred : (N,) np.ndarray
-        model prediction
-
-    Returns
-    -------
-    (N,) np.ndarray
-        coefficient of determination
-
-    """
-    res = y - ypred
-    ss_tot = np.power(y - y.mean(), 2).sum()
-    ss_res = np.power(res, 2).sum()
-    return 1. - ss_res / ss_tot
-
-
-def nrmsd(y, ypred):
-    """
-    Compute normalized root-mean-square deviation.
-
-    Parameters
-    ----------
-    y : (N,) np.ndarray
-        target vector
-    ypred : (N,) np.ndarray
-        model prediction
-
-    Returns
-    -------
-    (N,) np.ndarray
-        normalized root-mean-square deviation
-
-    """
-    return np.sqrt(np.power(y - ypred, 2).mean()) / y.mean()

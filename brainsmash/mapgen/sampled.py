@@ -283,9 +283,9 @@ class Sampled:
         # Each row corresponds to a unique h.
         du = np.abs(u - self._h[:, None])
         w = np.exp(-np.square(2.68 * du / self._b) / 2)
-        denom = w.sum(axis=1)
+        denom = np.nansum(w, axis=1)
         wv = w * v[None, :]
-        num = wv.sum(axis=1)
+        num = np.nansum(wv, axis=1)
         output = num / denom
         if not return_h:
             return output
