@@ -321,7 +321,7 @@ def _geodesic(surface, dist_file, coords):
 def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
                          medial=None, use_wb=False, verbose=True):
     """
-    Calculates surface distance for `surface` mesh and saves to `outfile`
+    Calculates surface distance for `surface` mesh and saves to `outfile`.
 
     Parameters
     ----------
@@ -329,25 +329,22 @@ def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
         Path to surface file on which to calculate distance
     outfile : str or os.PathLike
         Path to which generated distance matrix should be saved
-    euclid : bool, optional
-        Whether to compute Euclidean distance instead of surface distance.
-        Default: False
-    dlabel : str or os.PathLike, optional
-        Path to file with parcel labels for provided `surf`. If provided will
-        calculate parcel-parcel distances instead of vertex distances. Default:
-        None
-    medial : str or os.PathLike, optional
+    euclid : bool, optional (default False)
+        Whether to compute Euclidean distance instead of surface distance
+    dlabel : str or os.PathLike, optional (default None)
+        Path to file with parcel labels for provided `surf`. If provided, 
+        calculate and save parcel-parcel distances instead of vertex distances. 
+    medial : str or os.PathLike, optional (default None)
         Path to file containing labels for vertices corresponding to medial
         wall. If provided and `use_wb=False`, will disallow calculation of
-        surface distance along the medial wall. Default: None
-    use_wb : bool, optional
+        surface distance along the medial wall.
+    use_wb : bool, optional (default False)
         Whether to use calls to `wb_command -surface-geodesic-distance` for
         computation of the surface distance matrix; this will involve
         significant disk I/O. If False, all computations will be done in memory
-        using the `scipy.sparse.csgraph.dijkstra` function. Default: False
-    verbose : bool, optional
+        using the `scipy.sparse.csgraph.dijkstra` function.
+    verbose : bool, optional (default True)
         Whether to print status updates while distances are calculated.
-        Default: True
 
     Returns
     -------
@@ -359,6 +356,11 @@ def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
     The surface distance matrix computed with `use_wb=False` will have slightly
     lower values than when `use_wb=True` due to known estimation errors. These
     will be fixed at a later date.
+    
+    Raises
+    ------
+    ValueError : inconsistent no. of vertices in label, mask, and/or surface file
+    
     """
 
     n_vert = len(load(surface))
@@ -368,7 +370,8 @@ def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
     if dlabel is not None:
         labels = check_image_file(dlabel)
         if len(labels) != n_vert:
-            raise ValueError('')
+            raise ValueError('Provided `dlabel` file does not contain same '
+                             'number of vertices as provided `surface`')
     if medial is not None:
         mask = np.asarray(check_image_file(medial), dtype=bool)
         if len(mask) != n_vert:
@@ -413,8 +416,7 @@ def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
             dist[n] = func(n, graph, labels)
         # average rows (vertices) into parcels; columns are already parcels
         dist = np.row_stack([
-            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)
-        ])
+            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
         dist[np.diag_indices_from(dist)] = 0
         # NOTE: if `medial` is supplied and any of the parcel labels correspond
         # to the medial wall then those parcel-parcel distances will be `inf`!
@@ -425,7 +427,7 @@ def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
 
 def _get_workbench_distance(vertex, surf, labels=None):
     """
-    Gets surface distance of `vertex` to all other vertices in `surf`
+    Gets surface distance of `vertex` to all other vertices in `surf`.
 
     Parameters
     ----------
@@ -433,15 +435,16 @@ def _get_workbench_distance(vertex, surf, labels=None):
         Index of vertex for which to calculate surface distance
     surf : str or os.PathLike
         Path to surface file on which to calculate distance
-    labels : array_like, optional
+    labels : array_like, optional (default None)
         Labels indicating parcel to which each vertex belongs. If provided,
-        distances will be averaged within distinct labels
+        distances will be averaged within distinct labels.
 
     Returns
     -------
     dist : (N,) numpy.ndarray
         Distance of `vertex` to all other vertices in `graph` (or to all
         parcels in `labels`, if provided)
+    
     """
 
     distcmd = 'wb_command -surface-geodesic-distance {surf} {vertex} {out}'
@@ -466,17 +469,22 @@ def _get_graph_distance(vertex, graph, labels=None):
         Graph along which to calculate shortest path distances
     labels : array_like, optional
         Labels indicating parcel to which each vertex belongs. If provided,
-        distances will be averaged within distinct labels
+        distances will be averaged within unique labels
 
     Returns
     -------
     dist : (N,) numpy.ndarray
         Distance of `vertex` to all other vertices in `graph` (or to all
         parcels in `labels`, if provided)
+    
+    Notes
+    -----
+    Distances are computed using Dijkstra's algorithm.
+    
     """
 
-    # this involves an up-cast to float64; we're gonne get some rounding diff
-    # here when compared to the wb_command subprocess call
+    # this involves an up-cast to float64; will produce some numerical rounding
+    # discrepancies here when compared to the wb_command subprocess call
     dist = sparse.csgraph.dijkstra(graph, directed=False, indices=[vertex])
 
     return _get_parcel_distance(vertex, dist, labels)
@@ -484,33 +492,32 @@ def _get_graph_distance(vertex, graph, labels=None):
 
 def _get_euclid_distance(vertex, coords, labels=None):
     """
-    Gets Euclidean distance of `vertex` to all other vertices in `coords`
+    Gets Euclidean distance of `vertex` to all other vertices in `coords`.
 
     Parameters
     ----------
     vertex : int
         Index of vertex for which to calculate Euclidean distance
-    coords : array_like
+    coords : (N,3) array_like
         Coordinates of vertices on surface mesh
-    labels : array_like, optional
+    labels : (N,) array_like, optional (default None)
         Labels indicating parcel to which each vertex belongs. If provided,
-        distances will be averaged within distinct labels
+        distances will be averaged within M unique labels
 
     Returns
     -------
-    dist : (N,) numpy.ndarray
+    dist : (N,) or (M,) np.ndarray
         Distance of `vertex` to all other vertices in `coords` (or to all
-        parcels in `labels`, if provided)
+        unique parcels in `labels`, if provided)
+    
     """
-
     dist = np.squeeze(cdist(coords[[vertex]], coords))
-
     return _get_parcel_distance(vertex, dist, labels)
 
 
 def _get_parcel_distance(vertex, dist, labels=None):
     """
-    Averages `dist` within `labels`, if provided
+    Average `dist` within `labels`, if provided
 
     Parameters
     ----------
@@ -518,14 +525,15 @@ def _get_parcel_distance(vertex, dist, labels=None):
         Index of vertex used to calculate `dist`
     dist : (N,) array_like
         Distance of `vertex` to all other vertices
-    labels : (N,) array_like, optional
+    labels : (N,) array_like, optional (default None)
         Labels indicating parcel to which each vertex belongs. If provided,
         `dist` will be average within distinct labels.
 
     Returns
     -------
-    dist : numpy.ndarray
-        Distance (vertex or parcels), converted to float32
+    dist : np.ndarray
+        Distance from `vertex` to all vertices/parcels, cast to float32
+    
     """
 
     if labels is not None:
