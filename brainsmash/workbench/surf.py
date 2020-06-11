@@ -1,4 +1,4 @@
-""" Functions for creating graphs from surface meshes """
+""" Functions for creating graphs from surface meshes. """
 
 import numpy as np
 from scipy import sparse
@@ -6,7 +6,7 @@ from scipy import sparse
 
 def _get_edges(faces):
     """
-    Gets set of edges defined by `faces`
+    Gets set of edges defined by `faces`.
 
     Parameters
     ----------
@@ -17,17 +17,16 @@ def _get_edges(faces):
     -------
     edges : (F*3, 2) array_like
         All edges in `faces`
+    
     """
-
     faces = np.asarray(faces)
     edges = np.sort(faces[:, [0, 1, 1, 2, 2, 0]].reshape((-1, 2)), axis=1)
-
     return edges
 
 
 def get_direct_edges(faces):
     """
-    Gets (unique) direct edges in mesh described by `faces`
+    Gets (unique) direct edges in mesh described by `faces`.
 
     Parameters
     ----------
@@ -38,19 +37,18 @@ def get_direct_edges(faces):
     -------
     edges : (E, 2) array_like
         Direct edges (without duplicates) in `faces`
+    
     """
-
     edges = _get_edges(faces)
-
     return np.unique(edges, axis=0)
 
 
 def get_indirect_edges(faces):
     """
-    Gets indirect edges in mesh described by `faces`
+    Gets indirect edges in mesh described by `faces`.
 
     Indirect edges are between two vertices that participate in faces sharing
-    an edge
+    an edge.
 
     Parameters
     ----------
@@ -65,6 +63,7 @@ def get_indirect_edges(faces):
     References
     ----------
     https://github.com/mikedh/trimesh (MIT licensed)
+    
     """
 
     # first generate the list of edges for the provbided faces and the
@@ -113,7 +112,7 @@ def get_indirect_edges(faces):
 
 def make_surf_graph(vertices, faces, mask=None):
     """
-    Constructs adjacency graph from `surf`
+    Constructs adjacency graph from `surf`.
 
     Parameters
     ----------
@@ -121,14 +120,18 @@ def make_surf_graph(vertices, faces, mask=None):
         Coordinates of `vertices` comprising mesh with `faces`
     faces : (F, 3) array_like
         Indices of `vertices` that compose triangular faces of mesh
-    mask : (N,) array_like, optional
+    mask : (N,) array_like, optional (default None)
         Boolean mask indicating which vertices should be removed from generated
-        graph. If not supplied all vertices are used. Default: None
+        graph. If not supplied, all vertices are used.
 
     Returns
     -------
     graph : scipy.sparse.csr_matrix
         Sparse matrix representing `surf`
+    
+    Raises
+    ------
+    ValueError : inconsistent number of vertices in `mask` and `surf`
     """
 
     if mask is not None and len(mask) != len(vertices):
@@ -137,8 +140,7 @@ def make_surf_graph(vertices, faces, mask=None):
 
     # get all (direct + indirect) edges from surface
     edges = np.row_stack([
-        get_direct_edges(faces), get_indirect_edges(faces)
-    ])
+        get_direct_edges(faces), get_indirect_edges(faces)])
 
     # remove edges that include a vertex in `mask`
     if mask is not None:
