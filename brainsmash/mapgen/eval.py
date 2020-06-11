@@ -59,6 +59,8 @@ def base_fit(x, D, nsurr=100, **params):
     # Plot empirical variogram
     fig = plt.figure(figsize=(3, 3))
     ax = fig.add_axes([0.12, 0.15, 0.8, 0.77])
+    ax.autoscale(axis='y', tight=True)
+
     ax.scatter(u0, emp_var, s=20, facecolor='none', edgecolor='k',
                marker='o', lw=1, label='Empirical')
 
@@ -80,6 +82,7 @@ def base_fit(x, D, nsurr=100, **params):
     plt.setp(ax.get_xticklines(), visible=False)
     ax.set_xlabel("Spatial separation\ndistance")
     ax.set_ylabel("Variance")
+
     plt.show()
 
 

@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 with open("README.md", "r") as f:
     readme = f.read()
 
-requirements = ["numpy", "sklearn", "pandas", "scipy", "matplotlib", "nibabel"]
+requirements = ["numpy", "scikit-learn", "pandas", "scipy", "matplotlib", "nibabel"]
 
 setup(
     name="brainsmash",
-    version="0.1.1",
+    version="0.2.0",
     author="Joshua Burt",
     author_email="joshua.burt@yale.edu",
     include_package_data=True,

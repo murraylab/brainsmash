@@ -61,6 +61,7 @@ Change Log
 ==========
 ---
 
+* 0.2.0 Added Ross Markello's implementation of Dijkstra's algorithm for efficiently computing surface-based distances.
 * 0.1.1 Fixed bug in NaN handling.
 * 0.1.0 Added goodness-of-fit metrics to stats module.
 * 0.0.9 Fixed bug in Sampled.sampled.permute_map().
