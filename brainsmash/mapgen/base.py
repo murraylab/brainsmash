@@ -5,6 +5,7 @@ from .kernels import check_kernel
 from ..utils.checks import check_map, check_distmat, check_deltas, check_pv
 from ..utils.dataio import dataio
 from sklearn.linear_model import LinearRegression
+from sklearn.utils.validation import check_random_state
 import numpy as np
 
 
@@ -39,6 +40,8 @@ class Base:
     b : float or None, default None
         Gaussian kernel bandwidth for variogram smoothing. If None, set to
         three times the spacing between variogram x-coordinates.
+    seed : None or int or np.random.RandomState instance (default None)
+        Specify the seed for random number generation (or random state instance)
 
     Notes
     -----
@@ -49,7 +52,10 @@ class Base:
     """
 
     def __init__(self, x, D, deltas=np.linspace(0.1, 0.9, 9),
-                 kernel='exp', pv=25, nh=25, resample=False, b=None):
+                 kernel='exp', pv=25, nh=25, resample=False, b=None,
+                 seed=None):
+
+        self._rs = check_random_state(seed)
 
         self.x = x
         self.D = D
@@ -143,7 +149,7 @@ class Base:
             # Transform and smooth permuted map using best-fit parameters
             sm_xperm_best = self.smooth_map(x=xperm, delta=dopt)
             surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
-                    np.sqrt(np.abs(aopt)) * np.random.randn(self._nmap))
+                    np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
             surrs[i] = surr
 
         if self._resample:  # resample values from empirical map
@@ -183,7 +189,7 @@ class Base:
             Random permutation of target brain map
 
         """
-        perm_idx = np.random.permutation(np.arange(self._x.size))
+        perm_idx = self._rs.permutation(np.arange(self._x.size))
         mask_perm = self._x.mask[perm_idx]
         x_perm = self._x.data[perm_idx]
         return np.ma.masked_array(data=x_perm, mask=mask_perm)

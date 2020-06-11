@@ -6,6 +6,7 @@ from ..utils.dataio import dataio
 from ..utils.checks import check_map, check_pv, check_deltas
 from .kernels import check_kernel
 from sklearn.linear_model import LinearRegression
+from sklearn.utils.validation import check_random_state
 import numpy as np
 
 __all__ = ['Sampled']
@@ -50,6 +51,8 @@ class Sampled:
         Resample surrogate map values from the target brain map
     verbose : bool, default False
         Print surrogate count each time new surrogate map created
+    seed : None or int or np.random.RandomState instance (default None)
+        Specify the seed for random number generation (or random state instance)
 
     Notes
     -----
@@ -66,7 +69,9 @@ class Sampled:
 
     def __init__(self, x, D, index, ns=500, pv=70, nh=25, knn=1000, b=None,
                  deltas=np.arange(0.3, 1., 0.2), kernel='exp', resample=False,
-                 verbose=False):
+                 verbose=False, seed=None):
+
+        self._rs = check_random_state(seed)
 
         self._verbose = verbose
         self.x = x
@@ -171,7 +176,7 @@ class Sampled:
             # Transform and smooth permuted map using best-fit parameters
             sm_xperm_best = self.smooth_map(x=x_perm, k=kopt)
             surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
-                    np.sqrt(np.abs(aopt)) * np.random.randn(self._nmap))
+                    np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
             surrs[i] = surr
 
         if self._resample:  # resample values from empirical map
@@ -215,7 +220,7 @@ class Sampled:
             Random permutation of target brain map
 
         """
-        perm_idx = np.random.permutation(self._nmap)
+        perm_idx = self._rs.permutation(self._nmap)
         if self._ismasked:
             mask_perm = self._x.mask[perm_idx]
             x_perm = self._x.data[perm_idx]
@@ -330,7 +335,7 @@ class Sampled:
             Indices of randomly sampled areas
 
         """
-        return np.random.choice(
+        return self._rs.choice(
             a=self._nmap, size=self._ns, replace=False).astype(np.int32)
 
     @property
