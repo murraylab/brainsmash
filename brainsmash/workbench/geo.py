@@ -17,60 +17,173 @@ import nibabel as nib
 __all__ = ['cortex', 'subcortex', 'parcellate']
 
 
-def cortex(surface, outfile, euclid=False):
+def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
+           use_wb=True, verbose=True):
     """
-    Compute distance matrix for a cortical hemisphere.
+    Calculates surface distances for `surface` mesh and saves to `outfile`.
 
     Parameters
     ----------
-    surface : filename
-        Path to a surface GIFTI file (.surf.gii) from which to compute distances
-    outfile : filename
-        Path to output file
-    euclid : bool, default False
-        If True, compute Euclidean distances; if False, compute geodesic dist
+    surface : str or os.PathLike
+        Path to surface file on which to calculate distance
+    outfile : str or os.PathLike
+        Path to which generated distance matrix should be saved
+    euclid : bool, optional, default False
+        Whether to compute Euclidean distance instead of surface distance
+    dlabel : str or os.PathLike, optional, default None
+        Path to file with parcel labels for provided `surf`. If provided,
+        calculate and save parcel-parcel distances instead of vertex distances.
+    medial : str or os.PathLike, optional, default None
+        Path to file containing labels for vertices corresponding to medial
+        wall. If provided and `use_wb=False`, will disallow calculation of
+        surface distance along the medial wall.
+    use_wb : bool, optional, default True
+        Whether to use calls to `wb_command -surface-geodesic-distance` for
+        computation of the surface distance matrix; this will involve
+        significant disk I/O. If False, all computations will be done in memory
+        using the `scipy.sparse.csgraph.dijkstra` function.
+    verbose : bool, optional, default True
+        Whether to print status updates while distances are calculated.
 
     Returns
     -------
-    filename : str
-        Path to output distance matrix file
+    distance : str
+        Path to generated `outfile`
+
+    Notes
+    -----
+    The surface distance matrix computed with `use_wb=False` will have slightly
+    lower values than when `use_wb=True` due to known estimation errors. These
+    will be fixed at a later date. By default, `use_wb=True` for backwards-
+    compatibility but this will be changed in a future update.
+
+    Raises
+    ------
+    ValueError : inconsistent # of vertices in label, mask, and/or surface file
 
     """
 
-    check_outfile(outfile)
+    n_vert = len(load(surface))
 
-    # Strip file extensions and define output text file
-    outfile = stripext(outfile)
-    dist_file = outfile + '.txt'
+    # get data from dlabel / medial wall files if provided
+    labels, mask = None, np.zeros(n_vert, dtype=bool)
+    if dlabel is not None:
+        labels = check_image_file(dlabel)
+        if len(labels) != n_vert:
+            raise ValueError('Provided `dlabel` file does not contain same '
+                             'number of vertices as provided `surface`')
+    if medial is not None:
+        mask = np.asarray(check_image_file(medial), dtype=bool)
+        if len(mask) != n_vert:
+            raise ValueError('Provided `medial` file does not contain same '
+                             'number of vertices as provided `surface`')
 
-    # Load surface file
-    coords = check_surface(surface)
+    # define which function we'll be using to calculate the distances
+    if euclid:
+        func = _get_euclid_distance
+        graph = check_surface(surface)  # vertex coordinates
+    else:
+        if use_wb:
+            func = _get_workbench_distance
+            graph = surface
+        else:
+            func = _get_graph_distance
+            vert, faces = [darray.data for darray in nib.load(surface).darrays]
+            graph = make_surf_graph(vert, faces, mask=mask)
 
-    if euclid:  # Pairwise Euclidean distance matrix
-        of = _euclidean(dist_file=dist_file, coords=coords)
-    else:  # Pairwise geodesic distance matrix
-        of = _geodesic(
-            surface=surface, dist_file=dist_file, coords=coords)
-    return of
+    # if we want the vertex-vertex distance matrix we'll stream it to disk to
+    # save on memory, a la `_geodesic()` or `_euclid()`
+    # NOTE: streaming to disk takes a lot more _time_ than storing in memory
+    if labels is None:
+        with open(outfile, 'w') as dest:
+            for n in range(n_vert):
+                if verbose and n % 1000 == 0:
+                    print('Running vertex {} of {}'.format(n, n_vert))
+                np.savetxt(dest, func(n, graph))
+    # we can store the temporary n_vert x label matrix in memory; running this
+    # is much faster than trying to read through the giant vertex-vertex
+    # distance matrix file
+    else:
+        # depends on size of parcellation, but assuming even a liberal 1000
+        # parcel atlas this will be ~250 MB in-memory for the default fslr32k
+        # resolution
+        dist = np.zeros((n_vert, len(np.unique(labels))), dtype='float32')
+        # NOTE: because this is being done in-memory it could be multiprocessed
+        # for additional speed-ups, if desired!
+        for n in range(n_vert):
+            if verbose and n % 1000 == 0:
+                print('Running vertex {} of {}'.format(n, n_vert))
+            dist[n] = func(n, graph, labels)
+        # average rows (vertices) into parcels; columns are already parcels
+        dist = np.row_stack([
+            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
+        dist[np.diag_indices_from(dist)] = 0
+        # NOTE: if `medial` is supplied and any of the parcel labels correspond
+        # to the medial wall then those parcel-parcel distances will be `inf`!
+        np.savetxt(outfile, dist)
+
+    return outfile
 
 
-def subcortex(fout, image_file=None):
+# def cortex(surface, outfile, euclid=False):
+#     """
+#     Compute distance matrix for a cortical hemisphere.
+#
+#     Parameters
+#     ----------
+#     surface : filename
+#         Path to a surface GIFTI (.surf.gii) from which to compute distances
+#     outfile : filename
+#         Path to output file
+#     euclid : bool, default False
+#         If True, compute Euclidean distances; if False, compute geodesic dist
+#
+#     Returns
+#     -------
+#     filename : str
+#         Path to output distance matrix file
+#
+#     """
+#
+#     check_outfile(outfile)
+#
+#     # Strip file extensions and define output text file
+#     outfile = stripext(outfile)
+#     dist_file = outfile + '.txt'
+#
+#     # Load surface file
+#     coords = check_surface(surface)
+#
+#     if euclid:  # Pairwise Euclidean distance matrix
+#         of = _euclidean(dist_file=dist_file, coords=coords)
+#     else:  # Pairwise geodesic distance matrix
+#         of = _geodesic(
+#             surface=surface, dist_file=dist_file, coords=coords)
+#     return of
+
+
+def subcortex(fout, image_file=None, dlabel=None, verbose=True):
     """
     Compute inter-voxel Euclidean distance matrix.
 
     Parameters
     ----------
-    fout : filename
+    fout : str or os.Pathlike
         Path to output text file
-    image_file : filename or None, default None
+    image_file : str or os.Pathlike or None, default None
         Path to a CIFTI-2 format neuroimaging file (eg .dscalar.nii). MNI
         coordinates for each subcortical voxel are read from this file's
-        metadata. If None, use dlabel file defined in ``brainsmash.config.py``.
+        metadata. If None, uses dlabel file defined in ``brainsmash.config.py``.
+    dlabel : str or os.PathLike, optional, default None
+        Path to file with parcel labels for provided `surf`. If provided,
+        calculate and save parcel-parcel distances instead of vertex distances.
+    verbose : bool, optional, default True
+        Whether to print status updates while distances are calculated.
 
     Returns
     -------
     filename : str
-        Path to output text file
+        Path to output text file containing pairwise Euclidean distances
 
     Notes
     -----
@@ -81,6 +194,7 @@ def subcortex(fout, image_file=None):
     Raises
     ------
     ValueError : `image_file` header does not contain volume information
+    IndexError : Inconsistent number of elements in `image_file` and `dlabel`
 
     """
     # TODO add more robust error handling
@@ -91,18 +205,61 @@ def subcortex(fout, image_file=None):
     fout = stripext(fout)
     dist_file = fout + '.txt'
 
-    # Load CIFTI mapping
+    # Load CIFTI mapping  (i.e., map from scalar index to 3-D MNI indices)
     if image_file is None:
         image_file = parcel_labels_lr
     maps = export_cifti_mapping(image_file)
     if "volume" not in maps.keys():
         e = "Subcortical information was not found in {}".format(image_file)
         raise ValueError(e)
-
-    # Compute Euclidean distance matrix
     coords = maps['volume'].drop("structure", axis=1).values
-    outfile = _euclidean(dist_file=dist_file, coords=coords)
-    return outfile
+    # outfile = _euclidean(dist_file=dist_file, coords=coords)
+    n_vert = coords.shape[0]
+
+    # Get data from dlabel file if provided
+    labels, mask = None, np.zeros(n_vert, dtype=bool)
+    if dlabel is not None:
+        all_labels = check_image_file(dlabel)
+        volume_indices = maps['volume'].index.values
+        try:
+            labels = all_labels[volume_indices]
+        except IndexError:
+            raise IndexError(
+                'Volumetric CIFTI indices obtained from `image_file` could not '
+                'be indexed from the provided `dlabel` file.')
+
+    func = _get_euclid_distance
+
+    # If we want the vertex-vertex distance matrix we'll stream it to disk to
+    # save on memory.
+    # NOTE: streaming to disk takes a lot more _time_ than storing in memory
+    if labels is None:
+        with open(dist_file, 'w') as dest:
+            for n in range(n_vert):
+                if verbose and n % 1000 == 0:
+                    print('Running vertex {} of {}'.format(n, n_vert))
+                np.savetxt(dest, func(n, coords))
+    # We can store the temporary n_vert x label matrix in memory; running this
+    # is much faster than trying to read through the giant vertex-vertex
+    # distance matrix file
+    else:
+        # depends on size of parcellation, but assuming even a liberal 1000
+        # parcel atlas this will be ~250 MB in-memory for the default fslr32k
+        # resolution
+        dist = np.zeros((n_vert, len(np.unique(labels))), dtype='float32')
+        # NOTE: because this is being done in-memory it could be multiprocessed
+        # for additional speed-ups, if desired!
+        for n in range(n_vert):
+            if verbose and n % 1000 == 0:
+                print('Running vertex {} of {}'.format(n, n_vert))
+            dist[n] = func(n, coords, labels)
+        # average rows (vertices) into parcels; columns are already parcels
+        dist = np.row_stack([
+            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
+        dist[np.diag_indices_from(dist)] = 0
+        np.savetxt(dist_file, dist)
+
+    return dist_file
 
 
 def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
@@ -318,113 +475,6 @@ def _geodesic(surface, dist_file, coords):
     return dist_file
 
 
-def get_surface_distance(surface, outfile, euclid=False, dlabel=None,
-                         medial=None, use_wb=False, verbose=True):
-    """
-    Calculates surface distance for `surface` mesh and saves to `outfile`.
-
-    Parameters
-    ----------
-    surface : str or os.PathLike
-        Path to surface file on which to calculate distance
-    outfile : str or os.PathLike
-        Path to which generated distance matrix should be saved
-    euclid : bool, optional (default False)
-        Whether to compute Euclidean distance instead of surface distance
-    dlabel : str or os.PathLike, optional (default None)
-        Path to file with parcel labels for provided `surf`. If provided, 
-        calculate and save parcel-parcel distances instead of vertex distances. 
-    medial : str or os.PathLike, optional (default None)
-        Path to file containing labels for vertices corresponding to medial
-        wall. If provided and `use_wb=False`, will disallow calculation of
-        surface distance along the medial wall.
-    use_wb : bool, optional (default False)
-        Whether to use calls to `wb_command -surface-geodesic-distance` for
-        computation of the surface distance matrix; this will involve
-        significant disk I/O. If False, all computations will be done in memory
-        using the `scipy.sparse.csgraph.dijkstra` function.
-    verbose : bool, optional (default True)
-        Whether to print status updates while distances are calculated.
-
-    Returns
-    -------
-    distance : str
-        Path to generated `outfile`
-
-    Notes
-    -----
-    The surface distance matrix computed with `use_wb=False` will have slightly
-    lower values than when `use_wb=True` due to known estimation errors. These
-    will be fixed at a later date.
-    
-    Raises
-    ------
-    ValueError : inconsistent no. of vertices in label, mask, and/or surface file
-    
-    """
-
-    n_vert = len(load(surface))
-
-    # get data from dlabel / medial wall files if provided
-    labels, mask = None, np.zeros(n_vert, dtype=bool)
-    if dlabel is not None:
-        labels = check_image_file(dlabel)
-        if len(labels) != n_vert:
-            raise ValueError('Provided `dlabel` file does not contain same '
-                             'number of vertices as provided `surface`')
-    if medial is not None:
-        mask = np.asarray(check_image_file(medial), dtype=bool)
-        if len(mask) != n_vert:
-            raise ValueError('Provided `medial` file does not contain same '
-                             'number of vertices as provided `surface`')
-
-    # define which function we'll be using to calculate the distances
-    if euclid:
-        func = _get_euclid_distance
-        graph = check_surface(surface)  # vertex coordinates
-    else:
-        if use_wb:
-            func = _get_workbench_distance
-            graph = surface
-        else:
-            func = _get_graph_distance
-            vert, faces = [darray.data for darray in nib.load(surface).darrays]
-            graph = make_surf_graph(vert, faces, mask=mask)
-
-    # if we want the vertex-vertex distance matrix we'll stream it to disk to
-    # save on memory, a la `_geodesic()` or `_euclid()`
-    # NOTE: streaming to disk takes a lot more _time_ than storing in memory
-    if labels is None:
-        with open(outfile, 'w') as dest:
-            for n in range(n_vert):
-                if verbose and n % 1000 == 0:
-                    print('Running vertex {} of {}'.format(n, n_vert))
-                np.savetxt(dest, func(n, graph))
-    # we can store the temporary n_vert x label matrix in memory; running this
-    # is much faster than trying to read through the giant vertex-vertex
-    # distance matrix file
-    else:
-        # depends on size of parcellation, but assuming even a liberal 1000
-        # parcel atlas this will be ~250 MB in-memory for the default fslr32k
-        # resolution
-        dist = np.zeros((n_vert, len(np.unique(labels))), dtype='float32')
-        # NOTE: because this is being done in-memory it could be multiprocessed
-        # for additional speed-ups, if desired!
-        for n in range(n_vert):
-            if verbose and n % 1000 == 0:
-                print('Running vertex {} of {}'.format(n, n_vert))
-            dist[n] = func(n, graph, labels)
-        # average rows (vertices) into parcels; columns are already parcels
-        dist = np.row_stack([
-            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
-        dist[np.diag_indices_from(dist)] = 0
-        # NOTE: if `medial` is supplied and any of the parcel labels correspond
-        # to the medial wall then those parcel-parcel distances will be `inf`!
-        np.savetxt(outfile, dist)
-
-    return outfile
-
-
 def _get_workbench_distance(vertex, surf, labels=None):
     """
     Gets surface distance of `vertex` to all other vertices in `surf`.
@@ -486,7 +536,6 @@ def _get_graph_distance(vertex, graph, labels=None):
     # this involves an up-cast to float64; will produce some numerical rounding
     # discrepancies here when compared to the wb_command subprocess call
     dist = sparse.csgraph.dijkstra(graph, directed=False, indices=[vertex])
-
     return _get_parcel_distance(vertex, dist, labels)
 
 
