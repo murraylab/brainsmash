@@ -99,7 +99,7 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
             for n in range(n_vert):
                 if verbose and n % 1000 == 0:
                     print('Running vertex {} of {}'.format(n, n_vert))
-                np.savetxt(dest, [func(n, graph)])
+                np.savetxt(dest, func(n, graph))
     # we can store the temporary n_vert x label matrix in memory; running this
     # is much faster than trying to read through the giant vertex-vertex
     # distance matrix file
@@ -494,7 +494,7 @@ def _get_workbench_distance(vertex, surf, labels=None):
     dist : (N,) numpy.ndarray
         Distance of `vertex` to all other vertices in `graph` (or to all
         parcels in `labels`, if provided)
-    
+
     """
 
     distcmd = 'wb_command -surface-geodesic-distance {surf} {vertex} {out}'
@@ -526,11 +526,11 @@ def _get_graph_distance(vertex, graph, labels=None):
     dist : (N,) numpy.ndarray
         Distance of `vertex` to all other vertices in `graph` (or to all
         parcels in `labels`, if provided)
-    
+
     Notes
     -----
     Distances are computed using Dijkstra's algorithm.
-    
+
     """
 
     # this involves an up-cast to float64; will produce some numerical rounding
@@ -558,7 +558,7 @@ def _get_euclid_distance(vertex, coords, labels=None):
     dist : (N,) or (M,) np.ndarray
         Distance of `vertex` to all other vertices in `coords` (or to all
         unique parcels in `labels`, if provided)
-    
+
     """
     dist = np.squeeze(cdist(coords[[vertex]], coords))
     return _get_parcel_distance(vertex, dist, labels)
@@ -582,7 +582,7 @@ def _get_parcel_distance(vertex, dist, labels=None):
     -------
     dist : np.ndarray
         Distance from `vertex` to all vertices/parcels, cast to float32
-    
+
     """
 
     if labels is not None:
