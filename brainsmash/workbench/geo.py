@@ -238,7 +238,7 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
             for n in range(n_vert):
                 if verbose and n % 1000 == 0:
                     print('Running vertex {} of {}'.format(n, n_vert))
-                np.savetxt(dest, [func(n, coords)])
+                np.savetxt(dest, func(n, coords))
     # We can store the temporary n_vert x label matrix in memory; running this
     # is much faster than trying to read through the giant vertex-vertex
     # distance matrix file
@@ -590,4 +590,4 @@ def _get_parcel_distance(vertex, dist, labels=None):
                             labels=np.delete(labels, vertex),
                             index=np.unique(labels))
 
-    return dist.astype(np.float32)
+    return np.atleast_2d(dist).astype(np.float32)
