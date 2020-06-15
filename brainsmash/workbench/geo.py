@@ -99,7 +99,7 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
             for n in range(n_vert):
                 if verbose and n % 1000 == 0:
                     print('Running vertex {} of {}'.format(n, n_vert))
-                np.savetxt(dest, func(n, graph))
+                np.savetxt(dest, [func(n, graph)])
     # we can store the temporary n_vert x label matrix in memory; running this
     # is much faster than trying to read through the giant vertex-vertex
     # distance matrix file
@@ -120,7 +120,7 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
         dist[np.diag_indices_from(dist)] = 0
         # NOTE: if `medial` is supplied and any of the parcel labels correspond
         # to the medial wall then those parcel-parcel distances will be `inf`!
-        np.savetxt(outfile, dist)
+        np.savetxt(outfile, [dist])
 
     return outfile
 
@@ -238,7 +238,7 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
             for n in range(n_vert):
                 if verbose and n % 1000 == 0:
                     print('Running vertex {} of {}'.format(n, n_vert))
-                np.savetxt(dest, func(n, coords))
+                np.savetxt(dest, [func(n, coords)])
     # We can store the temporary n_vert x label matrix in memory; running this
     # is much faster than trying to read through the giant vertex-vertex
     # distance matrix file
@@ -257,7 +257,7 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
         dist = np.row_stack([
             dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
         dist[np.diag_indices_from(dist)] = 0
-        np.savetxt(dist_file, dist)
+        np.savetxt(dist_file, [dist])
 
     return dist_file
 
