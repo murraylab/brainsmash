@@ -7,7 +7,7 @@ requirements = ["numpy", "scikit-learn", "pandas", "scipy", "matplotlib", "nibab
 
 setup(
     name="brainsmash",
-    version="0.5.0",
+    version="0.5.1",
     author="Joshua Burt",
     author_email="joshua.burt@yale.edu",
     include_package_data=True,
