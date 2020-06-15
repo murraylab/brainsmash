@@ -120,7 +120,7 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
         dist[np.diag_indices_from(dist)] = 0
         # NOTE: if `medial` is supplied and any of the parcel labels correspond
         # to the medial wall then those parcel-parcel distances will be `inf`!
-        np.savetxt(outfile, [dist])
+        np.savetxt(outfile, dist)
 
     return outfile
 
@@ -257,7 +257,7 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
         dist = np.row_stack([
             dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
         dist[np.diag_indices_from(dist)] = 0
-        np.savetxt(dist_file, [dist])
+        np.savetxt(dist_file, dist)
 
     return dist_file
 

@@ -61,6 +61,7 @@ Change Log
 ==========
 ---
 
+* 0.5.2 Introduced a bug during the last bug fix.
 * 0.5.1 Fixed bug which caused distances to be written to file one-dimensionally.
 * 0.5.0 Updated `geo.subcortex` to have parallel structure with `cortex`.
 * 0.4.0 Replaced `geo.cortex` function with Ross' new implementation, in a backwards-compatible fashion.
