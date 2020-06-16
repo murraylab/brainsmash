@@ -44,23 +44,26 @@ License
 -------
 The BrainSMASH source code is available under the GNU General Public License v3.0.
 
-Preprint
---------
-Please cite the following preprint if you use BrainSMASH in your research:
+Reference
+---------
+Please cite the following paper if you use BrainSMASH in your research:
 
-Burt, J.B., Helmer, M., Shinn, M.W., Anticevic, A., Murray, J.D. (2020). Generative modeling of brain maps with spatial autocorrelation. bioRxiv doi: 10.1101/2020.02.18.955054v1
-
+Burt, J.B., Helmer, M., Shinn, M.W., Anticevic, A., Murray, J.D. (2020). Generative modeling of brain maps with spatial autocorrelation. Neuroimage (In Press).
 
 Core development team
 ---------------------
-
 * Joshua B Burt, Murray Lab - Yale University
 * John D Murray, Murray Lab - Yale University
+
+Contributors
+------------
+Ross Markello - Montreal Neurological Institute
 
 Change Log
 ==========
 ---
 
+* 0.6.0 Added `unassigned_value` kwarg to `cortex` and `subcortex`.
 * 0.5.2 Introduced a bug during the last bug fix.
 * 0.5.1 Fixed bug which caused distances to be written to file one-dimensionally.
 * 0.5.0 Updated `geo.subcortex` to have parallel structure with `cortex`.

@@ -18,7 +18,7 @@ __all__ = ['cortex', 'subcortex', 'parcellate']
 
 
 def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
-           use_wb=True, verbose=True):
+           use_wb=True, unassigned_value=0, verbose=True):
     """
     Calculates surface distances for `surface` mesh and saves to `outfile`.
 
@@ -42,6 +42,10 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
         computation of the surface distance matrix; this will involve
         significant disk I/O. If False, all computations will be done in memory
         using the `scipy.sparse.csgraph.dijkstra` function.
+    unassigned_value : int, default 0
+        Label value which indicates that a vertex/voxel is not assigned to
+        any parcel. This label is excluded from the output. 0 is the default
+        value used by Connectome Workbench, e.g. for ``-cifti-parcellate``.
     verbose : bool, optional, default True
         Whether to print status updates while distances are calculated.
 
@@ -107,7 +111,8 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
         # depends on size of parcellation, but assuming even a liberal 1000
         # parcel atlas this will be ~250 MB in-memory for the default fslr32k
         # resolution
-        dist = np.zeros((n_vert, len(np.unique(labels))), dtype='float32')
+        unique_parcels = np.unique(labels)
+        dist = np.zeros((n_vert, unique_parcels.size), dtype='float32')
         # NOTE: because this is being done in-memory it could be multiprocessed
         # for additional speed-ups, if desired!
         for n in range(n_vert):
@@ -116,10 +121,17 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
             dist[n] = func(n, graph, labels)
         # average rows (vertices) into parcels; columns are already parcels
         dist = np.row_stack([
-            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
+            dist[labels == lab].mean(axis=0) for lab in unique_parcels])
         dist[np.diag_indices_from(dist)] = 0
         # NOTE: if `medial` is supplied and any of the parcel labels correspond
         # to the medial wall then those parcel-parcel distances will be `inf`!
+
+        # remove unassigned parcel
+        if unassigned_value in unique_parcels:
+            idx = list(unique_parcels).index(unassigned_value)
+            dist = np.delete(dist, idx, axis=0)
+            dist = np.delete(dist, idx, axis=1)
+
         np.savetxt(outfile, dist)
 
     return outfile
@@ -162,7 +174,8 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
 #     return of
 
 
-def subcortex(fout, image_file=None, dlabel=None, verbose=True):
+def subcortex(fout, image_file=None, dlabel=None, unassigned_value=0,
+              verbose=True):
     """
     Compute inter-voxel Euclidean distance matrix.
 
@@ -177,6 +190,10 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
     dlabel : str or os.PathLike, optional, default None
         Path to file with parcel labels for provided `surf`. If provided,
         calculate and save parcel-parcel distances instead of vertex distances.
+    unassigned_value : int, default 0
+        Label value which indicates that a vertex/voxel is not assigned to
+        any parcel. This label is excluded from the output. 0 is the default
+        value used by Connectome Workbench, e.g. for ``-cifti-parcellate``.
     verbose : bool, optional, default True
         Whether to print status updates while distances are calculated.
 
@@ -246,7 +263,8 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
         # depends on size of parcellation, but assuming even a liberal 1000
         # parcel atlas this will be ~250 MB in-memory for the default fslr32k
         # resolution
-        dist = np.zeros((n_vert, len(np.unique(labels))), dtype='float32')
+        unique_parcels = np.unique(labels)
+        dist = np.zeros((n_vert, unique_parcels.size), dtype='float32')
         # NOTE: because this is being done in-memory it could be multiprocessed
         # for additional speed-ups, if desired!
         for n in range(n_vert):
@@ -255,8 +273,15 @@ def subcortex(fout, image_file=None, dlabel=None, verbose=True):
             dist[n] = func(n, coords, labels)
         # average rows (vertices) into parcels; columns are already parcels
         dist = np.row_stack([
-            dist[labels == lab].mean(axis=0) for lab in np.unique(labels)])
+            dist[labels == lab].mean(axis=0) for lab in unique_parcels])
         dist[np.diag_indices_from(dist)] = 0
+
+        # remove unassigned parcel
+        if unassigned_value in unique_parcels:
+            idx = list(unique_parcels).index(unassigned_value)
+            dist = np.delete(dist, idx, axis=0)
+            dist = np.delete(dist, idx, axis=1)
+
         np.savetxt(dist_file, dist)
 
     return dist_file

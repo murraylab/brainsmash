@@ -28,10 +28,14 @@ Contents:
 
 .. tutorials
 
-Authors
-=======
+Core development team
+=====================
 - Joshua B. Burt, Yale University
 - John D. Murray, Yale University
+
+Contributors
+============
+- Ross Markello, Montreal Neurological Institute
 
 License
 =======
