@@ -115,19 +115,33 @@ def get_indirect_edges(vertices, faces):
         unshared[~row_ok, :] = False
         indirect_edges[row_ok, i] = face[unshared]
 
+    # get vertex coordinates of triangles pairs with shared edges, ordered
+    # such that the non-shared vertex is always _last_ among the trio
     shared = np.sort(face[np.logical_not(unshared)].reshape(-1, 1, 2), axis=-1)
     shared = np.repeat(shared, 2, axis=1)
     triangles = np.concatenate((shared, indirect_edges[..., None]), axis=-1)
-    coords = vertices[triangles].transpose(2, 3, 0, 1)
+    # `A.shape`: (3, N, 2) corresponding to (xyz coords, edges, triangle pairs)
+    A, B, V = vertices[triangles].transpose(2, 3, 0, 1)
 
-    num = np.sum((coords[0] - coords[1]) * (coords[2] - coords[1]),
-                 axis=0, keepdims=True)
-    denom = np.sum((coords[0] - coords[1]) ** 2, axis=0, keepdims=True)
-    feet = coords[1] - (num / denom) * (coords[1] - coords[0])
+    # calculate the xyz coordinates of the foot of each triangle, where the
+    # base is the shared edge
+    # that is, we're trying to calculate F in the equation `VF = VB - (w * BA)`
+    # where `VF`, `VB`, and `BA` are vectors, and `w = (AB * VB) / (AB ** 2)`
+    w = (np.sum((A - B) * (V - B), axis=0, keepdims=True)
+         / np.sum((A - B) ** 2, axis=0, keepdims=True))
+    feet = B - (w * (B - A))
+    # calculate coordinates of midpoint b/w the feet of each pair of triangles
     midpoints = (np.sum(feet.transpose(1, 2, 0), axis=1) / 2)[:, None]
+    # calculate Euclidean distance between non-shared vertices and midpoints
+    # and add distances together for each pair of triangles
     norms = np.linalg.norm(vertices[indirect_edges] - midpoints, axis=-1)
     weights = np.sum(norms, axis=-1)
 
+    # NOTE: weights won't be perfectly accurate for a small subset of triangle
+    # pairs where either triangle has angle >90 along the shared edge. in these
+    # the midpoint lies _outside_ the shared edge, so neighboring triangles
+    # would need to be taken into account. that said, this occurs in only a
+    # minority of cases and the difference tends to be in the ~0.001 mm range
     return indirect_edges, weights
 
 
