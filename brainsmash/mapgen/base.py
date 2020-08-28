@@ -157,6 +157,8 @@ class Base:
             for i, surr in enumerate(surrs):
                 ii = np.argsort(surr)
                 np.put(surr, ii, sorted_map)
+        else:
+            surrs -= surrs.mean(axis=1)[:, np.newaxis]  # De-mean
 
         return surrs.squeeze()
 

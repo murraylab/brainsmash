@@ -184,6 +184,8 @@ class Sampled:
             for i, surr in enumerate(surrs):
                 ii = np.argsort(surr)
                 np.put(surr, ii, sorted_map)
+        else:
+            surrs = surrs - np.nanmean(surrs, axis=1)[:, np.newaxis]  # De-mean
 
         if self._ismasked:
             return np.ma.masked_array(

@@ -57,12 +57,13 @@ Core development team
 
 Contributors
 ------------
-Ross Markello - Montreal Neurological Institute
+* Ross Markello - Montreal Neurological Institute
 
 Change Log
 ==========
 ---
 
+* 0.6.1 Surrogates maps are now de-meaned prior to returning (as the mean carries no information).
 * 0.6.0 Added `unassigned_value` kwarg to `cortex` and `subcortex`.
 * 0.5.2 Introduced a bug during the last bug fix.
 * 0.5.1 Fixed bug which caused distances to be written to file one-dimensionally.
