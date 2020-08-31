@@ -16,12 +16,13 @@ import numpy.lib.format
 # from warnings import warn
 # from ..utils.dataio import dataio
 # from os import remove
+from joblib import Parallel, delayed
 
 __all__ = ['cortex', 'subcortex', 'parcellate', 'volume']
 
 
 def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
-           use_wb=True, unassigned_value=0, verbose=True):
+           use_wb=True, unassigned_value=0, verbose=True, n_jobs=None):
     """
     Calculates surface distances for `surface` mesh and saves to `outfile`.
 
@@ -51,6 +52,10 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
         value used by Connectome Workbench, e.g. for ``-cifti-parcellate``.
     verbose : bool, optional, default True
         Whether to print status updates while distances are calculated.
+    n_jobs : int, default None
+        The number of parallel jobs to run for distance calculation. None means
+        1 unless in a ``joblib.parallel_backend`` context. -1 means using all
+        processors.
 
     Returns
     -------
@@ -115,13 +120,8 @@ def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
         # parcel atlas this will be ~250 MB in-memory for the default fslr32k
         # resolution
         unique_parcels = np.unique(labels)
-        dist = np.zeros((n_vert, unique_parcels.size), dtype='float32')
-        # NOTE: because this is being done in-memory it could be multiprocessed
-        # for additional speed-ups, if desired!
-        for n in range(n_vert):
-            if verbose and n % 1000 == 0:
-                print('Running vertex {} of {}'.format(n, n_vert))
-            dist[n] = func(n, graph, labels)
+        par, func = Parallel(n_jobs=n_jobs), delayed(func)
+        dist = np.row_stack(par(func(n, graph, labels) for n in range(n_vert)))
         # average rows (vertices) into parcels; columns are already parcels
         dist = np.row_stack([
             dist[labels == lab].mean(axis=0) for lab in unique_parcels])
