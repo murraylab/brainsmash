@@ -138,7 +138,7 @@ class Base:
                 res[delta] = self.regress(smvar_perm, self._smvar)
 
             alphas, betas, residuals = np.array(
-                [res[d] for d in self._deltas]).T
+                [res[d] for d in self._deltas], dtype=float).T
 
             # Select best-fit model and regression parameters
             iopt = np.argmin(residuals)
