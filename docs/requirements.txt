@@ -1,2 +1,7 @@
 sphinx_rtd_theme
--r ../requirements.txt
+numpy
+scikit-learn
+pandas
+scipy
+matplotlib
+nibabel
