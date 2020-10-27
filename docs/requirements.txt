@@ -1,7 +1,2 @@
 sphinx_rtd_theme
-numpy
-scikit-learn
-pandas
-scipy
-matplotlib
-nibabel
+-r ../requirements.txt
