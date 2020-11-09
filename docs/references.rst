@@ -1,8 +1,8 @@
 References
 ==========
 
-If you use BrainSMASH in your research, please cite the following preprint:
-Burt, J.B., Helmer, M., Shinn, M.W., Anticevic, A., Murray, J.D. Generative modeling of brain maps with spatial autocorrelation. Neuroimage, 220 (2020).
+If you use BrainSMASH in your research, please cite the following study:
+`Burt, J.B., Helmer, M., Shinn, M.W., Anticevic, A., Murray, J.D. Generative modeling of brain maps with spatial autocorrelation. Neuroimage, 220 (2020). <https://www.sciencedirect.com/science/article/pii/S1053811920305243>`_
 
 The methodology used to generate surrogate maps in BrainSMASH was adapted from:
 
