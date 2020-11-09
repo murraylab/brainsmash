@@ -2,7 +2,7 @@
 
 import numpy as np
 
-__all__ = ['pearsonr', 'pairwise_r', 'nonparp', 'r2', 'nrmsd']
+__all__ = ['pearsonr', 'pairwise_r', 'nonparp']
 
 
 def pearsonr(X, Y):
