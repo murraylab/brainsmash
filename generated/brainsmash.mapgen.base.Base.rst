@@ -6,35 +6,37 @@ brainsmash.mapgen.base.Base
 .. autoclass:: Base
 
    
+   .. automethod:: __init__
+
    
+   .. rubric:: Methods
+
+   .. autosummary::
    
-   .. HACK -- the point here is that we don't want this to appear in the output, but the autosummary should still generate the pages.
-      .. autosummary::
-         :toctree:
-      
-         Base.b
-         Base.x
-         Base.deltas
-         Base.D
-         Base.b
-         Base.kernel
-         Base.nh
-         Base.nmap
-         Base.resample
-         Base.pv
+      ~Base.__init__
+      ~Base.compute_variogram
+      ~Base.permute_map
+      ~Base.regress
+      ~Base.smooth_map
+      ~Base.smooth_variogram
    
    
 
    
-   .. HACK -- the point here is that we don't want this to appear in the output, but the autosummary should still generate the pages.
-      .. autosummary::
-         :toctree:
-      
-         Base.__call__
-         Base.compute_variogram
-         Base.permute_map
-         Base.regress
-         Base.smooth_map
-         Base.smooth_variogram
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Base.D
+      ~Base.b
+      ~Base.deltas
+      ~Base.h
+      ~Base.kernel
+      ~Base.nh
+      ~Base.nmap
+      ~Base.pv
+      ~Base.resample
+      ~Base.x
    
    
