@@ -156,6 +156,9 @@ above.
 
 Again, we'll assume that the user already has a brain map and distance matrix saved
 locally as text files (or downloaded from `here <https://drive.google.com/open?id=1HZxh7aOral_blIQHQkT7IX525RaMyjPp>`_).
+**Update as of Nov. 24, 2020**: Per many requests from the community, BrainSMASH
+now includes functionality for users working with volumetric data at the whole-brain level.
+For details, please see the :ref:`whole-brain volumetric example <volume_example>`.
 
 .. _memmap:
 

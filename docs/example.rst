@@ -270,3 +270,57 @@ with a call to the surrogate map generator:
 
         gen = Sampled(x, distmat, index, **kwargs)
         surrogate_maps = gen(n=100)
+
+.. _volume_example:
+
+Whole-Brain Volume
+------------------
+For this analysis you will need:
+
+- A text file containing voxel coordinates (with shape N rows by 3 columns)
+- A text file containing N brain map values
+
+Your favorite neuroimaging software should be able to generate these files (e.g., AFNI).
+
+.. note:: Do not include every voxel in the volume, but rather the voxels corresponding to your region of interest (e.g., the brain).
+
+First, you will need to generate memory-mapped distance matrix files. This is
+achieved using :func:`brainsmash.workbench.geo.volume`, as in the code below:
+
+.. code-block:: python
+
+   from brainsmash.workbench.geo import volume
+
+   coord_file = "/path/to/voxel_coordinates.txt"
+   output_dir = "/some/directory/"
+
+   filenames = volume(coord_file, output_dir)
+
+A dictionary containing the names of the newly generated files is returned by the
+function, which are used in the example below to then generate surrogate brain maps:
+
+.. code-block:: python
+
+    from brainsmash.mapgen.sampled import Sampled
+
+    brain_map = "/some_path_to/brain_map.txt"
+
+    gen = Sampled(x=brain_map, D=filenames['D'], index=filenames['index'])
+    surrogate_maps = gen(n=1000)
+
+As illustrated in the sections above, the last step is to verify that the surrogate
+maps' variograms fit the data well. Using the built-in functionality to do this:
+
+.. code-block:: python
+
+    from brainsmash.mapgen.eval import sampled_fit
+
+    kwargs = {'ns': 500,
+              'knn': 1500,
+              'pv': 70
+              }
+
+    sampled_fit(brain_map, filenames['D'], filenames['index'], nsurr=10, **kwargs)
+
+If you are unhappy with the fit, it is recommended that you try varying the three
+parameters included in the keyword argument dictionary above (i.e., ``ns``, ``knn``, and ``pv``).
