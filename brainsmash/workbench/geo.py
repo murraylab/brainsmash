@@ -2,7 +2,7 @@
 
 from ..utils.checks import *
 from .io import check_surface, check_image_file
-from ..utils.dataio import load, export_cifti_mapping
+from ..utils.dataio import load, export_cifti_mapping, dataio
 from ..config import parcel_labels_lr
 from .surf import make_surf_graph
 from scipy.spatial.distance import cdist
@@ -12,9 +12,12 @@ from os import path
 from os import system
 import numpy as np
 import nibabel as nib
+import numpy.lib.format
+# from warnings import warn
+# from ..utils.dataio import dataio
+# from os import remove
 
-
-__all__ = ['cortex', 'subcortex', 'parcellate']
+__all__ = ['cortex', 'subcortex', 'parcellate', 'volume']
 
 
 def cortex(surface, outfile, euclid=False, dlabel=None, medial=None,
@@ -409,43 +412,138 @@ def parcellate(infile, dlabel_file, outfile, delimiter=' ', unassigned_value=0):
         return dist_file
 
 
-def _euclidean(dist_file, coords):
+def volume(coord_file, outdir, chunk_size=1000):
     """
-    Compute three-dimensional pairwise Euclidean distance between rows of
-    `coords`. Write results to `dist_file`.
+    Generate distance-matrix-related memory-mapped files for volumetric data.
 
     Parameters
     ----------
-    dist_file : filename
-        Path to output file, with .txt extension
-    coords : (N,3) np.ndarray
-        MNI coordinates for N voxels/vertices
+    coord_file : str or os.PathLike
+        Path to text file in which rows correspond to voxels of interest, and
+        *three* columns correspond to voxels' coordinates
+    outdir : str or os.PathLike
+        Path to the directory where outputs will be saved
+    chunk_size : int, default 1000
+        The number of voxels to process per chunk. For N voxels, this will
+        impose a memory burden of N*`chunk_size` per iteration (in contrast to
+        a memory burden of N*N for a single iteration, in the absence of
+        chunking).
 
     Returns
     -------
-    filename : str
-        Path to output distance matrix file
+    dict
+        Keys are 'D' and 'index'; values are absolute paths to the
+        corresponding files on disk. These files are used as inputs to
+        `brainsmash.mapgen.sampled.Sampled`.
+
+    Raises
+    ------
+    IOError : `outdir` doesn't exist
+    ValueError : `coord_file` does not contain three columns
 
     Notes
     -----
-    Distances are computed and written one row at a time to reduce memory load.
+    This function computes 3D Euclidean distance between all pairs of voxels
+    whose 3D coordinates are provided in `coord_file`. The distance matrix is
+    not saved in its raw, symmetric form, but rather as a pair of memory-mapped
+    arrays which are needed to create an instance of the
+    `brainsmash.mapgen.sampled.Sampled` class. See
+    `brainsmash.mapgen.memmap.txt2memmap` for more details. Note that the input
+    file should only contain brain voxels --- i.e., voxels in your brain map
+    of interest. Each row of `coord_file`, which indicates the coordinates of
+    a voxel, should therefore correspond to one brain map value.
 
     """
-    print("\nComputing Euclidean distance matrix\n")
-    m = "For a 32k-vertex cortical hemisphere, this may take 15-20 minutes."
-    print(m)
+    if not path.exists(outdir):
+        raise IOError("Output directory does not exist: {}".format(outdir))
 
-    # Use the following line instead if you have sufficient memory
-    # D = cdist(coords, coords)
+    # Load data
+    X = dataio(coord_file)
+    if X.ndim != 2 or X.shape[1] != 3:
+        e = f"expected N rows by 3 columns, instead got shape {X.shape}"
+        raise ValueError(e)
 
-    with open(dist_file, 'w') as fp:
-        for point in coords:
-            distances = cdist(
-                np.expand_dims(point, 0), coords).squeeze()
-            line = " ".join([str(d) for d in distances])+"\n"
-            fp.write(line)
-    check_file_exists(f=dist_file)
-    return dist_file
+    n = X.shape[0]
+    print(f"loading voxels coordinates from {coord_file}")
+    print(f"file contains {n} voxels")
+    print(f"saving memory-mapped distance matrix files to {outdir}")
+
+    # Open memory-mapped arrays
+    npydfile = path.join(outdir, "distmat.npy")
+    npyifile = path.join(outdir, "index.npy")
+    fpd = numpy.lib.format.open_memmap(
+        npydfile, mode='w+', dtype=np.float32, shape=(n, n))
+    fpi = numpy.lib.format.open_memmap(
+        npyifile, mode='w+', dtype=np.int32, shape=(n, n))
+
+    i = 0
+    while i < n:
+        j = min(i + chunk_size, n)
+        d = cdist(X[i:j], X)  # compute 3D euclidean distance
+        sort_idx = np.argsort(d, axis=1)  # sort each row
+        fpd[i:j] = d[np.arange(j-i)[:, np.newaxis], sort_idx]
+        fpi[i:j] = sort_idx  # indices used to sort each row
+        i += chunk_size
+
+    del fpd  # Flush memory changes to disk
+    del fpi
+
+    return {'D': npydfile, 'index': npyifile}  # Return filenames
+
+# def euclidean(coords, fout, chunk_size=10000):
+#     """
+#     Generate a three-dimensional Euclidean distance matrix and write to file.
+#
+#     Parameters
+#     ----------
+#     coords : (N,3) np.ndarray or str or os.Pathlike
+#         3-D coordinates for N brain regions (e.g. voxels, parcels), provided
+#         either as a numpy array or as a filename
+#     fout : filename
+#         Outputs are written to this file; include .txt extension!
+#     chunk_size : float
+#         The distance matrix is written to file `chunk_size` rows at
+#         a time, assuming N is larger than `chunk_size`.
+#
+#     Returns
+#     -------
+#     filename : str
+#         Output text file
+#
+#     Raises
+#     ------
+#     TypeError : coordinates not a numpy array
+#     ValueError : coordinates not a two-dimensional (N,3) matrix
+#
+#     """
+#
+#     X = dataio(coords)
+#     if not isinstance(X, np.ndarray):
+#         e = "Expected array-like, got type {}".format(type(X))
+#         raise TypeError(e)
+#     if X.ndim != 2 or X.shape[1] != 3:
+#         e = "Expected (N,3)-shaped coordinates, got shape {}".format(X.shape)
+#         raise ValueError(e)
+#     if path.exists(fout):
+#         warn("Output file already exists, will be overwritten")
+#         if input("continue? [y/n] ") == "y":
+#             remove(fout)
+#         else:
+#             print("terminating")
+#             return
+#
+#     n = X.shape[0]
+#     with open(fout, 'ab') as fp:
+#         i = 0
+#         while i < n:
+#             j = min(i+chunk_size, n)
+#             print(i, j)
+#             Y = X[i:i+j]
+#             d = cdist(Y, X)
+#             np.save(fp, d)
+#             i += chunk_size
+#     check_file_exists(f=fout)
+#     return fout
 
 
 def _geodesic(surface, dist_file, coords):
