@@ -7,6 +7,7 @@ from ..utils.dataio import dataio
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_random_state
 import numpy as np
+from joblib import Parallel, delayed
 
 
 __all__ = ['Base']
@@ -42,6 +43,8 @@ class Base:
         three times the spacing between variogram x-coordinates.
     seed : None or int or np.random.RandomState instance (default None)
         Specify the seed for random number generation (or random state instance)
+    n_jobs : int (default 1)
+        Number of jobs to use for parallelizing creation of surrogate maps
 
     Notes
     -----
@@ -53,9 +56,10 @@ class Base:
 
     def __init__(self, x, D, deltas=np.linspace(0.1, 0.9, 9),
                  kernel='exp', pv=25, nh=25, resample=False, b=None,
-                 seed=None):
+                 seed=None, n_jobs=1):
 
         self._rs = check_random_state(seed)
+        self._n_jobs = n_jobs
 
         self.x = x
         self.D = D
@@ -117,50 +121,59 @@ class Base:
         worsening the surrogate maps' variogram fit.
 
         """
-        surrs = np.empty((n, self._nmap))
-        for i in range(n):  # generate random maps
 
-            xperm = self.permute_map()  # Randomly permute values
-            res = dict.fromkeys(self._deltas)
+        rs = self._rs.randint(4294967295 - n)  # max RandomState allowed
+        surrs = np.row_stack(
+            Parallel(self._n_jobs)(
+                delayed(self._call_method)(rs=rs + i) for i in range(n)
+            )
+        )
+        return np.asarray(surrs.squeeze())
 
-            for delta in self.deltas:  # foreach neighborhood size
-                # Smooth the permuted map using delta proportion of
-                # neighbors to reintroduce spatial autocorrelation
-                sm_xperm = self.smooth_map(x=xperm, delta=delta)
+    def _call_method(self, rs=None):
+        """ Subfunction used by .__call__() for parallelization purposes """
+        # Reset RandomState so parallel jobs yield different results
+        self._rs = check_random_state(rs)
 
-                # Calculate empirical variogram of the smoothed permuted map
-                vperm = self.compute_variogram(sm_xperm)
+        xperm = self.permute_map()  # Randomly permute values
+        res = dict.fromkeys(self._deltas)
 
-                # Calculate smoothed variogram of the smoothed permuted map
-                smvar_perm = self.smooth_variogram(vperm)
+        for delta in self.deltas:  # foreach neighborhood size
+            # Smooth the permuted map using delta proportion of
+            # neighbors to reintroduce spatial autocorrelation
+            sm_xperm = self.smooth_map(x=xperm, delta=delta)
 
-                # Fit linear regression btwn smoothed variograms
-                res[delta] = self.regress(smvar_perm, self._smvar)
+            # Calculate empirical variogram of the smoothed permuted map
+            vperm = self.compute_variogram(sm_xperm)
 
-            alphas, betas, residuals = np.array(
-                [res[d] for d in self._deltas], dtype=float).T
+            # Calculate smoothed variogram of the smoothed permuted map
+            smvar_perm = self.smooth_variogram(vperm)
 
-            # Select best-fit model and regression parameters
-            iopt = np.argmin(residuals)
-            dopt = self._deltas[iopt]
-            aopt = alphas[iopt]
-            bopt = betas[iopt]
+            # Fit linear regression btwn smoothed variograms
+            res[delta] = self.regress(smvar_perm, self._smvar)
 
-            # Transform and smooth permuted map using best-fit parameters
-            sm_xperm_best = self.smooth_map(x=xperm, delta=dopt)
-            surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
-                    np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
-            surrs[i] = surr
+        alphas, betas, residuals = np.array(
+            [res[d] for d in self._deltas], dtype=float).T
+
+        # Select best-fit model and regression parameters
+        iopt = np.argmin(residuals)
+        dopt = self._deltas[iopt]
+        aopt = alphas[iopt]
+        bopt = betas[iopt]
+
+        # Transform and smooth permuted map using best-fit parameters
+        sm_xperm_best = self.smooth_map(x=xperm, delta=dopt)
+        surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
+                np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
 
         if self._resample:  # resample values from empirical map
             sorted_map = np.sort(self._x)
-            for i, surr in enumerate(surrs):
-                ii = np.argsort(surr)
-                np.put(surr, ii, sorted_map)
+            ii = np.argsort(surr)
+            np.put(surr, ii, sorted_map)
         else:
-            surrs -= surrs.mean(axis=1)[:, np.newaxis]  # De-mean
+            surr -= surr.mean()  # De-mean
 
-        return surrs.squeeze()
+        return surr
 
     def compute_variogram(self, x):
         """
