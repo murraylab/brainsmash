@@ -122,16 +122,17 @@ class Base:
 
         """
 
-        rs = self._rs.randint(4294967295 - n)  # max RandomState allowed
+        rs = self._rs.randint(np.iinfo(np.int32).max, size=n)
         surrs = np.row_stack(
             Parallel(self._n_jobs)(
-                delayed(self._call_method)(rs=rs + i) for i in range(n)
+                delayed(self._call_method)(rs=i) for i in rs
             )
         )
         return np.asarray(surrs.squeeze())
 
     def _call_method(self, rs=None):
         """ Subfunction used by .__call__() for parallelization purposes """
+
         # Reset RandomState so parallel jobs yield different results
         self._rs = check_random_state(rs)
 
