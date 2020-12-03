@@ -63,6 +63,7 @@ Change Log
 ==========
 ---
 
+* 0.8.0 Parallelization of surrogate map generation is now supported thanks to new contributions from Ross Markello!
 * 0.7.0 Added `geo.volume` method to compute 3D Euclidean distance matrix from an arbitrary set of voxel coordinates, per several requests.
 * 0.6.1 Surrogates maps are now de-meaned prior to returning (as the mean carries no information).
 * 0.6.0 Added `unassigned_value` kwarg to `cortex` and `subcortex`.
