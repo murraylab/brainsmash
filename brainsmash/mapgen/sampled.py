@@ -8,6 +8,7 @@ from .kernels import check_kernel
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_random_state
 import numpy as np
+from joblib import Parallel, delayed
 
 __all__ = ['Sampled']
 
@@ -53,6 +54,8 @@ class Sampled:
         Print surrogate count each time new surrogate map created
     seed : None or int or np.random.RandomState instance (default None)
         Specify the seed for random number generation (or random state instance)
+    n_jobs : int (default 1)
+        Number of jobs to use for parallelizing creation of surrogate maps
 
     Notes
     -----
@@ -69,9 +72,10 @@ class Sampled:
 
     def __init__(self, x, D, index, ns=500, pv=70, nh=25, knn=1000, b=None,
                  deltas=np.arange(0.3, 1., 0.2), kernel='exp', resample=False,
-                 verbose=False, seed=None):
+                 verbose=False, seed=None, n_jobs=1):
 
         self._rs = check_random_state(seed)
+        self._n_jobs = n_jobs
 
         self._verbose = verbose
         self.x = x
@@ -120,77 +124,83 @@ class Sampled:
         surrogate maps' variogram fits.
 
         """
-        if self._verbose:
-            print("Generating {} maps...".format(n))
-        surrs = np.empty((n, self._nmap))
-        for i in range(n):  # generate random maps
-            if self._verbose:
-                print(i+1)
 
-            # Randomly permute map
-            x_perm = self.permute_map()
+        rs = self._rs.randint(np.iinfo(np.int32).max, size=n)
+        surrs = np.row_stack(
+            Parallel(self._n_jobs)(
+                delayed(self._call_method)(rs=i) for i in rs
+            )
+        )
+        return np.asarray(surrs.squeeze())
 
-            # Randomly select subset of regions to use for variograms
-            idx = self.sample()
+    def _call_method(self, rs=None):
+        """ Subfunction used by .__call__() for parallelization purposes """
 
-            # Compute empirical variogram
-            v = self.compute_variogram(self._x, idx)
+        # Reset RandomState so parallel jobs yield different results
+        self._rs = check_random_state(rs)
 
-            # Variogram ordinates; use nearest neighbors because local effect
-            u = self._D[idx, :]
-            uidx = np.where(u < self._dmax)
+        # Randomly permute map
+        x_perm = self.permute_map()
 
-            # Smooth empirical variogram
-            smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_h=True)
+        # Randomly select subset of regions to use for variograms
+        idx = self.sample()
 
-            res = dict.fromkeys(self._deltas)
+        # Compute empirical variogram
+        v = self.compute_variogram(self._x, idx)
 
-            for d in self._deltas:  # foreach neighborhood size
+        # Variogram ordinates; use nearest neighbors because local effect
+        u = self._D[idx, :]
+        uidx = np.where(u < self._dmax)
 
-                k = int(d * self._knn)
+        # Smooth empirical variogram
+        smvar, u0 = self.smooth_variogram(u[uidx], v[uidx], return_h=True)
 
-                # Smooth the permuted map using k nearest neighbors to
-                # reintroduce spatial autocorrelation
-                sm_xperm = self.smooth_map(x=x_perm, k=k)
+        res = dict.fromkeys(self._deltas)
 
-                # Calculate variogram values for the smoothed permuted map
-                vperm = self.compute_variogram(sm_xperm, idx)
+        for d in self._deltas:  # foreach neighborhood size
 
-                # Calculate smoothed variogram of the smoothed permuted map
-                smvar_perm = self.smooth_variogram(u[uidx], vperm[uidx])
+            k = int(d * self._knn)
 
-                # Fit linear regression btwn smoothed variograms
-                res[d] = self.regress(smvar_perm, smvar)
+            # Smooth the permuted map using k nearest neighbors to
+            # reintroduce spatial autocorrelation
+            sm_xperm = self.smooth_map(x=x_perm, k=k)
 
-            alphas, betas, residuals = np.array(
-                [res[d] for d in self._deltas], dtype=float).T
+            # Calculate variogram values for the smoothed permuted map
+            vperm = self.compute_variogram(sm_xperm, idx)
 
-            # Select best-fit model and regression parameters
-            iopt = np.argmin(residuals)
-            dopt = self._deltas[iopt]
-            self._dopt = dopt
-            kopt = int(dopt * self._knn)
-            aopt = alphas[iopt]
-            bopt = betas[iopt]
+            # Calculate smoothed variogram of the smoothed permuted map
+            smvar_perm = self.smooth_variogram(u[uidx], vperm[uidx])
 
-            # Transform and smooth permuted map using best-fit parameters
-            sm_xperm_best = self.smooth_map(x=x_perm, k=kopt)
-            surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
-                    np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
-            surrs[i] = surr
+            # Fit linear regression btwn smoothed variograms
+            res[d] = self.regress(smvar_perm, smvar)
+
+        alphas, betas, residuals = np.array(
+            [res[d] for d in self._deltas], dtype=float).T
+
+        # Select best-fit model and regression parameters
+        iopt = np.argmin(residuals)
+        dopt = self._deltas[iopt]
+        self._dopt = dopt
+        kopt = int(dopt * self._knn)
+        aopt = alphas[iopt]
+        bopt = betas[iopt]
+
+        # Transform and smooth permuted map using best-fit parameters
+        sm_xperm_best = self.smooth_map(x=x_perm, k=kopt)
+        surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
+                np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
 
         if self._resample:  # resample values from empirical map
             sorted_map = np.sort(self._x)
-            for i, surr in enumerate(surrs):
-                ii = np.argsort(surr)
-                np.put(surr, ii, sorted_map)
+            ii = np.argsort(surr)
+            np.put(surr, ii, sorted_map)
         else:
-            surrs = surrs - np.nanmean(surrs, axis=1)[:, np.newaxis]  # De-mean
+            surr = surr - np.nanmean(surr) # De-mean
 
         if self._ismasked:
             return np.ma.masked_array(
-                data=surrs, mask=np.isnan(surrs)).squeeze()
-        return surrs.squeeze()
+                data=surr, mask=np.isnan(surr)).squeeze()
+        return surr.squeeze()
 
     def compute_variogram(self, x, idx):
         """
