@@ -1,8 +1,43 @@
 """ Functions for performing statistical inference using surrogate maps. """
 
 import numpy as np
+from scipy.stats import rankdata
 
-__all__ = ['pearsonr', 'pairwise_r', 'nonparp']
+__all__ = ['spearmanr', 'pearsonr', 'pairwise_r', 'nonparp']
+
+
+def spearmanr(X, Y):
+    """
+    Multi-dimensional Spearman rank correlation between rows of `X` and `Y`.
+
+    Parameters
+    ----------
+    X : (N,P) np.ndarray
+    Y : (M,P) np.ndarray
+
+    Returns
+    -------
+    (N,M) np.ndarray
+
+    Raises
+    ------
+    TypeError : `X` or `Y` is not array_like
+    ValueError : `X` and `Y` are not same size along second axis
+
+    """
+    if not isinstance(X, np.ndarray) or not isinstance(Y, np.ndarray):
+        raise TypeError('X and Y must be numpy arrays')
+
+    if X.ndim == 1:
+        X = X.reshape(1, -1)
+    if Y.ndim == 1:
+        Y = Y.reshape(1, -1)
+
+    n = X.shape[1]
+    if n != Y.shape[1]:
+        raise ValueError('X and Y must be same size along axis=1')
+
+    return pearsonr(rankdata(X, axis=1), rankdata(Y, axis=1))
 
 
 def pearsonr(X, Y):
@@ -20,8 +55,8 @@ def pearsonr(X, Y):
 
     Raises
     ------
-    TypeError : `x` or `y` is not array_like
-    ValueError : `x` and `y` are not same size along second axis
+    TypeError : `X` or `Y` is not array_like
+    ValueError : `X` and `Y` are not same size along second axis
 
     """
     if not isinstance(X, np.ndarray) or not isinstance(Y, np.ndarray):
