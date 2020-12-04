@@ -1,12 +1,13 @@
 """
 Generate spatial autocorrelation-preserving surrogate maps.
 """
-from .kernels import check_kernel
-from ..utils.checks import check_map, check_distmat, check_deltas, check_pv
-from ..utils.dataio import dataio
+from brainsmash.mapgen.kernels import check_kernel
+from brainsmash.utils.checks import check_map, check_distmat, check_deltas, check_pv
+from brainsmash.utils.dataio import dataio
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_random_state
 import numpy as np
+from scipy.spatial.distance import pdist
 from joblib import Parallel, delayed
 
 
@@ -73,7 +74,6 @@ class Base:
         self._ikn = np.arange(n)[:, None]
         self._triu = np.triu_indices(self._nmap, k=1)  # upper triangular inds
         self._u = self._D[self._triu]  # variogram X-coordinate
-        self._v = self.compute_variogram(self._x)  # variogram Y-coord
 
         # Get indices of pairs with u < pv'th percentile
         self._uidx = np.where(self._u < np.percentile(self._u, self._pv))[0]
@@ -94,7 +94,7 @@ class Base:
         utrunc = self._u[self._uidx]
         self._h = np.linspace(utrunc.min(), utrunc.max(), self._nh)
         self.b = b
-        self._smvar = self.smooth_variogram(self._v)
+        self._smvar = self.compute_smooth_variogram(self._x[..., None])
 
         # Linear regression model
         self._lm = LinearRegression(fit_intercept=True)
@@ -130,72 +130,70 @@ class Base:
         )
         return np.asarray(surrs.squeeze())
 
-    def _call_method(self, rs=None):
+    def _call_method(self, i, rs=None):
         """ Subfunction used by .__call__() for parallelization purposes """
 
         # Reset RandomState so parallel jobs yield different results
         self._rs = check_random_state(rs)
 
-        xperm = self.permute_map()  # Randomly permute values
+        xperm = self.permute_map(i)  # Randomly permute values
         res = dict.fromkeys(self._deltas)
 
         for delta in self.deltas:  # foreach neighborhood size
             # Smooth the permuted map using delta proportion of
             # neighbors to reintroduce spatial autocorrelation
-            sm_xperm = self.smooth_map(x=xperm, delta=delta)
-
-            # Calculate empirical variogram of the smoothed permuted map
-            vperm = self.compute_variogram(sm_xperm)
+            sm_xperm = self.smooth_map(xperm, delta)
 
             # Calculate smoothed variogram of the smoothed permuted map
-            smvar_perm = self.smooth_variogram(vperm)
+            smvar_perm = self.compute_smooth_variogram(sm_xperm)
 
             # Fit linear regression btwn smoothed variograms
             res[delta] = self.regress(smvar_perm, self._smvar)
 
         alphas, betas, residuals = np.array(
-            [res[d] for d in self._deltas], dtype=float).T
+            [res[d] for d in self._deltas], dtype=float).transpose(1, 0, 2)
 
         # Select best-fit model and regression parameters
-        iopt = np.argmin(residuals)
-        dopt = self._deltas[iopt]
-        aopt = alphas[iopt]
-        bopt = betas[iopt]
+        iopt = np.argmin(residuals, axis=0)[None]
+        dopt = self._deltas[iopt][0]
+        aopt = np.take_along_axis(alphas, iopt, 0).squeeze()
+        bopt = np.take_along_axis(betas, iopt, 0).squeeze()
 
         # Transform and smooth permuted map using best-fit parameters
-        sm_xperm_best = self.smooth_map(x=xperm, delta=dopt)
+        sm_xperm_best = np.column_stack([
+            self.smooth_map(x[:, None], d) for x, d in zip(xperm.T, dopt)
+        ])
         surr = (np.sqrt(np.abs(bopt)) * sm_xperm_best +
-                np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap))
+                np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap, i))
 
         if self._resample:  # resample values from empirical map
             sorted_map = np.sort(self._x)
             ii = np.argsort(surr)
             np.put(surr, ii, sorted_map)
         else:
-            surr -= surr.mean()  # De-mean
+            surr -= surr.mean(axis=0)  # De-mean
 
-        return surr
+        return np.asarray(surr).T
 
-    def compute_variogram(self, x):
-        """
-        Compute variogram values (i.e., one-half squared pairwise differences).
+    def compute_smooth_variogram(self, x, return_h=False):
+        diff_ij = np.column_stack([
+            pdist(x[:, [n]])[self._uidx] for n in range(x.shape[-1])
+        ])
+        v = 0.5 * np.square(diff_ij)
+        u = self._u[self._uidx]
+        if len(u) != len(v):
+            raise ValueError(
+                "argument v: expected size {}, got {}".format(len(u), len(v)))
+        # Subtract each h from each pairwise distance u
+        # Each row corresponds to a unique h
+        du = np.abs(u - self._h[:, None])
+        w = np.exp(-np.square(2.68 * du / self._b) / 2)
+        output = np.squeeze((w @ v) / np.nansum(w, axis=1)[:, None])
+        if not return_h:
+            return output
+        return output, self._h
 
-        Parameters
-        ----------
-        x : (N,) np.ndarray
-            Brain map scalar array
-
-        Returns
-        -------
-        v : (N(N-1)/2,) np.ndarray
-           Variogram y-coordinates, i.e. 0.5 * (x_i - x_j) ^ 2
-
-        """
-        diff_ij = np.subtract.outer(x, x)
-        v = 0.5 * np.square(diff_ij)[self._triu]
-        return v
-
-    def permute_map(self):
+    def permute_map(self, i=1):
         """
         Return randomly permuted brain map.
 
@@ -205,7 +203,7 @@ class Base:
             Random permutation of target brain map
 
         """
-        perm_idx = self._rs.permutation(np.arange(self._x.size))
+        perm_idx = self._rs.random_sample((self._x.size, i)).argsort(axis=0)
         mask_perm = self._x.mask[perm_idx]
         x_perm = self._x.data[perm_idx]
         return np.ma.masked_array(data=x_perm, mask=mask_perm)
@@ -227,52 +225,11 @@ class Base:
             Smoothed brain map
 
         """
-        # Values of k nearest neighbors for each brain area
-        xkn = x[self._jkn[delta]]
-        weights = self._kernel(self._dkn[delta])  # Distance-weight kernel
-        # Kernel-weighted sum
-        return (weights * xkn).sum(axis=1) / weights.sum(axis=1)
-
-    def smooth_variogram(self, v, return_h=False):
-        """
-        Smooth a variogram.
-
-        Parameters
-        ----------
-        v : (N,) np.ndarray
-            Variogram values, i.e. 0.5 * (x_i - x_j) ^ 2
-        return_h : bool, default False
-            Return distances at which the smoothed variogram was computed
-
-        Returns
-        -------
-        (self.nh,) np.ndarray
-            Smoothed variogram values
-        (self.nh) np.ndarray
-            Distances at which smoothed variogram was computed (returned only if
-            `return_h` is True)
-
-        Raises
-        ------
-        ValueError : `v` has unexpected size.
-
-        """
-        u = self._u[self._uidx]
-        v = v[self._uidx]
-        if len(u) != len(v):
-            raise ValueError(
-                "argument v: expected size {}, got {}".format(len(u), len(v)))
-        # Subtract each h from each pairwise distance u
-        # Each row corresponds to a unique h
-        du = np.abs(u - self._h[:, None])
-        w = np.exp(-np.square(2.68 * du / self._b) / 2)
-        denom = np.nansum(w, axis=1)
-        wv = w * v[None, :]
-        num = np.nansum(wv, axis=1)
-        output = num / denom
-        if not return_h:
-            return output
-        return output, self._h
+        weights = self._kernel(self._dkn[delta])
+        ws = weights.sum(axis=1)
+        return np.column_stack([
+            (weights * xp[self._jkn[delta]]).sum(axis=1) / ws for xp in x.T
+        ])
 
     def regress(self, x, y):
         """
@@ -295,11 +252,20 @@ class Base:
             Sum of squared residuals
 
         """
-        self._lm.fit(X=np.expand_dims(x, -1), y=y)
-        beta = self._lm.coef_
-        alpha = self._lm.intercept_
-        y_pred = self._lm.predict(X=np.expand_dims(x, -1))
-        res = np.sum(np.square(y-y_pred))
+
+        if x.ndim < 2:
+            x = x[..., None]
+        if y.ndim < 2:
+            y = y[..., None]
+        if y.squeeze().ndim > 1:
+            raise ValueError('Provided `y` has multiple dependent variables')
+
+        num = (x * y).sum(axis=0) - ((x.sum(axis=0) * y.sum()) / len(x))
+        denom = (x ** 2).sum(axis=0) - ((np.sum(x, axis=0) ** 2) / len(x))
+        beta = num / denom
+        alpha = y.mean() - (beta * x.mean(axis=0))
+        res = np.sum((y - ((x * beta) + alpha)) ** 2, axis=0)
+
         return alpha, beta, res
 
     @property
