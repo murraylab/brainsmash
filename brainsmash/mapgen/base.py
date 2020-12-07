@@ -4,7 +4,6 @@ Generate spatial autocorrelation-preserving surrogate maps.
 from brainsmash.mapgen.kernels import check_kernel
 from brainsmash.utils.checks import check_map, check_distmat, check_deltas, check_pv
 from brainsmash.utils.dataio import dataio
-from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_random_state
 import numpy as np
 from joblib import Parallel, delayed
@@ -94,10 +93,7 @@ class Base:
         utrunc = self._u[self._uidx]
         self._h = np.linspace(utrunc.min(), utrunc.max(), self._nh)
         self.b = b
-        self._smvar = self.compute_smooth_variogram(self._x[..., None])
-
-        # Linear regression model
-        self._lm = LinearRegression(fit_intercept=True)
+        self._smvar = self.compute_smooth_variogram(self._x)
 
     def __call__(self, n=1, batch_size=1):
         """
@@ -210,6 +206,9 @@ class Base:
             `return_h` is True)
 
         """
+        if x.ndim < 2:
+            x = x[..., None]
+
         diff_ij = x[self._triu[1][self._uidx]] - x[self._triu[0][self._uidx]]
         v = 0.5 * np.square(diff_ij)
         u = self._u[self._uidx]
