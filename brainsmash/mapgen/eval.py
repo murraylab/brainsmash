@@ -45,14 +45,12 @@ def base_fit(x, D, nsurr=100, **params):
     surrogate_maps = generator(n=nsurr)
 
     # Compute empirical variogram
-    v = generator.compute_variogram(x)
-    emp_var, u0 = generator.smooth_variogram(v, return_h=True)
+    emp_var, u0 = generator.compute_smooth_variogram(x, return_h=True)
 
     # Compute surrogate map variograms
     surr_var = np.empty((nsurr, generator.nh))
     for i in range(nsurr):
-        v_null = generator.compute_variogram(surrogate_maps[i])
-        surr_var[i] = generator.smooth_variogram(v_null, return_h=False)
+        surr_var[i] = generator.compute_smooth_variogram(surrogate_maps[i])
 
     # # Create plot for visual comparison
 
