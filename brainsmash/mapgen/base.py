@@ -7,9 +7,9 @@ from brainsmash.utils.dataio import dataio
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_random_state
 import numpy as np
-from scipy.spatial.distance import pdist
 from joblib import Parallel, delayed
 
+MAX_ALLOWABLE_BATCH_SIZE = 500
 
 __all__ = ['Base']
 
@@ -99,7 +99,7 @@ class Base:
         # Linear regression model
         self._lm = LinearRegression(fit_intercept=True)
 
-    def __call__(self, n=1):
+    def __call__(self, n=1, batch_size=1):
         """
         Randomly generate new surrogate map(s).
 
@@ -107,6 +107,10 @@ class Base:
         ----------
         n : int, default 1
             Number of surrogate maps to randomly generate
+        batch_size : int, default 1
+            If generating n > 1 surrogates, how many to generate with each
+            batch. An ideal batch_size for computation / memory tradeoffs seems
+            to be around ~100.
 
         Returns
         -------
@@ -122,15 +126,25 @@ class Base:
 
         """
 
-        rs = self._rs.randint(np.iinfo(np.int32).max, size=n)
+        # hard limit
+        if batch_size > MAX_ALLOWABLE_BATCH_SIZE or batch_size == 'max':
+            batch_size = MAX_ALLOWABLE_BATCH_SIZE
+
+        # how many batches were requested?
+        batches = [batch_size] * (n // batch_size)
+        if n % batch_size != 0:
+            batches += [n % batch_size]
+
+        rs = self._rs.randint(np.iinfo(np.int32).max, size=len(batches))
         surrs = np.row_stack(
             Parallel(self._n_jobs)(
-                delayed(self._call_method)(rs=i) for i in rs
+                delayed(self._call_method)(i=batches[n], rs=i)
+                for n, i in enumerate(rs)
             )
         )
         return np.asarray(surrs.squeeze())
 
-    def _call_method(self, i, rs=None):
+    def _call_method(self, i=1, rs=None):
         """ Subfunction used by .__call__() for parallelization purposes """
 
         # Reset RandomState so parallel jobs yield different results
@@ -160,6 +174,7 @@ class Base:
         bopt = np.take_along_axis(betas, iopt, 0).squeeze()
 
         # Transform and smooth permuted map using best-fit parameters
+        # TODO: fix somehow, ideally
         sm_xperm_best = np.column_stack([
             self.smooth_map(x[:, None], d) for x, d in zip(xperm.T, dopt)
         ])
@@ -176,9 +191,26 @@ class Base:
         return np.asarray(surr).T
 
     def compute_smooth_variogram(self, x, return_h=False):
-        diff_ij = np.column_stack([
-            pdist(x[:, [n]])[self._uidx] for n in range(x.shape[-1])
-        ])
+        """
+        Compute smoothed variogram values (1/2 squared pairwise differences)
+
+        Parameters
+        ----------
+        x : (N,) np.ndarray
+            Brain map scalar array
+        return_h : bool, default False
+            Return distances at which the smoothed variogram was computed
+
+        Returns
+        -------
+        (self.nh,) np.ndarray
+            Smoothed variogram values
+        (self.nh) np.ndarray
+            Distances at which smoothed variogram was computed (returned only if
+            `return_h` is True)
+
+        """
+        diff_ij = x[self._triu[1][self._uidx]] - x[self._triu[0][self._uidx]]
         v = 0.5 * np.square(diff_ij)
         u = self._u[self._uidx]
         if len(u) != len(v):
@@ -188,7 +220,7 @@ class Base:
         # Each row corresponds to a unique h
         du = np.abs(u - self._h[:, None])
         w = np.exp(-np.square(2.68 * du / self._b) / 2)
-        output = np.squeeze((w @ v) / np.nansum(w, axis=1)[:, None])
+        output = np.squeeze(np.dot(w, v) / np.nansum(w, axis=1)[:, None])
         if not return_h:
             return output
         return output, self._h
@@ -226,9 +258,17 @@ class Base:
 
         """
         weights = self._kernel(self._dkn[delta])
-        ws = weights.sum(axis=1)
+        weights /= weights.sum(axis=1, keepdims=True)
+
+        # iterate over the lesser of the dimensions for this comprehension
+        if weights.shape[1] > x.shape[1]:
+            return np.sum([
+                weights[:, [n]] * x[self._jkn[delta][:, n]]
+                for n in range(weights.shape[1])
+            ], axis=0)
+
         return np.column_stack([
-            (weights * xp[self._jkn[delta]]).sum(axis=1) / ws for xp in x.T
+            np.sum(weights * xp[self._jkn[delta]], axis=1) for xp in x.T
         ])
 
     def regress(self, x, y):
@@ -252,7 +292,6 @@ class Base:
             Sum of squared residuals
 
         """
-
         if x.ndim < 2:
             x = x[..., None]
         if y.ndim < 2:
