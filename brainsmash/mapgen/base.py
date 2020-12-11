@@ -1,7 +1,7 @@
 """
 Generate spatial autocorrelation-preserving surrogate maps.
 """
-from .mapgen.kernels import check_kernel
+from .kernels import check_kernel
 from ..utils.checks import check_map, check_distmat, check_deltas, check_pv
 from ..utils.dataio import dataio
 from sklearn.utils.validation import check_random_state

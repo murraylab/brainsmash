@@ -63,6 +63,7 @@ Change Log
 ==========
 ---
 
+* 0.10.0 Added batch processing to `mapgen.Base` thanks to contributions from Ross Markello. Note that generating surrogate maps before vs. after this update with the same random seed will yield different results due to a minor implementational change.
 * 0.9.0 Added multi-dimensional Spearman rank correlation to `mapgen.stats` module.
 * 0.8.0 Parallelization of surrogate map generation is now supported thanks to new contributions from Ross Markello!
 * 0.7.0 Added `geo.volume` method to compute 3D Euclidean distance matrix from an arbitrary set of voxel coordinates, per several requests.

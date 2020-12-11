@@ -1,8 +1,8 @@
 """ Evaluation metrics for randomly generated surrogate maps. """
 
-from brainsmash.mapgen.base import Base
-from brainsmash.mapgen.sampled import Sampled
-from brainsmash.utils.dataio import dataio
+from .base import Base
+from .sampled import Sampled
+from ..utils.dataio import dataio
 import matplotlib.pyplot as plt
 import numpy as np
 
