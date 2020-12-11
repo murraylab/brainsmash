@@ -1,9 +1,9 @@
 """
 Generate spatial autocorrelation-preserving surrogate maps.
 """
-from brainsmash.mapgen.kernels import check_kernel
-from brainsmash.utils.checks import check_map, check_distmat, check_deltas, check_pv
-from brainsmash.utils.dataio import dataio
+from .mapgen.kernels import check_kernel
+from ..utils.checks import check_map, check_distmat, check_deltas, check_pv
+from ..utils.dataio import dataio
 from sklearn.utils.validation import check_random_state
 import numpy as np
 from joblib import Parallel, delayed
@@ -178,9 +178,9 @@ class Base:
                 np.sqrt(np.abs(aopt)) * self._rs.randn(self._nmap, i))
 
         if self._resample:  # resample values from empirical map
-            sorted_map = np.sort(self._x)
-            ii = np.argsort(surr)
-            np.put(surr, ii, sorted_map)
+            sorted_map = np.sort(self._x)[:, None]
+            ii = np.argsort(surr, axis=0)
+            np.put_along_axis(surr, ii, sorted_map, axis=0)
         else:
             surr -= surr.mean(axis=0)  # De-mean
 
