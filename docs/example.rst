@@ -302,7 +302,7 @@ we first visually inspect the variogram fit:
 
 .. code-block:: python
 
-    from brainsmash.mapgen.sampled import Sampled
+    from brainsmash.mapgen.eval import sampled_fit
 
     brain_map = "/some_path_to/brain_map.txt"
 
@@ -326,7 +326,7 @@ we can now randomly generate surrogate brain maps with spatial autocorrelation t
 
 .. code-block:: python
 
-    from brainsmash.mapgen.eval import sampled_fit
+    from brainsmash.mapgen.sampled import Sampled
 
     gen = Sampled(x=brain_map, D=filenames['D'], index=filenames['index'], **kwargs)
     surrogate_maps = gen(n=1000)
