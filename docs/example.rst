@@ -297,7 +297,8 @@ achieved using :func:`brainsmash.workbench.geo.volume`, as in the code below:
    filenames = volume(coord_file, output_dir)
 
 A dictionary containing the names of the newly generated files is returned by the
-function, which are used in the example below to then generate surrogate brain maps:
+function, which are used in the example below. Prior to generating surrogate maps,
+we first visually inspect the variogram fit:
 
 .. code-block:: python
 
@@ -305,22 +306,29 @@ function, which are used in the example below to then generate surrogate brain m
 
     brain_map = "/some_path_to/brain_map.txt"
 
-    gen = Sampled(x=brain_map, D=filenames['D'], index=filenames['index'])
-    surrogate_maps = gen(n=1000)
-
-As illustrated in the sections above, the last step is to verify that the surrogate
-maps' variograms fit the data well. Using the built-in functionality to do this:
-
-.. code-block:: python
-
-    from brainsmash.mapgen.eval import sampled_fit
-
+    # These are three of the key parameters affecting the variogram fit
     kwargs = {'ns': 500,
               'knn': 1500,
               'pv': 70
               }
 
+    # Running this command will generate a matplotlib figure
     sampled_fit(brain_map, filenames['D'], filenames['index'], nsurr=10, **kwargs)
+
 
 If you are unhappy with the fit, it is recommended that you try varying the three
 parameters included in the keyword argument dictionary above (i.e., ``ns``, ``knn``, and ``pv``).
+
+.. note:: A few users have reported a systematic overestimation of variance in their surrogate maps' variograms. This suggests that further parameter tuning is necessary. However, it may also indicate a violation of the underlying assumption of stationary, which is more likely to be violated at the whole-brain level than within a single contiguous brain structure.
+
+Having selected our parameter values and stored them in the ``kwargs`` dictionary,
+we can now randomly generate surrogate brain maps with spatial autocorrelation that is matched to our target brain map:
+
+.. code-block:: python
+
+    from brainsmash.mapgen.eval import sampled_fit
+
+    gen = Sampled(x=brain_map, D=filenames['D'], index=filenames['index'], **kwargs)
+    surrogate_maps = gen(n=1000)
+
+These surrogate maps can then be used to test the null hypothesis that any random yet spatially autocorrelated brain map would yield a comparable or more extreme statistical result.
