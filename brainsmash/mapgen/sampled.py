@@ -195,7 +195,7 @@ class Sampled:
             ii = np.argsort(surr)
             np.put(surr, ii, sorted_map)
         else:
-            surr = surr - np.nanmean(surr) # De-mean
+            surr = surr - np.nanmean(surr)  # De-mean
 
         if self._ismasked:
             return np.ma.masked_array(

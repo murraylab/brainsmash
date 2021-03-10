@@ -9,7 +9,7 @@ import numpy as np
 __all__ = ['base_fit', 'sampled_fit']
 
 
-def base_fit(x, D, nsurr=100, **params):
+def base_fit(x, D, nsurr=100, return_data=False, **params):
     """
     Evaluate variogram fits for Base class.
 
@@ -21,17 +21,30 @@ def base_fit(x, D, nsurr=100, **params):
         Pairwise distance matrix between regions in `x`
     nsurr : int, default 100
         Number of simulated surrogate maps from which to compute variograms
+    return_data : bool, default False
+        if True, return: 1, the smoothed variogram values for the target
+        brain map; 2, the distances at which the smoothed variograms values
+        were computed; and 3, the surrogate maps' smoothed variogram values
     params
         Keyword arguments for :class:`brainsmash.mapgen.base.Base`
 
     Returns
     -------
-    None
+    if and only if return_data is True:
+    emp_var : (M,) np.ndarray
+        empirical smoothed variogram values
+    u0 : (M,) np.ndarray
+        distances at which variogram values were computed
+    surr_var : (nsurr, M) np.ndarray
+        surrogate maps' smoothed variogram values
 
     Notes
     -----
-    Generates and shows a matplotlib plot instance illustrating the fit of
-    the surrogates' variograms to the target map's variogram.
+    If `return_data` is False, this function generates and shows a matplotlib
+    plot instance illustrating the fit of the surrogates' variograms to the
+    target map's variogram. If `return_data` is True, this function returns the
+    data needed to generate such a plot (i.e., the variogram values and the
+    corresponding distances).
 
     """
 
@@ -51,6 +64,9 @@ def base_fit(x, D, nsurr=100, **params):
     surr_var = np.empty((nsurr, generator.nh))
     for i in range(nsurr):
         surr_var[i] = generator.compute_smooth_variogram(surrogate_maps[i])
+
+    if return_data:
+        return emp_var, u0, surr_var
 
     # # Create plot for visual comparison
 
@@ -84,7 +100,7 @@ def base_fit(x, D, nsurr=100, **params):
     plt.show()
 
 
-def sampled_fit(x, D, index, nsurr=10, **params):
+def sampled_fit(x, D, index, nsurr=10, return_data=False, **params):
     """
     Evaluate variogram fits for Sampled class.
 
@@ -98,17 +114,30 @@ def sampled_fit(x, D, index, nsurr=10, **params):
         See :class:`brainsmash.mapgen.sampled.Sampled`
     nsurr : int, default 10
         Number of simulated surrogate maps from which to compute variograms
+    return_data : bool, default False
+        if True, return: 1, the smoothed variogram values for the target
+        brain map; 2, the distances at which the smoothed variograms values
+        were computed; and 3, the surrogate maps' smoothed variogram values
     params
         Keyword arguments for :class:`brainsmash.mapgen.sampled.Sampled`
 
     Returns
     -------
-    None
+    if and only if return_data is True:
+    emp_var : (M,) np.ndarray
+        empirical smoothed variogram values
+    u0 : (M,) np.ndarray
+        distances at which variogram values were computed
+    surr_var : (nsurr, M) np.ndarray
+        surrogate maps' smoothed variogram values
 
     Notes
     -----
-    Generates and shows a matplotlib plot instance illustrating the fit of
-    the surrogates' variograms to the target map's variogram.
+    If `return_data` is False, this function generates and shows a matplotlib
+    plot instance illustrating the fit of the surrogates' variograms to the
+    target map's variogram. If `return_data` is True, this function returns the
+    data needed to generate such a plot (i.e., the variogram values and the
+    corresponding distances).
 
     """
 
@@ -136,9 +165,11 @@ def sampled_fit(x, D, index, nsurr=10, **params):
         surr_var[i] = generator.smooth_variogram(
             u=u[uidx], v=v_null[uidx], return_h=False)
 
-    # # Create plot for visual comparison
     u0 = u0_samples.mean(axis=0)
     emp_var = emp_var_samples.mean(axis=0)
+
+    if return_data:
+        return emp_var, u0, surr_var
 
     # Plot target variogram
     fig = plt.figure(figsize=(3, 3))

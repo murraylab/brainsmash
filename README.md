@@ -63,6 +63,7 @@ Change Log
 ==========
 ---
 
+* 0.11.0 Added `return_data` keyword argument to both variogram-plotting functions in the `eval` module, such that users can easily customize variogram plots to their liking and/or compute numerical goodness-of-fit metrics. 
 * 0.10.0 Added batch processing to `mapgen.Base` thanks to contributions from Ross Markello. Note that generating surrogate maps before vs. after this update with the same random seed will yield different results due to a minor implementational change.
 * 0.9.0 Added multi-dimensional Spearman rank correlation to `mapgen.stats` module.
 * 0.8.0 Parallelization of surrogate map generation is now supported thanks to new contributions from Ross Markello!
